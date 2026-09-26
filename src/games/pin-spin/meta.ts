@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'pin-spin',
@@ -10,6 +10,7 @@ export default defineMeta({
     'Tap to throw a pin into the spinning target.',
     'Hitting a pin that is already stuck ends the game.',
     'Throw all pins to clear the level. Gems on the rim are worth +3.',
+    'Gems are coins; hit a pin and you can continue by retrying the throw.',
   ],
   categories: ['hyper-casual', 'reflex'],
   tags: ['timing', 'one-tap', 'knife', 'target', 'levels'],
@@ -23,4 +24,21 @@ export default defineMeta({
   realtime: true,
   popularity: 88,
   addedAt: '2026-06-02',
+  shop: {
+    title: 'Pin Shop',
+    icon: '📌',
+    skinLabel: 'Pins',
+    upgrades: [
+      upgrade('slow', 'Slow spin', '🐢', 'Targets spin 5% slower per level', 3, 100),
+      upgrade('thin', 'Thin needles', '🪡', 'Pins can land 10% closer together per level', 3, 120),
+      upgrade('gems', 'Gem hunter', '💎', 'Easier to hit gems', 3, 70),
+    ],
+    skins: [
+      skin('classic', 'Lavender', 0, ['#f5f3ff', '#c084fc', '#a78bfa'], { icon: '📌' }),
+      skin('ruby', 'Ruby', 120, ['#fecdd3', '#e11d48', '#fb7185'], { icon: '❤️' }),
+      skin('emerald', 'Emerald', 200, ['#d1fae5', '#059669', '#34d399'], { icon: '💚' }),
+      skin('sapphire', 'Sapphire', 300, ['#dbeafe', '#2563eb', '#60a5fa'], { icon: '💙' }),
+      skin('gold', 'Golden', 0, ['#fef3c7', '#f59e0b', '#fbbf24'], { icon: '🏆', adUnlock: 3 }),
+    ],
+  },
 });

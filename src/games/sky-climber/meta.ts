@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'sky-climber',
@@ -10,6 +10,7 @@ export default defineMeta({
     'Hold the left or right side (or ←/→) to steer.',
     'You bounce automatically. Springs send you flying.',
     'Brown platforms crumble. Falling off the screen ends the climb.',
+    'Grab coins on the way up; fell? Continue with a rescue spring.',
   ],
   categories: ['endless', 'hyper-casual', 'physics'],
   tags: ['jump', 'platformer', 'climb', 'doodle', 'bounce'],
@@ -23,4 +24,21 @@ export default defineMeta({
   realtime: true,
   popularity: 84,
   addedAt: '2026-06-23',
+  shop: {
+    title: 'Base Camp',
+    icon: '⛰️',
+    skinLabel: 'Climbers',
+    upgrades: [
+      upgrade('jump', 'Power legs', '🦵', '+4% jump height per level', 4, 80),
+      upgrade('springs', 'Spring fever', '🌀', 'More spring platforms', 3, 100),
+      upgrade('magnet', 'Coin magnet', '🧲', 'Grab coins from further away', 3, 70),
+    ],
+    skins: [
+      skin('blob', 'Purple Blob', 0, ['#a855f7', '#c084fc', '#7e22ce'], { icon: '🟣' }),
+      skin('cap', 'Capped Climber', 150, ['#f97316', '#fdba74', '#1d4ed8'], { icon: '🧢' }),
+      skin('astro', 'Astronaut', 400, ['#e2e8f0', '#f8fafc', '#64748b'], { icon: '👩‍🚀' }),
+      skin('slime', 'Slime', 250, ['#22c55e', '#86efac', '#15803d'], { icon: '🟢' }),
+      skin('king', 'Sky King', 0, ['#facc15', '#fef08a', '#dc2626'], { icon: '👑', adUnlock: 3 }),
+    ],
+  },
 });

@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'block-drop',
@@ -10,6 +10,7 @@ export default defineMeta({
     'Move with ←/→ (or drag), rotate with ↑ (or tap).',
     'Hard drop with Space (or swipe down). Hold with C.',
     'Clear several lines at once for big points. Speed rises every 10 lines.',
+    'Level-ups and Block Busters pay coins; topped out? Continue and the bottom rows vanish.',
   ],
   categories: ['arcade', 'puzzle'],
   tags: ['tetris', 'blocks', 'falling', 'lines', 'classic'],
@@ -26,4 +27,20 @@ export default defineMeta({
   realtime: true,
   popularity: 89,
   addedAt: '2026-06-28',
+  shop: {
+    title: 'Workshop',
+    icon: '🟦',
+    skinLabel: 'Palettes',
+    upgrades: [
+      upgrade('lock', 'Sticky hands', '✋', '+0.1 s lock delay per level', 3, 90),
+      upgrade('calm', 'Calm gravity', '🐢', 'Pieces fall 10% slower per level', 3, 120),
+    ],
+    skins: [
+      skin('classic', 'Classic', 0, ['#22d3ee', '#a855f7', '#facc15'], { icon: '🟦' }),
+      skin('pastel', 'Pastel', 150, ['#a5f3fc', '#e9d5ff', '#fef08a'], { icon: '🧁' }),
+      skin('neon', 'Neon', 250, ['#00fff0', '#ff00e6', '#fffb00'], { icon: '⚡' }),
+      skin('ocean', 'Ocean', 250, ['#67e8f9', '#818cf8', '#2dd4bf'], { icon: '🌊' }),
+      skin('gold', 'Gold Rush', 0, ['#fde68a', '#eab308', '#d97706'], { icon: '🪙', adUnlock: 3 }),
+    ],
+  },
 });

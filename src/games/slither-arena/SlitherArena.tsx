@@ -3,6 +3,7 @@ import {
   CanvasStage,
   ControlBar,
   TouchButton,
+  createContinueGate,
   useGameLoop,
   useHeldKeys,
   useKeyDown,
@@ -90,13 +91,23 @@ function makeSnake(rng: Rng, at: Point, mass: number, player: boolean, name: str
   };
 }
 
+/** Player hue per skin (the rainbow skin cycles). */
+const SKIN_HUE: Record<string, number> = { violet: 265, lime: 95, ocean: 200, ember: 15, rose: 330, rainbow: 0 };
+
 export function SlitherArena({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
+  const lo = api.loadout;
+  const myHue = SKIN_HUE[lo.skin.id] ?? 265;
+  const startMass = 20 + 10 * lo.level('start');
+  const mySpeed = 1 + 0.05 * lo.level('speed');
+  const boostCost = 5 * (1 - 0.15 * lo.level('boost'));
+  const myReach = 6 + 5 * lo.level('magnet');
+  const continueGate = useRef(createContinueGate(api)).current;
 
   const init = () => {
-    const player = makeSnake(rng, { x: 0, y: 0 }, 20, true, 'You', 265);
+    const player = makeSnake(rng, { x: 0, y: 0 }, startMass, true, 'You', myHue);
     const bots: Snake[] = [];
     for (let i = 0; i < BOTS; i++) {
       let p = randomPointInWorld(rng, 200);
@@ -121,8 +132,10 @@ export function SlitherArena({ api, paused }: GameProps) {
     dead: false,
     deadTimer: 0,
     ended: false,
+    waiting: false,
+    invuln: 0,
     time: 0,
-    maxMass: 20,
+    maxMass: startMass,
     respawns: [] as number[],
     cam: { x: 0, y: 0, zoom: 1 },
   }).current;
@@ -145,6 +158,7 @@ export function SlitherArena({ api, paused }: GameProps) {
     if (!snake.alive) return;
     snake.alive = false;
     if (by) by.kills += 1;
+    if (by?.player) api.addCoins(2);
     // Leave a trail of rich orbs behind.
     const drop = Math.max(8, Math.floor(snake.mass * 0.8));
     for (let i = 0; i < snake.body.length; i += Math.max(1, Math.floor(snake.body.length / drop))) {
@@ -263,7 +277,7 @@ export function SlitherArena({ api, paused }: GameProps) {
           }
         }
         const canBoost = sn.boost && sn.mass > 12;
-        const speed = canBoost ? 255 : 140;
+        const speed = (canBoost ? 255 : 140) * (sn.player ? mySpeed : 1);
         const turnRate = (canBoost ? 2.4 : 3.4) / (1 + sn.mass / 600);
         const diff = angleDiff(sn.angle, sn.target);
         sn.angle += Math.max(-turnRate * dt, Math.min(turnRate * dt, diff));
@@ -271,7 +285,7 @@ export function SlitherArena({ api, paused }: GameProps) {
         head.x += Math.cos(sn.angle) * speed * dt;
         head.y += Math.sin(sn.angle) * speed * dt;
         if (canBoost) {
-          sn.mass -= 5 * dt;
+          sn.mass -= (sn.player ? boostCost : 5) * dt;
           sn.dropTimer -= dt;
           if (sn.dropTimer <= 0) {
             sn.dropTimer = 0.18;
@@ -288,7 +302,7 @@ export function SlitherArena({ api, paused }: GameProps) {
       for (const sn of s.snakes) {
         if (!sn.alive) continue;
         const head = sn.body[0]!;
-        const r = radiusFor(sn.mass) + 6;
+        const r = radiusFor(sn.mass) + (sn.player ? myReach : 6);
         for (let i = s.food.length - 1; i >= 0; i--) {
           const f = s.food[i]!;
           const dx = f.x - head.x;
@@ -304,8 +318,9 @@ export function SlitherArena({ api, paused }: GameProps) {
       }
 
       // ---- collisions
+      s.invuln = Math.max(0, s.invuln - dt);
       for (const a of s.snakes) {
-        if (!a.alive) continue;
+        if (!a.alive || (a.player && s.invuln > 0)) continue;
         const head = a.body[0]!;
         const ra = radiusFor(a.mass);
         for (const b of s.snakes) {
@@ -351,18 +366,40 @@ export function SlitherArena({ api, paused }: GameProps) {
       }
     }
 
-    if (s.dead && !s.ended) {
+    if (s.dead && !s.ended && !s.waiting) {
       s.deadTimer -= dt;
       if (s.deadTimer <= 0) {
-        s.ended = true;
-        api.gameOver({
-          score: Math.floor(s.maxMass),
-          stats: [
-            { label: 'Final length', value: String(Math.floor(me.mass)) },
-            { label: 'Rivals trapped', value: String(me.kills) },
-            { label: 'Survived', value: `${Math.floor(s.time)}s` },
-          ],
-        });
+        s.waiting = true;
+        continueGate(
+          () => {
+            // Respawn somewhere quiet with most of your length.
+            let p = randomPointInWorld(rng, 300);
+            for (let i = 0; i < 30; i++) {
+              const busy = s.snakes.some(
+                (sn) => sn.alive && Math.hypot(sn.body[0]!.x - p.x, sn.body[0]!.y - p.y) < 400,
+              );
+              if (!busy) break;
+              p = randomPointInWorld(rng, 300);
+            }
+            const again = makeSnake(rng, p, Math.max(startMass, me.mass * 0.7), true, 'You', myHue);
+            again.kills = me.kills;
+            s.snakes[0] = again;
+            s.invuln = 3;
+            s.dead = false;
+            s.waiting = false;
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({
+              score: Math.floor(s.maxMass),
+              stats: [
+                { label: 'Final length', value: String(Math.floor(me.mass)) },
+                { label: 'Rivals trapped', value: String(me.kills) },
+                { label: 'Survived', value: `${Math.floor(s.time)}s` },
+              ],
+            });
+          },
+        );
       }
     }
 
@@ -429,6 +466,8 @@ export function SlitherArena({ api, paused }: GameProps) {
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.lineWidth = r * 2;
+      if (sn.player && lo.skin.id === 'rainbow') sn.hue = (s.time * 60) % 360;
+      ctx.globalAlpha = sn.player && s.invuln > 0 && Math.floor(s.time * 8) % 2 === 0 ? 0.45 : 1;
       ctx.strokeStyle = `hsl(${sn.hue} 85% 50%)`;
       ctx.beginPath();
       ctx.moveTo(sn.body[sn.body.length - 1]!.x, sn.body[sn.body.length - 1]!.y);
@@ -454,6 +493,7 @@ export function SlitherArena({ api, paused }: GameProps) {
         circle(ctx, ox, oy, r * 0.32, '#fff');
         circle(ctx, ox + ex * r * 0.1, oy + ey * r * 0.1, r * 0.16, '#111');
       }
+      ctx.globalAlpha = 1;
       if (!sn.player)
         text(ctx, sn.name, hx.x, hx.y - r - 12, { size: 11, weight: 700, color: 'rgba(255,255,255,0.55)' });
     }

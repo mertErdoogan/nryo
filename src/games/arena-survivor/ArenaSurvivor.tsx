@@ -6,6 +6,7 @@ import {
   FloatingText,
   Particles,
   Shake,
+  createContinueGate,
   useGameLoop,
   useHeldKeys,
   useSeededRng,
@@ -54,6 +55,18 @@ interface Bullet {
 
 export function ArenaSurvivor({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
+  const lo = api.loadout;
+  const [heroColor, coreColor, gunColor] = lo.skin.colors;
+  // Permanent armory upgrades raise the starting stats of every run.
+  const startStats: Stats = {
+    ...BASE_STATS,
+    damage: BASE_STATS.damage * (1 + 0.08 * lo.level('damage')),
+    maxHp: BASE_STATS.maxHp + 15 * lo.level('vitality'),
+    moveSpeed: BASE_STATS.moveSpeed * (1 + 0.05 * lo.level('boots')),
+    magnet: BASE_STATS.magnet + 20 * lo.level('magnet'),
+    regen: BASE_STATS.regen + 0.4 * lo.level('regen'),
+  };
+  const continueGate = useRef(createContinueGate(api)).current;
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
   const fx = useRef({
@@ -67,8 +80,10 @@ export function ArenaSurvivor({ api, paused }: GameProps) {
     x: 0,
     y: 0,
     facing: 0,
-    stats: { ...BASE_STATS } as Stats,
-    hp: BASE_STATS.maxHp,
+    stats: { ...startStats } as Stats,
+    hp: startStats.maxHp,
+    invuln: 0,
+    waiting: false,
     enemies: [] as Enemy[],
     bullets: [] as Bullet[],
     gems: [] as { x: number; y: number; v: number }[],
@@ -152,8 +167,10 @@ export function ArenaSurvivor({ api, paused }: GameProps) {
       });
       for (let i = 0; i < Math.min(8, def.xp); i++)
         s.gems.push({ x: e.x + rng.range(-10, 10), y: e.y + rng.range(-10, 10), v: def.xp > 8 ? 4 : 1 });
+      if (s.kills % 25 === 0) api.addCoins(1);
       if (e.kind === 'boss') {
-        fx.current.floaters.add('BOSS DOWN!', e.x, e.y - 50, '#fde047', 26, 1.4);
+        api.addCoins(5);
+        fx.current.floaters.add('BOSS DOWN! +5 coins', e.x, e.y - 50, '#fde047', 24, 1.4);
         api.sfx('win');
       } else if (s.kills % 3 === 0) api.sfx('hit');
     }
@@ -258,7 +275,7 @@ export function ArenaSurvivor({ api, paused }: GameProps) {
             });
           }
         }
-        if (d < def.r + 14) {
+        if (d < def.r + 14 && s.invuln <= 0) {
           s.hp -= def.dmg * dt;
           s.hurt = 0.15;
         }
@@ -289,7 +306,7 @@ export function ArenaSurvivor({ api, paused }: GameProps) {
         b.y += b.vy * dt;
         b.life -= dt;
         if (b.hostile) {
-          if (dist2(b.x, b.y, s.x, s.y) < 16 * 16) {
+          if (dist2(b.x, b.y, s.x, s.y) < 16 * 16 && s.invuln <= 0) {
             s.hp -= 12;
             s.hurt = 0.2;
             b.life = 0;
@@ -370,23 +387,42 @@ export function ArenaSurvivor({ api, paused }: GameProps) {
         api.haptic([100, 50, 100]);
       }
     }
-    if (s.dead && !s.ended) {
+    if (s.dead && !s.ended && !s.waiting) {
       s.deadTimer -= dt;
       if (s.deadTimer <= 0) {
-        s.ended = true;
-        api.gameOver({
-          score: s.score,
-          stats: [
-            {
-              label: 'Survived',
-              value: `${Math.floor(s.t / 60)}:${String(Math.floor(s.t % 60)).padStart(2, '0')}`,
-            },
-            { label: 'Kills', value: String(s.kills) },
-            { label: 'Level', value: String(s.level) },
-          ],
-        });
+        s.waiting = true;
+        continueGate(
+          () => {
+            // Shockwave: clear the crowd around the hero and heal up.
+            for (const e of s.enemies)
+              if (e.kind !== 'boss' && dist2(e.x, e.y, s.x, s.y) < 260 * 260) e.hp = 0;
+            s.enemies = s.enemies.filter((e) => e.hp > 0);
+            s.bullets = s.bullets.filter((b) => !b.hostile);
+            s.hp = s.stats.maxHp * 0.7;
+            s.invuln = 2.5;
+            s.dead = false;
+            s.waiting = false;
+            fx.current.particles.burst(s.x, s.y, { count: 60, colors: ['#93c5fd', '#fff'], speed: 420, life: 0.7 });
+            fx.current.floaters.add('Second wind!', s.x, s.y - 40, '#86efac', 24, 1.2);
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({
+              score: s.score,
+              stats: [
+                {
+                  label: 'Survived',
+                  value: `${Math.floor(s.t / 60)}:${String(Math.floor(s.t % 60)).padStart(2, '0')}`,
+                },
+                { label: 'Kills', value: String(s.kills) },
+                { label: 'Level', value: String(s.level) },
+              ],
+            });
+          },
+        );
       }
     }
+    s.invuln = Math.max(0, s.invuln - dt);
     s.hurt = Math.max(0, s.hurt - dt);
     particles.update(dt);
     floaters.update(dt);
@@ -462,9 +498,10 @@ export function ArenaSurvivor({ api, paused }: GameProps) {
       }
     }
     if (!s.dead) {
-      circle(ctx, s.x, s.y, 15, s.hurt > 0 ? '#fca5a5' : '#3b82f6');
-      circle(ctx, s.x, s.y, 9, '#bfdbfe');
-      ctx.strokeStyle = '#1e3a8a';
+      if (s.invuln > 0) circle(ctx, s.x, s.y, 22 + Math.sin(s.t * 12) * 2, 'rgba(147,197,253,0.3)');
+      circle(ctx, s.x, s.y, 15, s.hurt > 0 ? '#fca5a5' : heroColor);
+      circle(ctx, s.x, s.y, 9, coreColor);
+      ctx.strokeStyle = gunColor;
       ctx.lineWidth = 5;
       ctx.beginPath();
       ctx.moveTo(s.x, s.y);

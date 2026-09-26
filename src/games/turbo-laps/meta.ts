@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'turbo-laps',
@@ -10,6 +10,7 @@ export default defineMeta({
     'Your car accelerates by itself — just steer.',
     'Hold ◀ ▶ (or ←/→) to turn, ↓ to brake for tight corners.',
     'Finish first and beat your ghost’s time. Lower time is better.',
+    'Podium finishes pay coins (10 / 5 / 2) for engine upgrades and new cars.',
   ],
   categories: ['racing', 'versus', 'arcade'],
   tags: ['race', 'cars', 'circuit', 'ghost', 'time trial', 'ai rivals'],
@@ -23,4 +24,17 @@ export default defineMeta({
   realtime: true,
   popularity: 83,
   addedAt: '2026-06-15',
+  shop: {
+    title: 'Pit Garage',
+    icon: '🏎️',
+    skinLabel: 'Cars',
+    upgrades: [upgrade('engine', 'Engine tune', '⚙️', '+2.5% top speed per level', 5, 100)],
+    skins: [
+      skin('kart', 'Red Kart', 0, ['#ef4444', '#fecaca', '#111827'], { icon: '🏎️' }),
+      skin('racer', 'Blue Racer', 200, ['#2563eb', '#f8fafc', '#111827'], { icon: '🚙' }),
+      skin('lime', 'Lime Rocket', 300, ['#84cc16', '#111827', '#111827'], { icon: '🚀' }),
+      skin('gt', 'Black GT', 600, ['#18181b', '#facc15', '#111827'], { icon: '🏁', perk: '+2% top speed' }),
+      skin('gold', 'Gold Cup', 0, ['#f59e0b', '#fff7ed', '#111827'], { icon: '🏆', adUnlock: 3 }),
+    ],
+  },
 });

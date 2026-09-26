@@ -6,6 +6,7 @@ import {
   makeStars,
   Particles,
   Shake,
+  createContinueGate,
   useGameLoop,
   useHeldKeys,
   useSeededRng,
@@ -49,6 +50,10 @@ type PowerKind = 'P' | 'S' | '+';
 
 export function StarDefender({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
+  const lo = api.loadout;
+  const [hullColor, cockpitColor, flameColor] = lo.skin.colors;
+  const fireDelay = 0.17 * (1 - 0.07 * lo.level('rapid'));
+  const continueGate = useRef(createContinueGate(api)).current;
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
   const fx = useRef({
@@ -60,9 +65,10 @@ export function StarDefender({ api, paused }: GameProps) {
     x: W / 2,
     y: H - 110,
     drag: null as null | { id: number; px: number; py: number; sx: number; sy: number },
-    gun: 1,
-    shield: 0,
-    lives: 3,
+    gun: 1 + lo.level('guns'),
+    shield: lo.level('shield') > 0 ? 1 : 0,
+    lives: 3 + lo.level('lives'),
+    waiting: false,
     invuln: 0,
     fire: 0,
     enemies: [] as Enemy[],
@@ -153,7 +159,7 @@ export function StarDefender({ api, paused }: GameProps) {
       return;
     }
     s.lives -= 1;
-    s.gun = Math.max(1, s.gun - 1);
+    s.gun = Math.max(1 + lo.level('guns'), s.gun - 1);
     s.invuln = 2;
     shake.add(12);
     particles.burst(s.x, s.y, { count: 40, colors: ['#fb923c', '#fde047', '#fff'], speed: 260, life: 0.8 });
@@ -194,6 +200,7 @@ export function StarDefender({ api, paused }: GameProps) {
           if (s.wave > 0) {
             s.score += 500;
             api.setScore(s.score);
+            api.addCoins(1);
           }
           startWave();
           s.waveTimer = 1.5;
@@ -203,7 +210,7 @@ export function StarDefender({ api, paused }: GameProps) {
       // player fire
       s.fire -= dt;
       if (s.fire <= 0) {
-        s.fire = 0.17;
+        s.fire = fireDelay;
         const spreads = s.gun === 1 ? [0] : s.gun === 2 ? [-8, 8] : [-12, 0, 12];
         for (const off of spreads)
           s.shots.push({ x: s.x + off, y: s.y - 18, vx: s.gun === 3 ? off * 6 : 0, vy: -620, enemy: false });
@@ -289,6 +296,7 @@ export function StarDefender({ api, paused }: GameProps) {
               });
               floaters.add(`+${e.points}`, e.x, e.y, '#fff', e.boss ? 26 : 14, 0.6);
               if (e.boss) {
+                api.addCoins(5);
                 shake.add(16);
                 api.sfx('win');
                 for (const k of ['P', 'S', '+'] as PowerKind[])
@@ -327,11 +335,25 @@ export function StarDefender({ api, paused }: GameProps) {
         }
       }
       s.powers = s.powers.filter((p) => p.y < H + 20);
-    } else if (s.dead && !s.ended) {
+    } else if (s.dead && !s.ended && !s.waiting) {
       s.deadTimer -= dt;
       if (s.deadTimer <= 0) {
-        s.ended = true;
-        api.gameOver({ score: s.score, stats: [{ label: 'Wave reached', value: String(s.wave) }] });
+        s.waiting = true;
+        continueGate(
+          () => {
+            s.lives = 2;
+            s.shield = 1;
+            s.invuln = 2.5;
+            s.shots = s.shots.filter((sh) => !sh.enemy);
+            s.dead = false;
+            s.waiting = false;
+            fx.current.floaters.add('Reinforcements!', W / 2, H * 0.45, '#86efac', 26, 1.2);
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({ score: s.score, stats: [{ label: 'Wave reached', value: String(s.wave) }] });
+          },
+        );
       }
     }
     particles.update(dt);
@@ -392,7 +414,7 @@ export function StarDefender({ api, paused }: GameProps) {
     if (!s.dead && (s.invuln <= 0 || Math.floor(s.time * 12) % 2 === 0)) {
       ctx.save();
       ctx.translate(s.x, s.y);
-      ctx.fillStyle = '#e2e8f0';
+      ctx.fillStyle = hullColor;
       ctx.beginPath();
       ctx.moveTo(0, -20);
       ctx.lineTo(14, 12);
@@ -402,8 +424,8 @@ export function StarDefender({ api, paused }: GameProps) {
       ctx.lineTo(-14, 12);
       ctx.closePath();
       ctx.fill();
-      circle(ctx, 0, -4, 4, '#38bdf8');
-      circle(ctx, 0, 16 + Math.sin(s.time * 30) * 2, 4, '#fb923c');
+      circle(ctx, 0, -4, 4, cockpitColor);
+      circle(ctx, 0, 16 + Math.sin(s.time * 30) * 2, 4, flameColor);
       ctx.restore();
       if (s.shield > 0) {
         ctx.strokeStyle = 'rgba(96,165,250,0.7)';

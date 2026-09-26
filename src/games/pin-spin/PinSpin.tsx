@@ -4,6 +4,7 @@ import {
   FloatingText,
   Particles,
   Shake,
+  createContinueGate,
   useGameLoop,
   useKeyDown,
   useSeededRng,
@@ -12,7 +13,7 @@ import type { CanvasView } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import { angleDiff, TAU } from '../../lib/math';
 import type { GameProps } from '../../platform/types';
-import { angularVelocity, collides, normalizeAngle, planLevel, type LevelPlan } from './logic';
+import { angularVelocity, collides, normalizeAngle, PIN_CLEARANCE, planLevel, type LevelPlan } from './logic';
 
 const W = 360;
 const H = 640;
@@ -31,6 +32,13 @@ export function PinSpin({ api, paused }: GameProps) {
     floaters: new FloatingText(),
     shake: new Shake(rng.next),
   });
+
+  const lo = api.loadout;
+  const [pinColor, headColor] = lo.skin.colors;
+  const spinScale = 1 - 0.05 * lo.level('slow');
+  const gap = PIN_CLEARANCE * (1 - 0.1 * lo.level('thin'));
+  const gemReach = 0.22 + 0.06 * lo.level('gems');
+  const continueGate = useRef(createContinueGate(api)).current;
 
   const makeLevel = (level: number) => {
     const plan = planLevel(level);
@@ -60,6 +68,7 @@ export function PinSpin({ api, paused }: GameProps) {
     dead: false,
     deadTimer: 0,
     ended: false,
+    waiting: false,
     score: 0,
     time: 0,
     thrown: 0,
@@ -80,7 +89,7 @@ export function PinSpin({ api, paused }: GameProps) {
   const impact = () => {
     const { particles, floaters, shake } = fx.current;
     const angle = normalizeAngle(Math.PI / 2 - s.rotation);
-    if (collides(angle, s.stuck)) {
+    if (collides(angle, s.stuck, gap)) {
       s.dead = true;
       s.deadTimer = 1;
       s.falling = { x: CX, y: CY + R + PIN_LEN / 2, vx: rng.range(-120, 120), vy: 260, rot: 0 };
@@ -105,9 +114,10 @@ export function PinSpin({ api, paused }: GameProps) {
     });
     api.sfx('tap');
     for (const g of s.gems) {
-      if (g.alive && Math.abs(angleDiff(g.angle, angle)) < 0.22) {
+      if (g.alive && Math.abs(angleDiff(g.angle, angle)) < gemReach) {
         g.alive = false;
         s.score += 3;
+        api.addCoins(1);
         floaters.add('+3 gem', CX, CY + R + 40, '#fde047', 20);
         particles.burst(CX, CY + R, { count: 18, colors: ['#fde047', '#f472b6'], speed: 200, life: 0.6 });
         api.sfx('coin');
@@ -117,6 +127,7 @@ export function PinSpin({ api, paused }: GameProps) {
       s.clearTimer = 1.1;
       s.shatter = 1;
       s.score += 5;
+      if (s.plan.boss) api.addCoins(3);
       floaters.add(
         s.plan.boss ? 'Boss cleared! +5' : `Level ${s.level} clear! +5`,
         CX,
@@ -156,7 +167,7 @@ export function PinSpin({ api, paused }: GameProps) {
       }
     } else if (!s.dead) {
       s.t += dt;
-      s.rotation += angularVelocity(s.plan, s.t) * dt;
+      s.rotation += angularVelocity(s.plan, s.t) * spinScale * dt;
     }
 
     if (s.flying) {
@@ -172,17 +183,30 @@ export function PinSpin({ api, paused }: GameProps) {
       s.falling.y += s.falling.vy * dt;
       s.falling.rot += 8 * dt;
     }
-    if (s.dead && !s.ended) {
+    if (s.dead && !s.ended && !s.waiting) {
       s.deadTimer -= dt;
       if (s.deadTimer <= 0) {
-        s.ended = true;
-        api.gameOver({
-          score: s.score,
-          stats: [
-            { label: 'Level', value: String(s.level) },
-            { label: 'Pins', value: String(s.thrown) },
-          ],
-        });
+        s.waiting = true;
+        continueGate(
+          () => {
+            // Get the pin back and try again.
+            s.pinsLeft += 1;
+            s.falling = null;
+            s.dead = false;
+            s.waiting = false;
+            fx.current.floaters.add('Try again!', CX, LAUNCH_Y - 60, '#86efac', 22, 1);
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({
+              score: s.score,
+              stats: [
+                { label: 'Level', value: String(s.level) },
+                { label: 'Pins', value: String(s.thrown) },
+              ],
+            });
+          },
+        );
       }
     }
     particles.update(dt);
@@ -200,7 +224,7 @@ export function PinSpin({ api, paused }: GameProps) {
     ctx.save();
     shake.apply(ctx);
 
-    const drawPin = (x: number, y: number, rot: number, color = '#f5f3ff') => {
+    const drawPin = (x: number, y: number, rot: number, color = pinColor) => {
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(rot);
@@ -211,7 +235,7 @@ export function PinSpin({ api, paused }: GameProps) {
       ctx.lineTo(3, 0);
       ctx.fillStyle = color;
       ctx.fill();
-      circle(ctx, 0, PIN_LEN - 8, 8, '#c084fc');
+      circle(ctx, 0, PIN_LEN - 8, 8, headColor);
       ctx.restore();
     };
 

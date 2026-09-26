@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'star-defender',
@@ -10,6 +10,7 @@ export default defineMeta({
     'Drag (or use arrows / WASD) to fly. Your ship fires on its own.',
     'Catch P for more guns, S for a shield, + for an extra life.',
     'Every 5th wave brings a boss. You have 3 lives.',
+    'Cleared waves and bosses pay coins for permanent ship upgrades.',
   ],
   categories: ['action', 'arcade'],
   tags: ['shooter', 'space', 'shmup', 'aliens', 'boss', 'shoot'],
@@ -23,4 +24,22 @@ export default defineMeta({
   realtime: true,
   popularity: 87,
   addedAt: '2026-06-18',
+  shop: {
+    title: 'Hangar',
+    icon: '🛸',
+    skinLabel: 'Fighters',
+    upgrades: [
+      upgrade('lives', 'Extra hull', '❤️', 'Start with one more life per level', 2, 200),
+      upgrade('guns', 'Twin cannons', '🔫', 'Start with a stronger gun (never drops below)', 2, 250),
+      upgrade('rapid', 'Rapid fire', '⚡', '7% faster fire rate per level', 4, 90),
+      upgrade('shield', 'Starting shield', '🛡️', 'Launch with a shield up', 1, 150),
+    ],
+    skins: [
+      skin('falcon', 'Falcon', 0, ['#e2e8f0', '#38bdf8', '#fb923c'], { icon: '✈️' }),
+      skin('viper', 'Viper', 200, ['#22c55e', '#fef08a', '#a3e635'], { icon: '🐍' }),
+      skin('nova', 'Nova', 350, ['#f472b6', '#fdf4ff', '#c084fc'], { icon: '💫' }),
+      skin('phantom', 'Phantom', 600, ['#475569', '#f43f5e', '#ef4444'], { icon: '👻' }),
+      skin('sol', 'Sol Guardian', 0, ['#fbbf24', '#7c2d12', '#fde047'], { icon: '☀️', adUnlock: 3 }),
+    ],
+  },
 });
