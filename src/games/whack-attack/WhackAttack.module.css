@@ -1,0 +1,215 @@
+.grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(8px, 3vw, 18px);
+  width: min(100%, 440px, calc(100cqh - 110px));
+  aspect-ratio: 1;
+  margin: auto;
+  padding: clamp(10px, 3vw, 18px);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 30% 20%, rgb(132 204 22 / 0.35), transparent 60%),
+    linear-gradient(160deg, #3f6212, #1a2e05);
+  box-shadow: inset 0 -8px 0 rgb(0 0 0 / 0.25);
+}
+
+.grid[data-shake='true'] {
+  animation: shake 300ms linear;
+}
+
+.hole {
+  position: relative;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+/* The dark opening */
+.hole::before {
+  content: '';
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 10%;
+  height: 32%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 35%, #0a0602 50%, #2b1a0b 85%, #4d3219 100%);
+  box-shadow: 0 3px 0 rgb(255 255 255 / 0.08);
+}
+
+/* Front lip of the hole, drawn over the critter's lower edge */
+.hole::after {
+  content: '';
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 10%;
+  height: 16%;
+  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  background: linear-gradient(#3b2412, #24160a);
+  z-index: 2;
+}
+
+.window {
+  position: absolute;
+  left: 16%;
+  right: 16%;
+  top: 0;
+  bottom: 26%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.critter {
+  position: absolute;
+  inset: 12% 0 0;
+  transform: translateY(105%);
+  transition: transform 120ms ease-out;
+}
+
+.up .critter {
+  transform: translateY(0);
+}
+
+.hit .critter {
+  transform: translateY(28%) scaleY(0.75);
+  transition-duration: 60ms;
+}
+
+.mole {
+  width: 100%;
+  height: 100%;
+  border-radius: 48% 48% 20% 20%;
+  background: radial-gradient(circle at 50% 30%, #a16207, #713f12);
+  position: relative;
+}
+
+.golden .mole {
+  background: radial-gradient(circle at 50% 30%, #fde047, #ca8a04);
+  box-shadow: 0 0 20px #facc15;
+}
+
+.eye {
+  position: absolute;
+  top: 26%;
+  width: 14%;
+  height: 16%;
+  border-radius: 50%;
+  background: #111;
+}
+
+.eye:first-child {
+  left: 28%;
+}
+
+.eye:nth-child(2) {
+  right: 28%;
+}
+
+.hit .eye {
+  height: 4%;
+  top: 32%;
+}
+
+.nose {
+  position: absolute;
+  top: 45%;
+  left: 40%;
+  width: 20%;
+  height: 12%;
+  border-radius: 50%;
+  background: #f472b6;
+}
+
+.bomb {
+  position: absolute;
+  inset: 12% 8% 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #4b5563, #0b0b0f 70%);
+}
+
+.bomb::before {
+  content: '';
+  position: absolute;
+  top: -14%;
+  left: 46%;
+  width: 10%;
+  height: 20%;
+  border-radius: 3px;
+  background: #a16207;
+}
+
+.bomb::after {
+  content: '';
+  position: absolute;
+  top: -24%;
+  left: 44%;
+  width: 16%;
+  height: 16%;
+  border-radius: 50%;
+  background: #f97316;
+  box-shadow: 0 0 12px #fde047;
+  animation: flicker 180ms infinite alternate;
+}
+
+.pop {
+  position: absolute;
+  left: 50%;
+  top: 10%;
+  transform: translateX(-50%);
+  font-weight: 850;
+  font-size: clamp(0.9rem, 4vw, 1.3rem);
+  color: #fff;
+  text-shadow: 0 2px 4px rgb(0 0 0 / 0.6);
+  pointer-events: none;
+  animation: rise 600ms ease-out forwards;
+  z-index: 3;
+}
+
+.pop[data-bad='true'] {
+  color: #fca5a5;
+}
+
+.key {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgb(255 255 255 / 0.3);
+  z-index: 3;
+}
+
+@media (pointer: coarse) {
+  .key {
+    display: none;
+  }
+}
+
+@keyframes rise {
+  to {
+    transform: translate(-50%, -30px);
+    opacity: 0;
+  }
+}
+
+@keyframes flicker {
+  to {
+    transform: scale(1.3);
+  }
+}
+
+@keyframes shake {
+  25% {
+    transform: translateX(-6px);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+  75% {
+    transform: translateX(-3px);
+  }
+}

@@ -8,3 +8,4 @@ export { Particles, FloatingText, Shake, GAME_FONT, makeStars } from './effects'
 export { roundRectPath, fillRoundRect, circle, text, verticalGradient, hsl, prompt } from './draw';
 export { TouchButton, ControlBar, FloatingStick } from './controls';
 export { useSeededRng } from './rng';
+export { DomStage, StatBar, Stat, TimerBar, Banner, Hint, ActionRow, GameButton } from './ui';

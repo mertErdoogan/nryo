@@ -47,6 +47,11 @@ function noise(ctx: AudioContext, out: AudioNode, t: number, dur: number, gain: 
 const arp = (notes: number[], step: number, type: OscillatorType, gain: number, dur = step * 1.6): Voice =>
   (ctx, out, t) => notes.forEach((f, i) => tone(ctx, out, t, { type, from: f, dur, gain, delay: i * step }));
 
+const note = (freq: number): Voice => (ctx, out, t) => {
+  tone(ctx, out, t, { type: 'triangle', from: freq, dur: 0.42, gain: 0.26 });
+  tone(ctx, out, t, { type: 'sine', from: freq * 2, dur: 0.25, gain: 0.07 });
+};
+
 const VOICES: Record<SoundName, Voice> = {
   click: (c, o, t) => tone(c, o, t, { from: 820, dur: 0.05, gain: 0.18 }),
   tap: (c, o, t) => tone(c, o, t, { type: 'triangle', from: 520, to: 640, dur: 0.07, gain: 0.25 }),
@@ -75,6 +80,12 @@ const VOICES: Record<SoundName, Voice> = {
   tick: (c, o, t) => tone(c, o, t, { from: 1400, dur: 0.025, gain: 0.08 }),
   swap: (c, o, t) => tone(c, o, t, { from: 420, to: 760, dur: 0.07, gain: 0.16 }),
   error: (c, o, t) => tone(c, o, t, { type: 'square', from: 150, to: 120, dur: 0.16, gain: 0.1 }),
+  'note-c': note(523.25),
+  'note-d': note(587.33),
+  'note-e': note(659.25),
+  'note-g': note(783.99),
+  'note-a': note(880),
+  'note-c2': note(1046.5),
 };
 
 /**

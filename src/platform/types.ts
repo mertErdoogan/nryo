@@ -149,7 +149,13 @@ export type SoundName =
   | 'achievement'
   | 'tick'
   | 'swap'
-  | 'error';
+  | 'error'
+  | 'note-c'
+  | 'note-d'
+  | 'note-e'
+  | 'note-g'
+  | 'note-a'
+  | 'note-c2';
 
 /** The API a game receives from the platform shell. */
 export interface GameApi<S = unknown, P = unknown> {

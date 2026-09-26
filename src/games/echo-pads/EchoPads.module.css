@@ -1,0 +1,99 @@
+.board {
+  --size: min(100cqw - 32px, 100cqh - 110px, 460px);
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(var(--size) * 0.04);
+  width: var(--size);
+  height: var(--size);
+  margin: auto;
+  padding: calc(var(--size) * 0.04);
+  border-radius: 50%;
+  background: #0b0b16;
+  box-shadow:
+    0 20px 60px rgb(0 0 0 / 0.5),
+    inset 0 0 0 2px rgb(255 255 255 / 0.06);
+}
+
+.board[data-fail='true'] {
+  animation: fail 400ms linear;
+}
+
+.pad {
+  border: 0;
+  opacity: 0.55;
+  filter: saturate(0.7) brightness(0.75);
+  transition:
+    opacity 90ms ease-out,
+    filter 90ms ease-out,
+    transform 90ms ease-out;
+  touch-action: manipulation;
+}
+
+.pad:nth-child(1) {
+  border-radius: 100% 12px 12px 12px;
+  background: radial-gradient(circle at 70% 70%, #4ade80, #15803d);
+}
+
+.pad:nth-child(2) {
+  border-radius: 12px 100% 12px 12px;
+  background: radial-gradient(circle at 30% 70%, #f87171, #b91c1c);
+}
+
+.pad:nth-child(3) {
+  border-radius: 12px 12px 12px 100%;
+  background: radial-gradient(circle at 70% 30%, #fde047, #ca8a04);
+}
+
+.pad:nth-child(4) {
+  border-radius: 12px 12px 100% 12px;
+  background: radial-gradient(circle at 30% 30%, #60a5fa, #1d4ed8);
+}
+
+.pad[data-lit='true'] {
+  opacity: 1;
+  filter: saturate(1.2) brightness(1.25);
+  transform: scale(1.03);
+  box-shadow: 0 0 40px currentColor;
+}
+
+.pad:disabled {
+  cursor: default;
+}
+
+.hub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34%;
+  height: 34%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #111827;
+  box-shadow: 0 0 0 6px #0b0b16;
+  text-align: center;
+  pointer-events: none;
+}
+
+.hubNum {
+  font-size: calc(var(--size) * 0.1);
+  font-weight: 850;
+  line-height: 1;
+}
+
+.hubLabel {
+  font-size: calc(var(--size) * 0.032);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+@keyframes fail {
+  20%,
+  60% {
+    box-shadow: 0 0 0 8px #ef4444;
+  }
+}
