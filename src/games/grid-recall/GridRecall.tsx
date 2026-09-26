@@ -88,7 +88,7 @@ export function GridRecall({ api, paused }: GameProps) {
         <Stat label="Tiles" value={`${found.size}/${tilesFor(level)}`} />
         <Stat label="Lives" value={<span className={styles.lives}>{'♥'.repeat(lives) || '—'}</span>} />
       </StatBar>
-      <div className={styles.grid} style={style} role="grid" aria-label={`Level ${level} grid`}>
+      <div className={styles.grid} style={style} role="group" aria-label={`Level ${level} grid`}>
         {Array.from({ length: n * n }, (_, i) => {
           let state = 'idle';
           if (phase === 'show' && targets.has(i)) state = 'show';

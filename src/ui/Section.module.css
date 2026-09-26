@@ -129,6 +129,7 @@
 }
 
 .emptyTitle {
+  margin: 0;
   font-size: var(--text-lg);
   font-weight: 700;
 }

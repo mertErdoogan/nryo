@@ -169,7 +169,7 @@ export function MineSweeper({ api, paused }: GameProps<Save>) {
         <Stat label="Time" value={formatClock(elapsed)} />
         <Stat label="Board" value={level} />
       </StatBar>
-      <div className={styles.board} style={style} role="grid" aria-label={`Minefield ${cfg.label}`}>
+      <div className={styles.board} style={style} role="group" aria-label={`Minefield ${cfg.label}`}>
         {Array.from({ length: cfg.rows * cfg.cols }, (_, i) => {
           const open = revealed.has(i) || (done && !!mines?.[i]);
           const isMine = !!mines?.[i];

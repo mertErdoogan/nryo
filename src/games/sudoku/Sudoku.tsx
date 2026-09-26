@@ -200,7 +200,7 @@ export function Sudoku({ api, paused }: GameProps<Save>) {
         <Stat label="Mistakes" value={`${mistakes}/${MAX_MISTAKES}`} tone={mistakes >= 2 ? 'warn' : undefined} />
         {hints > 0 && <Stat label="Hints" value={hints} />}
       </StatBar>
-      <div className={styles.grid} role="grid" aria-label="Sudoku grid">
+      <div className={styles.grid} role="group" aria-label="Sudoku grid">
         {Array.from({ length: 81 }, (_, i) => {
           const v = value(i);
           const wrong = !game.puzzle[i] && !!entries[i] && entries[i] !== game.solution[i];

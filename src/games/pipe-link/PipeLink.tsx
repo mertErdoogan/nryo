@@ -122,7 +122,7 @@ export function PipeLink({ api, paused }: GameProps<Save, Progress>) {
         <Stat label="Lit" value={`${lit.size}/${total}`} tone={solved ? 'good' : undefined} />
         <Stat label="Time" value={formatClock(elapsed)} />
       </StatBar>
-      <div className={styles.grid} style={style} data-solved={solved} role="grid" aria-label={`Pipe puzzle ${puzzle.size} by ${puzzle.size}`}>
+      <div className={styles.grid} style={style} data-solved={solved} role="group" aria-label={`Pipe puzzle ${puzzle.size} by ${puzzle.size}`}>
         {puzzle.base.map((base, i) => (
           <button
             key={i}

@@ -9,6 +9,7 @@ export function NotFoundPage() {
     <div className="container" style={{ paddingTop: 48 }}>
       <EmptyState
         icon="👾"
+        level={1}
         title="This level doesn’t exist"
         action={
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>

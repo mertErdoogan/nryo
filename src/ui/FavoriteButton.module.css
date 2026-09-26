@@ -35,6 +35,20 @@
   border-color: var(--border);
 }
 
+.labelled {
+  display: inline-flex;
+  gap: 8px;
+  width: auto;
+  padding: 0 16px 0 12px;
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+
+.labelled.on svg {
+  color: #fb7185;
+}
+
 @keyframes heart-pop {
   0% {
     transform: scale(0.6);

@@ -10,14 +10,18 @@ interface FavoriteButtonProps {
   className?: string;
   plain?: boolean;
   size?: number;
+  /** Show a text label next to the heart (used on game pages). */
+  withLabel?: boolean;
 }
 
-export function FavoriteButton({ gameId, title, className, plain, size = 20 }: FavoriteButtonProps) {
+export function FavoriteButton({ gameId, title, className, plain, size = 20, withLabel }: FavoriteButtonProps) {
   const active = useIsFavorite(gameId);
   return (
     <button
       type="button"
-      className={[styles.fav, active && styles.on, plain && styles.plain, className].filter(Boolean).join(' ')}
+      className={[styles.fav, active && styles.on, plain && styles.plain, withLabel && styles.labelled, className]
+        .filter(Boolean)
+        .join(' ')}
       aria-pressed={active}
       aria-label={active ? `Remove ${title} from favorites` : `Add ${title} to favorites`}
       title={active ? 'Remove from favorites' : 'Add to favorites'}
@@ -30,6 +34,7 @@ export function FavoriteButton({ gameId, title, className, plain, size = 20 }: F
       }}
     >
       <Icon name="heart" size={size} filled={active} />
+      {withLabel && <span aria-hidden="true">{active ? 'In favorites' : 'Favorite'}</span>}
     </button>
   );
 }

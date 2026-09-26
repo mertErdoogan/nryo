@@ -142,3 +142,32 @@
   font-size: var(--text-xs);
   color: var(--text-dim);
 }
+
+.aboutHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.share {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.share:active {
+  transform: scale(0.9);
+}

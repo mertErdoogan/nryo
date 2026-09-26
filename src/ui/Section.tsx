@@ -63,18 +63,22 @@ export function EmptyState({
   title,
   children,
   action,
+  level = 3,
 }: {
   icon: string;
   title: string;
   children?: ReactNode;
   action?: ReactNode;
+  /** Heading level of the title; the 404 page uses 1. */
+  level?: 1 | 2 | 3;
 }) {
+  const Title = `h${level}` as const;
   return (
     <div className={styles.empty}>
       <span className={styles.emptyIcon} aria-hidden="true">
         {icon}
       </span>
-      <p className={styles.emptyTitle}>{title}</p>
+      <Title className={styles.emptyTitle}>{title}</Title>
       {children && <p className={styles.emptyBody}>{children}</p>}
       {action}
     </div>

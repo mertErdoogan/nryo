@@ -148,7 +148,7 @@ export function FiveLetters({ api, paused }: GameProps<Save>) {
         <Stat label="Streak" value={progress.current.streak} tone={progress.current.streak > 0 ? 'good' : undefined} />
         <Stat label="Guess" value={`${Math.min(MAX_GUESSES, guesses.length + 1)}/6`} />
       </StatBar>
-      <div className={styles.board} role="grid" aria-label="Guesses">
+      <div className={styles.board} role="group" aria-label="Guesses">
         {rows.map((row, r) => (
           <div
             key={r === guesses.length ? `${answer}-${r}-${shake}` : `${answer}-${r}`}

@@ -44,6 +44,7 @@ const PATHS = {
   lightbulb: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.3 1 2.1h5c0-.8.4-1.6 1-2.1A6 6 0 0 0 12 3z',
   flag: 'M5 21V4M5 4h11l-2 4 2 4H5',
   pencil: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4',
+  share: 'M12 3v12M7.5 7.5 12 3l4.5 4.5M5 12v8h14v-8',
 } as const;
 
 export type IconName = keyof typeof PATHS;

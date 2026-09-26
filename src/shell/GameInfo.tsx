@@ -7,10 +7,28 @@ import { recommend } from '../platform/discovery';
 import { getLeaderboard } from '../platform/rivals';
 import { MEDAL_NAMES } from '../platform/scoring';
 import type { GameEntry } from '../platform/types';
+import { FavoriteButton } from '../ui/FavoriteButton';
 import { GameGrid } from '../ui/GameList';
+import { Icon } from '../ui/Icon';
 import { Medal } from '../ui/Medal';
 import { Section } from '../ui/Section';
+import { showToast } from '../ui/Toasts';
 import styles from './GameInfo.module.css';
+
+async function shareGame(game: GameEntry) {
+  const url = window.location.origin + window.location.pathname;
+  const data = { title: game.title, text: `${game.title} — ${game.tagline}`, url };
+  try {
+    if (navigator.share) {
+      await navigator.share(data);
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    showToast({ kind: 'info', icon: '🔗', kicker: 'Link copied', title: game.title }, 2400);
+  } catch {
+    // Share sheet dismissed or clipboard blocked — nothing to do.
+  }
+}
 
 const DIFFICULTY_LABEL = { easy: 'Easy to learn', medium: 'Moderate', hard: 'Challenging' } as const;
 
@@ -30,9 +48,17 @@ export function GameInfo({ game }: { game: GameEntry }) {
     <div className={`container ${styles.info}`}>
       <div className={styles.grid}>
         <section className={styles.panel} aria-labelledby="about-title">
-          <h2 className={styles.title} id="about-title">
-            About {game.title}
-          </h2>
+          <div className={styles.aboutHead}>
+            <h2 className={styles.title} id="about-title">
+              About {game.title}
+            </h2>
+            <div className={styles.actions}>
+              <FavoriteButton gameId={game.id} title={game.title} plain withLabel size={18} />
+              <button type="button" className={styles.share} onClick={() => void shareGame(game)} aria-label={`Share ${game.title}`}>
+                <Icon name="share" size={18} />
+              </button>
+            </div>
+          </div>
           <p className={styles.desc}>{game.description}</p>
           <div className={styles.tags}>
             {game.categories.map((c) => (

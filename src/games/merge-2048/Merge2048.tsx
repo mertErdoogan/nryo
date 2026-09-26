@@ -127,7 +127,7 @@ export function Merge2048({ api, paused }: GameProps<Save2048>) {
       .filter(Boolean)
       .join(' ');
     return (
-      <div key={`t${t.id}`} className={cls} style={style}>
+      <div key={`t${t.id}`} className={cls} style={style} data-tile={ghost ? undefined : `${t.value}@${t.r},${t.c}`}>
         <div className={styles.inner}>{t.value}</div>
       </div>
     );
@@ -141,7 +141,7 @@ export function Merge2048({ api, paused }: GameProps<Save2048>) {
       </StatBar>
       <div
         className={styles.board}
-        role="grid"
+        role="group"
         aria-label={`2048 board. ${state.tiles.length} tiles. Largest ${maxTile(state.tiles)}.`}
         onPointerDown={(e) => {
           swipe.current = { x: e.clientX, y: e.clientY, id: e.pointerId };

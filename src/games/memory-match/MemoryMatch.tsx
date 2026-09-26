@@ -108,7 +108,7 @@ export function MemoryMatch({ api, paused }: GameProps) {
         <Stat label="Streak" value={stats.current.combo} tone={stats.current.combo >= 2 ? 'good' : undefined} />
       </StatBar>
       <TimerBar ratio={clock.remaining / START_SECONDS} label="Time remaining" />
-      <div className={styles.board} style={style} role="grid" aria-label={`Memory board ${level}`}>
+      <div className={styles.board} style={style} role="group" aria-label={`Memory board ${level}`}>
         {cards.map((card, i) => {
           const up = preview || card.matched || open.includes(i);
           return (

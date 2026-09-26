@@ -107,7 +107,7 @@ export function Reversi({ api, paused }: GameProps<unknown, Progress>) {
       <p className={styles.status} aria-live="polite">
         {status}
       </p>
-      <div className={styles.board} role="grid" aria-label="Reversi board">
+      <div className={styles.board} role="group" aria-label="Reversi board">
         {board.map((v, i) => {
           const legal = playerMoves.has(i) && !paused && !done.current;
           return (

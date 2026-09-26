@@ -131,7 +131,7 @@ export function FourInARow({ api, paused }: GameProps<unknown, Progress>) {
         {status}
       </p>
       <div className={styles.board}>
-        <div className={styles.cols} role="grid" aria-label="Four in a Row board">
+        <div className={styles.cols} role="group" aria-label="Four in a Row board">
           {board.map((col, c) => (
             <button
               key={c}
