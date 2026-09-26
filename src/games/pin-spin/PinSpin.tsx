@@ -1,5 +1,13 @@
 import { useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, Shake, useGameLoop, useKeyDown, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  Shake,
+  useGameLoop,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import { angleDiff, TAU } from '../../lib/math';
@@ -18,7 +26,11 @@ const PIN_SPEED = 1700;
 export function PinSpin({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
-  const fx = useRef({ particles: new Particles(400, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(400, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
 
   const makeLevel = (level: number) => {
     const plan = planLevel(level);
@@ -32,7 +44,8 @@ export function PinSpin({ api, paused }: GameProps) {
     guard = 0;
     while (gems.length < plan.gems && guard++ < 200) {
       const a = rng.range(0, TAU);
-      if (!collides(a, stuck, 0.5) && !gems.some((g) => Math.abs(angleDiff(g.angle, a)) < 0.6)) gems.push({ angle: a, alive: true });
+      if (!collides(a, stuck, 0.5) && !gems.some((g) => Math.abs(angleDiff(g.angle, a)) < 0.6))
+        gems.push({ angle: a, alive: true });
     }
     return { plan, stuck, gems, pinsLeft: plan.pins, rotation: rng.range(0, TAU), t: 0 };
   };
@@ -81,7 +94,15 @@ export function PinSpin({ api, paused }: GameProps) {
     s.score += 1;
     s.hitFlash = 1;
     shake.add(2);
-    particles.burst(CX, CY + R, { count: 8, colors: ['#e9d5ff', '#fff'], speed: 120, life: 0.35, size: 3, angle: Math.PI / 2, spread: 2 });
+    particles.burst(CX, CY + R, {
+      count: 8,
+      colors: ['#e9d5ff', '#fff'],
+      speed: 120,
+      life: 0.35,
+      size: 3,
+      angle: Math.PI / 2,
+      spread: 2,
+    });
     api.sfx('tap');
     for (const g of s.gems) {
       if (g.alive && Math.abs(angleDiff(g.angle, angle)) < 0.22) {
@@ -96,8 +117,22 @@ export function PinSpin({ api, paused }: GameProps) {
       s.clearTimer = 1.1;
       s.shatter = 1;
       s.score += 5;
-      floaters.add(s.plan.boss ? 'Boss cleared! +5' : `Level ${s.level} clear! +5`, CX, CY, '#86efac', 24, 1.2);
-      particles.burst(CX, CY, { count: 50, colors: ['#a78bfa', '#c4b5fd', '#fff', '#f0abfc'], speed: 320, life: 0.9, size: 6, shape: 'square' });
+      floaters.add(
+        s.plan.boss ? 'Boss cleared! +5' : `Level ${s.level} clear! +5`,
+        CX,
+        CY,
+        '#86efac',
+        24,
+        1.2,
+      );
+      particles.burst(CX, CY, {
+        count: 50,
+        colors: ['#a78bfa', '#c4b5fd', '#fff', '#f0abfc'],
+        speed: 320,
+        life: 0.9,
+        size: 6,
+        shape: 'square',
+      });
       api.sfx('win');
       api.haptic(30);
     }
@@ -223,7 +258,15 @@ export function PinSpin({ api, paused }: GameProps) {
 
     // HUD: pins left (vertical stack bottom-left), level at top
     for (let i = 0; i < s.pinsLeft; i++) {
-      fillRoundRect(ctx, 22, H - 40 - i * 22, 26, 8, 4, i === s.pinsLeft - 1 ? '#f5f3ff' : 'rgba(245,243,255,0.45)');
+      fillRoundRect(
+        ctx,
+        22,
+        H - 40 - i * 22,
+        26,
+        8,
+        4,
+        i === s.pinsLeft - 1 ? '#f5f3ff' : 'rgba(245,243,255,0.45)',
+      );
     }
     text(ctx, s.plan.boss ? `BOSS · Level ${s.level}` : `Level ${s.level}`, CX, 40, {
       size: 18,
@@ -233,7 +276,16 @@ export function PinSpin({ api, paused }: GameProps) {
     if (s.thrown === 0 && s.level === 1 && !s.flying) prompt(ctx, 'Tap to throw', CX, 470, s.time);
   }, !paused);
 
-  return <CanvasStage ref={view} width={W} height={H} label="Pin Spin game area" onPointerDown={throwPin} cursor="pointer" />;
+  return (
+    <CanvasStage
+      ref={view}
+      width={W}
+      height={H}
+      label="Pin Spin game area"
+      onPointerDown={throwPin}
+      cursor="pointer"
+    />
+  );
 }
 
 export type { LevelPlan };

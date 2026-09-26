@@ -1,5 +1,13 @@
 import { useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, Shake, useGameLoop, useKeyDown, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  Shake,
+  useGameLoop,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import type { GameProps } from '../../platform/types';
@@ -16,7 +24,11 @@ const R = 15;
 export function SkyHopper({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
-  const fx = useRef({ particles: new Particles(300, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(300, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
   const s = useRef({
     y: H * 0.42,
     vy: 0,
@@ -29,7 +41,11 @@ export function SkyHopper({ api, paused }: GameProps) {
     scroll: 0,
     time: 0,
     flapAnim: 0,
-    clouds: Array.from({ length: 6 }, () => ({ x: rng.range(0, W), y: rng.range(40, 300), s: rng.range(0.6, 1.3) })),
+    clouds: Array.from({ length: 6 }, () => ({
+      x: rng.range(0, W),
+      y: rng.range(40, 300),
+      s: rng.range(0.6, 1.3),
+    })),
   }).current;
 
   const spawn = (x: number) => {
@@ -46,7 +62,15 @@ export function SkyHopper({ api, paused }: GameProps) {
     s.vy = FLAP_VELOCITY;
     s.flapAnim = 1;
     api.sfx('jump');
-    fx.current.particles.burst(BIRD_X - 10, s.y + 6, { count: 5, color: '#ffffff', speed: 60, life: 0.35, size: 4, angle: Math.PI, spread: 1.2 });
+    fx.current.particles.burst(BIRD_X - 10, s.y + 6, {
+      count: 5,
+      color: '#ffffff',
+      speed: 60,
+      life: 0.35,
+      size: 4,
+      angle: Math.PI,
+      spread: 1.2,
+    });
   };
 
   const die = () => {
@@ -54,7 +78,12 @@ export function SkyHopper({ api, paused }: GameProps) {
     s.dead = true;
     s.deadTimer = 0.9;
     fx.current.shake.add(12);
-    fx.current.particles.burst(BIRD_X, s.y, { count: 30, colors: ['#fde047', '#fb923c', '#fff'], speed: 260, life: 0.8 });
+    fx.current.particles.burst(BIRD_X, s.y, {
+      count: 30,
+      colors: ['#fde047', '#fb923c', '#fff'],
+      speed: 260,
+      life: 0.8,
+    });
     api.sfx('hit');
     api.haptic([40, 30, 40]);
   };
@@ -133,7 +162,7 @@ export function SkyHopper({ api, paused }: GameProps) {
     ctx.save();
     shake.apply(ctx);
     for (const c of s.clouds) {
-      const x = (((c.x - s.scroll * 0.15 * c.s) % (W + 120)) + W + 120) % (W + 120) - 60;
+      const x = ((((c.x - s.scroll * 0.15 * c.s) % (W + 120)) + W + 120) % (W + 120)) - 60;
       ctx.globalAlpha = 0.25;
       circle(ctx, x, c.y, 22 * c.s, '#fff');
       circle(ctx, x + 22 * c.s, c.y + 4, 16 * c.s, '#fff');
@@ -164,7 +193,7 @@ export function SkyHopper({ api, paused }: GameProps) {
     ctx.fillStyle = '#312e81';
     ctx.fillRect(0, FLOOR, W, H - FLOOR);
     ctx.fillStyle = '#4338ca';
-    for (let x = -((s.scroll) % 40); x < W; x += 40) ctx.fillRect(x, FLOOR, 20, 8);
+    for (let x = -(s.scroll % 40); x < W; x += 40) ctx.fillRect(x, FLOOR, 20, 8);
 
     // bird
     const tilt = s.started ? Math.max(-0.5, Math.min(1.2, s.vy / 600)) : Math.sin(s.time * 3) * 0.1;
@@ -192,9 +221,23 @@ export function SkyHopper({ api, paused }: GameProps) {
     floaters.draw(ctx);
     ctx.restore();
 
-    text(ctx, String(s.score), W / 2, 64, { size: 52, weight: 800, stroke: 'rgba(0,0,0,0.3)', strokeWidth: 6 });
+    text(ctx, String(s.score), W / 2, 64, {
+      size: 52,
+      weight: 800,
+      stroke: 'rgba(0,0,0,0.3)',
+      strokeWidth: 6,
+    });
     if (!s.started) prompt(ctx, 'Tap to flap', W / 2, H * 0.62, s.time, 22);
   }, !paused);
 
-  return <CanvasStage ref={view} width={W} height={H} label="Sky Hopper game area" onPointerDown={flap} cursor="pointer" />;
+  return (
+    <CanvasStage
+      ref={view}
+      width={W}
+      height={H}
+      label="Sky Hopper game area"
+      onPointerDown={flap}
+      cursor="pointer"
+    />
+  );
 }

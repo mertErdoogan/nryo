@@ -50,7 +50,21 @@ const MAX_DPR = 2;
  * devicePixelRatio, and converts pointer events to logical coordinates.
  */
 export const CanvasStage = forwardRef<CanvasView | null, CanvasStageProps>(function CanvasStage(
-  { width, height, fit = 'contain', minAspect, maxAspect, label, onResize, onPointerDown, onPointerMove, onPointerUp, cursor, children, className },
+  {
+    width,
+    height,
+    fit = 'contain',
+    minAspect,
+    maxAspect,
+    label,
+    onResize,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    cursor,
+    children,
+    className,
+  },
   ref,
 ) {
   const wrapRef = useRef<HTMLDivElement>(null);

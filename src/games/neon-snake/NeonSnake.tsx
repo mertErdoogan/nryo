@@ -1,5 +1,13 @@
 import { useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, Shake, useGameLoop, useKeyDown, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  Shake,
+  useGameLoop,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import type { GameProps } from '../../platform/types';
@@ -25,7 +33,11 @@ const KEY_DIRS: Record<string, Dir> = {
 export function NeonSnake({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
-  const fx = useRef({ particles: new Particles(300, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(300, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
   const start: Cell[] = [
     { x: 8, y: 16 },
     { x: 8, y: 17 },
@@ -94,7 +106,13 @@ export function NeonSnake({ api, paused }: GameProps) {
       s.dead = true;
       s.deadTimer = 1;
       shake.add(10);
-      for (const c of s.body) particles.burst(c.x * CELL + CELL / 2, c.y * CELL + CELL / 2, { count: 3, colors: ['#34d399', '#a7f3d0'], speed: 120, life: 0.6 });
+      for (const c of s.body)
+        particles.burst(c.x * CELL + CELL / 2, c.y * CELL + CELL / 2, {
+          count: 3,
+          colors: ['#34d399', '#a7f3d0'],
+          speed: 120,
+          life: 0.6,
+        });
       api.sfx('hit');
       api.haptic([40, 30, 60]);
       return;
@@ -151,7 +169,13 @@ export function NeonSnake({ api, paused }: GameProps) {
       s.deadTimer -= dt;
       if (s.deadTimer <= 0) {
         s.ended = true;
-        api.gameOver({ score: s.score, stats: [{ label: 'Length', value: String(s.body.length) }, { label: 'Orbs', value: String(s.eaten) }] });
+        api.gameOver({
+          score: s.score,
+          stats: [
+            { label: 'Length', value: String(s.body.length) },
+            { label: 'Orbs', value: String(s.eaten) },
+          ],
+        });
       }
     }
     particles.update(dt);
@@ -165,7 +189,8 @@ export function NeonSnake({ api, paused }: GameProps) {
     ctx.save();
     shake.apply(ctx);
     ctx.fillStyle = 'rgba(52, 211, 153, 0.09)';
-    for (let x = 0; x < COLS; x++) for (let y = 0; y < ROWS; y++) ctx.fillRect(x * CELL + CELL / 2 - 1, y * CELL + CELL / 2 - 1, 2, 2);
+    for (let x = 0; x < COLS; x++)
+      for (let y = 0; y < ROWS; y++) ctx.fillRect(x * CELL + CELL / 2 - 1, y * CELL + CELL / 2 - 1, 2, 2);
     ctx.strokeStyle = 'rgba(52, 211, 153, 0.35)';
     ctx.lineWidth = 2;
     ctx.strokeRect(1, 1, W - 2, H - 2);

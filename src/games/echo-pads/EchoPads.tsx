@@ -71,7 +71,14 @@ export function EchoPads({ api, paused }: GameProps) {
       api.sfx('error');
       api.haptic([80, 40, 80]);
       const completed = sequence.length - 1;
-      later(() => api.gameOver({ score: completed, stats: [{ label: 'Longest sequence', value: String(completed) }] }), 700);
+      later(
+        () =>
+          api.gameOver({
+            score: completed,
+            stats: [{ label: 'Longest sequence', value: String(completed) }],
+          }),
+        700,
+      );
       return;
     }
     api.sfx(NOTES[pad]!);
@@ -97,7 +104,15 @@ export function EchoPads({ api, paused }: GameProps) {
   }, !paused);
 
   const status =
-    phase === 'showing' ? 'Watch…' : phase === 'input' ? 'Your turn' : phase === 'failed' ? 'Oops!' : phase === 'between' ? 'Nice!' : 'Get ready';
+    phase === 'showing'
+      ? 'Watch…'
+      : phase === 'input'
+        ? 'Your turn'
+        : phase === 'failed'
+          ? 'Oops!'
+          : phase === 'between'
+            ? 'Nice!'
+            : 'Get ready';
 
   return (
     <DomStage center>

@@ -9,10 +9,33 @@ const W = 360;
 const H = 640;
 const LANE_W = W / LANES;
 const MELODY: SoundName[] = [
-  'note-c', 'note-c', 'note-g', 'note-g', 'note-a', 'note-a', 'note-g',
-  'note-e', 'note-e', 'note-d', 'note-d', 'note-c', 'note-g', 'note-e', 'note-c2', 'note-a',
+  'note-c',
+  'note-c',
+  'note-g',
+  'note-g',
+  'note-a',
+  'note-a',
+  'note-g',
+  'note-e',
+  'note-e',
+  'note-d',
+  'note-d',
+  'note-c',
+  'note-g',
+  'note-e',
+  'note-c2',
+  'note-a',
 ];
-const KEYS: Record<string, number> = { KeyD: 0, KeyF: 1, KeyJ: 2, KeyK: 3, Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3 };
+const KEYS: Record<string, number> = {
+  KeyD: 0,
+  KeyF: 1,
+  KeyJ: 2,
+  KeyK: 3,
+  Digit1: 0,
+  Digit2: 1,
+  Digit3: 2,
+  Digit4: 3,
+};
 
 export function TileTapper({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
@@ -62,7 +85,11 @@ export function TileTapper({ api, paused }: GameProps) {
     if (!pending) return;
     // Keyboard taps (y === null) always target the lowest pending row.
     let row: Row | undefined = pending;
-    if (y !== null) row = s.rows.find((r) => { const top = rowTop(r.index, s.scroll, H); return y >= top && y < top + ROW_H; });
+    if (y !== null)
+      row = s.rows.find((r) => {
+        const top = rowTop(r.index, s.scroll, H);
+        return y >= top && y < top + ROW_H;
+      });
     if (!row) return;
     if (row.tapped) return;
     if (row.lane !== lane) {
@@ -77,7 +104,12 @@ export function TileTapper({ api, paused }: GameProps) {
     api.setScore(s.score);
     api.sfx(MELODY[(s.score - 1) % MELODY.length]!);
     const top = rowTop(row.index, s.scroll, H);
-    fx.current.particles.burst(lane * LANE_W + LANE_W / 2, top + ROW_H / 2, { count: 8, colors: ['#94a3b8', '#e2e8f0'], speed: 120, life: 0.35 });
+    fx.current.particles.burst(lane * LANE_W + LANE_W / 2, top + ROW_H / 2, {
+      count: 8,
+      colors: ['#94a3b8', '#e2e8f0'],
+      speed: 120,
+      life: 0.35,
+    });
     if (s.score % 25 === 0) {
       fx.current.floaters.add(`${s.score}!`, W / 2, H * 0.35, '#fde047', 34, 1);
       s.flash = 1;
@@ -117,7 +149,10 @@ export function TileTapper({ api, paused }: GameProps) {
       s.failTimer -= dt;
       if (s.failTimer <= 0 && !s.ended) {
         s.ended = true;
-        api.gameOver({ score: s.score, stats: [{ label: 'Top speed', value: `${(speedForScore(s.score) / ROW_H).toFixed(1)} tiles/s` }] });
+        api.gameOver({
+          score: s.score,
+          stats: [{ label: 'Top speed', value: `${(speedForScore(s.score) / ROW_H).toFixed(1)} tiles/s` }],
+        });
       }
     }
     particles.update(dt);
@@ -134,7 +169,8 @@ export function TileTapper({ api, paused }: GameProps) {
       const top = rowTop(r.index, s.scroll, H);
       if (top > H || top + ROW_H < 0) continue;
       const x = r.lane * LANE_W;
-      const failing = s.fail && s.fail.index === r.index && s.fail.lane === r.lane && s.fail.kind === 'missed';
+      const failing =
+        s.fail && s.fail.index === r.index && s.fail.lane === r.lane && s.fail.kind === 'missed';
       const blink = failing && Math.sin(s.time * 24) > 0;
       if (r.tapped) {
         ctx.fillStyle = 'rgba(15, 23, 42, 0.14)';
@@ -144,7 +180,8 @@ export function TileTapper({ api, paused }: GameProps) {
         g.addColorStop(0, blink ? '#ef4444' : '#1e293b');
         g.addColorStop(1, blink ? '#b91c1c' : '#020617');
         fillRoundRect(ctx, x + 2, top + 2, LANE_W - 4, ROW_H - 4, 6, g);
-        if (r.index === 0 && !s.started) text(ctx, 'START', x + LANE_W / 2, top + ROW_H / 2, { size: 17, weight: 800, color: '#e2e8f0' });
+        if (r.index === 0 && !s.started)
+          text(ctx, 'START', x + LANE_W / 2, top + ROW_H / 2, { size: 17, weight: 800, color: '#e2e8f0' });
       }
       ctx.fillStyle = '#e2e8f0';
       ctx.fillRect(0, top + ROW_H - 0.5, W, 1);
@@ -162,7 +199,13 @@ export function TileTapper({ api, paused }: GameProps) {
     }
     particles.draw(ctx);
     floaters.draw(ctx);
-    text(ctx, String(s.score), W / 2, 50, { size: 44, weight: 850, color: '#ef4444', stroke: '#fff', strokeWidth: 6 });
+    text(ctx, String(s.score), W / 2, 50, {
+      size: 44,
+      weight: 850,
+      color: '#ef4444',
+      stroke: '#fff',
+      strokeWidth: 6,
+    });
   }, !paused);
 
   return <CanvasStage ref={view} width={W} height={H} label="Tile Tapper game area" onPointerDown={onDown} />;

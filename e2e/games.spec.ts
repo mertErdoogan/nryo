@@ -13,7 +13,18 @@ const PICKERS: Record<string, RegExp> = {
 async function mash(page: Page, isMobile: boolean) {
   const stage = page.getByTestId('game-stage');
   const box = (await stage.boundingBox())!;
-  const keys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space', 'KeyA', 'KeyD', 'KeyW', 'KeyS', 'Enter'];
+  const keys = [
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowUp',
+    'ArrowDown',
+    'Space',
+    'KeyA',
+    'KeyD',
+    'KeyW',
+    'KeyS',
+    'Enter',
+  ];
   for (let i = 0; i < 14; i++) {
     const x = box.x + box.width * (0.15 + ((i * 37) % 70) / 100);
     const y = box.y + box.height * (0.2 + ((i * 53) % 65) / 100);
@@ -46,7 +57,10 @@ for (const id of GAME_IDS) {
     const pauseOverlay = page.getByTestId('pause-overlay');
     const results = page.getByTestId('results-overlay');
     const pause = page.getByRole('button', { name: 'Pause' });
-    if ((await page.getByTestId('game-stage').getAttribute('data-phase')) === 'playing' && (await pause.isVisible())) {
+    if (
+      (await page.getByTestId('game-stage').getAttribute('data-phase')) === 'playing' &&
+      (await pause.isVisible())
+    ) {
       await pause.click();
       await expect(pauseOverlay.or(results)).toBeVisible();
       if (await pauseOverlay.isVisible()) {

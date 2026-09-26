@@ -5,7 +5,11 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
  * `running` is false (pause, game over, hidden tab) and always cleans up.
  * Delta is clamped so a long frame never teleports objects through walls.
  */
-export function useGameLoop(step: (dt: number, elapsed: number) => void, running: boolean, maxDt = 1 / 20): void {
+export function useGameLoop(
+  step: (dt: number, elapsed: number) => void,
+  running: boolean,
+  maxDt = 1 / 20,
+): void {
   const stepRef = useRef(step);
   useLayoutEffect(() => {
     stepRef.current = step;

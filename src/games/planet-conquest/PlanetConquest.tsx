@@ -35,7 +35,8 @@ export function PlanetConquest({ api, paused }: GameProps<unknown, Progress>) {
   const aggression = Math.min(1, 0.35 + level * 0.12);
   const aiInterval = Math.max(0.9, 2.3 - level * 0.18);
 
-  const planetAt = (x: number, y: number) => s.planets.find((p) => Math.hypot(p.x - x, p.y - y) < p.r + 14) ?? null;
+  const planetAt = (x: number, y: number) =>
+    s.planets.find((p) => Math.hypot(p.x - x, p.y - y) < p.r + 14) ?? null;
 
   const send = (from: Planet, to: Planet, owner: number) => {
     const ships = Math.floor(from.ships / 2);
@@ -74,7 +75,14 @@ export function PlanetConquest({ api, paused }: GameProps<unknown, Progress>) {
     api.setScore(score);
     if (won && api.mode === 'normal') api.saveProgress({ level: level + 1 });
     api.sfx(won ? 'win' : 'gameover');
-    fx.current.floaters.add(won ? 'GALAXY CONQUERED' : 'DEFEATED', W / 2, H / 2, won ? '#93c5fd' : '#fca5a5', 28, 2);
+    fx.current.floaters.add(
+      won ? 'GALAXY CONQUERED' : 'DEFEATED',
+      W / 2,
+      H / 2,
+      won ? '#93c5fd' : '#fca5a5',
+      28,
+      2,
+    );
     setTimeout(
       () =>
         api.gameOver({
@@ -105,7 +113,8 @@ export function PlanetConquest({ api, paused }: GameProps<unknown, Progress>) {
         if (s.aiTimers[owner]! <= 0) {
           s.aiTimers[owner] = aiInterval * rng.range(0.8, 1.2);
           const orders = aiOrders(s.planets, s.fleets, owner, aggression);
-          for (const o of orders.slice(0, 1 + Math.floor(level / 3))) send(s.planets[o.from]!, s.planets[o.to]!, owner);
+          for (const o of orders.slice(0, 1 + Math.floor(level / 3)))
+            send(s.planets[o.from]!, s.planets[o.to]!, owner);
         }
       }
       for (const f of s.fleets) {
@@ -116,7 +125,12 @@ export function PlanetConquest({ api, paused }: GameProps<unknown, Progress>) {
         if (d < target.r) {
           const before = target.owner;
           if (land(f, target)) {
-            particles.burst(target.x, target.y, { count: 20, colors: [COLORS[f.owner]!, '#fff'], speed: 140, life: 0.5 });
+            particles.burst(target.x, target.y, {
+              count: 20,
+              colors: [COLORS[f.owner]!, '#fff'],
+              speed: 140,
+              life: 0.5,
+            });
             if (f.owner === 1) {
               s.captured += 1;
               floaters.add('Captured!', target.x, target.y - target.r - 10, '#93c5fd', 14);
@@ -134,7 +148,8 @@ export function PlanetConquest({ api, paused }: GameProps<unknown, Progress>) {
         }
       }
       s.fleets = s.fleets.filter((f) => f.ships > 0);
-      const alive = (owner: number) => s.planets.some((p) => p.owner === owner) || s.fleets.some((f) => f.owner === owner);
+      const alive = (owner: number) =>
+        s.planets.some((p) => p.owner === owner) || s.fleets.some((f) => f.owner === owner);
       if (!alive(1)) end(false);
       else if (![2, 3].some(alive)) end(true);
       if (!s.over) api.setScore(s.captured * 50);
@@ -183,7 +198,12 @@ export function PlanetConquest({ api, paused }: GameProps<unknown, Progress>) {
         ctx.arc(p.x, p.y, p.r + 4, 0, Math.PI * 2);
         ctx.stroke();
       }
-      text(ctx, String(Math.floor(p.ships)), p.x, p.y + 1, { size: Math.max(11, p.r * 0.6), weight: 850, stroke: 'rgba(0,0,0,0.5)', strokeWidth: 3 });
+      text(ctx, String(Math.floor(p.ships)), p.x, p.y + 1, {
+        size: Math.max(11, p.r * 0.6),
+        weight: 850,
+        stroke: 'rgba(0,0,0,0.5)',
+        strokeWidth: 3,
+      });
     }
     for (const f of s.fleets) {
       const target = s.planets[f.to]!;
@@ -209,11 +229,25 @@ export function PlanetConquest({ api, paused }: GameProps<unknown, Progress>) {
     floaters.draw(ctx);
     const count = (o: number) => s.planets.filter((p) => p.owner === o).length;
     text(ctx, `Sector ${level}`, 12, 20, { size: 13, weight: 800, align: 'left', color: '#c7d2fe' });
-    text(ctx, `🔵 ${count(1)}   🔴 ${count(2)}${level >= 3 ? `   🟢 ${count(3)}` : ''}`, W - 12, 20, { size: 13, weight: 700, align: 'right' });
+    text(ctx, `🔵 ${count(1)}   🔴 ${count(2)}${level >= 3 ? `   🟢 ${count(3)}` : ''}`, W - 12, 20, {
+      size: 13,
+      weight: 700,
+      align: 'right',
+    });
     if (!s.started) prompt(ctx, 'Drag from your blue planet to attack', W / 2, H - 22, s.time, 15);
   }, !paused);
 
-  return <CanvasStage ref={view} width={W} height={H} label="Planet Conquest galaxy" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} />;
+  return (
+    <CanvasStage
+      ref={view}
+      width={W}
+      height={H}
+      label="Planet Conquest galaxy"
+      onPointerDown={onDown}
+      onPointerMove={onMove}
+      onPointerUp={onUp}
+    />
+  );
 }
 
 const STARS = makeStars(createRng(7), 80, W, H);

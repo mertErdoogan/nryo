@@ -14,7 +14,10 @@ export default defineMeta({
   categories: ['physics', 'strategy', 'hyper-casual'],
   tags: ['ballz', 'bricks', 'aim', 'bounce', 'turns'],
   difficulty: 'easy',
-  controls: { desktop: 'Drag to aim, release to fire (or ←/→ + Space)', touch: 'Drag to aim, release to fire' },
+  controls: {
+    desktop: 'Drag to aim, release to fire (or ←/→ + Space)',
+    touch: 'Drag to aim, release to fire',
+  },
   score: { label: 'Turns', format: 'points' },
   medals: { bronze: 20, silver: 45, gold: 80 },
   theme: { from: '#0d9488', to: '#1e1b4b', accent: '#2dd4bf' },

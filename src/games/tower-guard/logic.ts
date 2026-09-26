@@ -40,11 +40,17 @@ export function pathCells(): Set<string> {
 }
 
 /** Waypoints in pixel space (cell centres). */
-export const PATH_POINTS = WAYPOINTS.map(([c, r]) => ({ x: c * CELL + CELL / 2, y: MAP_Y + r * CELL + CELL / 2 }));
+export const PATH_POINTS = WAYPOINTS.map(([c, r]) => ({
+  x: c * CELL + CELL / 2,
+  y: MAP_Y + r * CELL + CELL / 2,
+}));
 
 export type TowerType = 'blaster' | 'frost' | 'cannon';
 
-export const TOWERS: Record<TowerType, { name: string; cost: number; range: number; rate: number; damage: number; color: string; icon: string }> = {
+export const TOWERS: Record<
+  TowerType,
+  { name: string; cost: number; range: number; rate: number; damage: number; color: string; icon: string }
+> = {
   blaster: { name: 'Blaster', cost: 50, range: 92, rate: 0.45, damage: 11, color: '#38bdf8', icon: '🔹' },
   frost: { name: 'Frost', cost: 70, range: 82, rate: 0.9, damage: 5, color: '#a5f3fc', icon: '❄️' },
   cannon: { name: 'Cannon', cost: 110, range: 112, rate: 1.35, damage: 30, color: '#fb923c', icon: '💣' },
@@ -60,7 +66,10 @@ export const towerDamage = (type: TowerType, level: number) => TOWERS[type].dama
 export const towerRange = (type: TowerType, level: number) => TOWERS[type].range * (1 + (level - 1) * 0.1);
 
 export type CreepKind = 'normal' | 'fast' | 'armored' | 'boss';
-export const CREEPS: Record<CreepKind, { hp: number; speed: number; reward: number; r: number; color: string; leak: number }> = {
+export const CREEPS: Record<
+  CreepKind,
+  { hp: number; speed: number; reward: number; r: number; color: string; leak: number }
+> = {
   normal: { hp: 30, speed: 48, reward: 5, r: 10, color: '#f87171', leak: 1 },
   fast: { hp: 18, speed: 88, reward: 5, r: 8, color: '#facc15', leak: 1 },
   armored: { hp: 90, speed: 34, reward: 11, r: 13, color: '#a78bfa', leak: 2 },

@@ -14,7 +14,10 @@ export function DomStage({
   style?: CSSProperties;
 }) {
   return (
-    <div className={[styles.stage, center && styles.center, className].filter(Boolean).join(' ')} style={style}>
+    <div
+      className={[styles.stage, center && styles.center, className].filter(Boolean).join(' ')}
+      style={style}
+    >
       {children}
     </div>
   );

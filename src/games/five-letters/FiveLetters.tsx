@@ -3,7 +3,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Banner, DomStage, Stat, StatBar, useKeyDown, useSeededRng } from '../../engine';
 import { arr, num, obj, str, type Infer } from '../../lib/schema';
 import type { GameProps, VersionedSpec } from '../../platform/types';
-import { answerList, evaluate, isValidGuess, keyStates, MAX_GUESSES, solvePoints, WORD_LENGTH } from './logic';
+import {
+  answerList,
+  evaluate,
+  isValidGuess,
+  keyStates,
+  MAX_GUESSES,
+  solvePoints,
+  WORD_LENGTH,
+} from './logic';
 import styles from './FiveLetters.module.css';
 
 const word5 = str({ pattern: /^[a-z]{5}$/ });
@@ -35,7 +43,12 @@ export function FiveLetters({ api, paused }: GameProps<Save>) {
   const [toast, setToast] = useState<{ key: number; text: string } | null>(null);
   const [banner, setBanner] = useState<{ key: number; text: string; sub?: string } | null>(null);
   const [locked, setLocked] = useState(false);
-  const progress = useRef({ streak: api.resume?.streak ?? 0, score: api.resume?.score ?? 0, words: api.resume?.words ?? 0, over: false });
+  const progress = useRef({
+    streak: api.resume?.streak ?? 0,
+    score: api.resume?.score ?? 0,
+    words: api.resume?.words ?? 0,
+    over: false,
+  });
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
   const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(fn, ms));
@@ -87,7 +100,11 @@ export function FiveLetters({ api, paused }: GameProps<Save>) {
         p.score += pts;
         api.setScore(p.score);
         api.sfx('win');
-        setBanner({ key: Date.now(), text: next.length === 1 ? 'Genius!' : `Solved in ${next.length}!`, sub: `+${pts} · streak ${p.streak}` });
+        setBanner({
+          key: Date.now(),
+          text: next.length === 1 ? 'Genius!' : `Solved in ${next.length}!`,
+          sub: `+${pts} · streak ${p.streak}`,
+        });
         setLocked(true);
         later(() => {
           const fresh = pickAnswer();
@@ -145,7 +162,11 @@ export function FiveLetters({ api, paused }: GameProps<Save>) {
   return (
     <DomStage>
       <StatBar>
-        <Stat label="Streak" value={progress.current.streak} tone={progress.current.streak > 0 ? 'good' : undefined} />
+        <Stat
+          label="Streak"
+          value={progress.current.streak}
+          tone={progress.current.streak > 0 ? 'good' : undefined}
+        />
         <Stat label="Guess" value={`${Math.min(MAX_GUESSES, guesses.length + 1)}/6`} />
       </StatBar>
       <div className={styles.board} role="group" aria-label="Guesses">
@@ -200,7 +221,12 @@ export function FiveLetters({ api, paused }: GameProps<Save>) {
               </button>
             ))}
             {i === 2 && (
-              <button type="button" className={`${styles.key} ${styles.wideKey}`} onClick={erase} aria-label="Backspace">
+              <button
+                type="button"
+                className={`${styles.key} ${styles.wideKey}`}
+                onClick={erase}
+                aria-label="Backspace"
+              >
                 ⌫
               </button>
             )}

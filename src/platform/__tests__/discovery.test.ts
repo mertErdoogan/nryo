@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { FIXTURE_GAMES, makeMeta } from '../../test/fixtures';
 import { ACHIEVEMENTS, findNewlyUnlocked } from '../achievements';
-import { featuredForDay, newestGames, popularityScore, rankPopular, recommend, recommendForPlayer, searchGames } from '../discovery';
+import {
+  featuredForDay,
+  newestGames,
+  popularityScore,
+  rankPopular,
+  recommend,
+  recommendForPlayer,
+  searchGames,
+} from '../discovery';
 import { defaultPlayer } from '../services/player';
 import { emptyDaily } from '../services/daily';
 import { emptyStats } from '../services/stats';
@@ -9,7 +17,12 @@ import { getLeaderboard, nextRival } from '../rivals';
 
 describe('search', () => {
   it('finds games by title, category and tag (including stems)', () => {
-    expect(searchGames('race', FIXTURE_GAMES).map((g) => g.id).slice(0, 2).sort()).toEqual(['drifter', 'racer']);
+    expect(
+      searchGames('race', FIXTURE_GAMES)
+        .map((g) => g.id)
+        .slice(0, 2)
+        .sort(),
+    ).toEqual(['drifter', 'racer']);
     expect(searchGames('racing', FIXTURE_GAMES).map((g) => g.id)).toContain('drifter');
     expect(searchGames('shoot', FIXTURE_GAMES)[0]!.id).toBe('blaster');
     expect(searchGames('word', FIXTURE_GAMES)[0]!.id).toBe('wordy');
@@ -34,7 +47,9 @@ describe('recommendations and popularity', () => {
   it('boosts games the player keeps coming back to', () => {
     const now = Date.now();
     const stats = { thinker: { ...emptyStats(now), plays: 40, lastPlayedAt: now } };
-    expect(popularityScore(FIXTURE_GAMES[5]!, stats.thinker, now)).toBeGreaterThan(FIXTURE_GAMES[5]!.popularity);
+    expect(popularityScore(FIXTURE_GAMES[5]!, stats.thinker, now)).toBeGreaterThan(
+      FIXTURE_GAMES[5]!.popularity,
+    );
     const ranked = rankPopular(FIXTURE_GAMES, stats, now);
     expect(ranked.findIndex((g) => g.id === 'thinker')).toBeLessThan(FIXTURE_GAMES.length - 1);
   });
@@ -46,8 +61,15 @@ describe('recommendations and popularity', () => {
   });
 
   it('rotates the featured shelf daily but deterministically', () => {
-    expect(featuredForDay(FIXTURE_GAMES, '2026-01-01', 3)).toEqual(featuredForDay(FIXTURE_GAMES, '2026-01-01', 3));
-    expect(newestGames([makeMeta({ id: 'old', addedAt: '2025-01-01' }), makeMeta({ id: 'new', addedAt: '2026-06-01' })], 1)[0]!.id).toBe('new');
+    expect(featuredForDay(FIXTURE_GAMES, '2026-01-01', 3)).toEqual(
+      featuredForDay(FIXTURE_GAMES, '2026-01-01', 3),
+    );
+    expect(
+      newestGames(
+        [makeMeta({ id: 'old', addedAt: '2025-01-01' }), makeMeta({ id: 'new', addedAt: '2026-06-01' })],
+        1,
+      )[0]!.id,
+    ).toBe('new');
   });
 });
 
@@ -57,7 +79,8 @@ describe('rival leaderboard', () => {
     const board = getLeaderboard(meta, 22, 'Me');
     expect(board).toEqual(getLeaderboard(meta, 22, 'Me'));
     expect(board.some((e) => e.isPlayer && e.score === 22)).toBe(true);
-    for (let i = 1; i < board.length; i++) expect(board[i - 1]!.score).toBeGreaterThanOrEqual(board[i]!.score);
+    for (let i = 1; i < board.length; i++)
+      expect(board[i - 1]!.score).toBeGreaterThanOrEqual(board[i]!.score);
     const rival = nextRival(board)!;
     expect(rival.score).toBeGreaterThanOrEqual(22);
   });

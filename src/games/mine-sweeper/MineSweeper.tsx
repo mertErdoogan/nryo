@@ -1,6 +1,15 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { ActionRow, DomStage, GameButton, Hint, Stat, StatBar, useSeededRng, useStopwatch } from '../../engine';
+import {
+  ActionRow,
+  DomStage,
+  GameButton,
+  Hint,
+  Stat,
+  StatBar,
+  useSeededRng,
+  useStopwatch,
+} from '../../engine';
 import { formatClock } from '../../lib/format';
 import { arr, bool, num, obj, oneOf, type Infer } from '../../lib/schema';
 import type { GameProps, VersionedSpec } from '../../platform/types';
@@ -23,7 +32,9 @@ const LONG_PRESS_MS = 380;
 export function MineSweeper({ api, paused }: GameProps<Save>) {
   const rng = useSeededRng(api.seed);
   const resume = api.resume;
-  const [level, setLevel] = useState<Level | null>(() => resume?.level ?? (api.mode === 'daily' ? 'medium' : null));
+  const [level, setLevel] = useState<Level | null>(
+    () => resume?.level ?? (api.mode === 'daily' ? 'medium' : null),
+  );
   const [mines, setMines] = useState<boolean[] | null>(() => resume?.mines ?? null);
   const [revealed, setRevealed] = useState<Set<number>>(() => new Set(resume?.revealed));
   const [flags, setFlags] = useState<Set<number>>(() => new Set(resume?.flags));
@@ -41,7 +52,10 @@ export function MineSweeper({ api, paused }: GameProps<Save>) {
     const safeCells = cfg.rows * cfg.cols - cfg.mines;
     api.save(
       { level, mines: m, revealed: [...rev], flags: [...fl], elapsed: readElapsed() },
-      { label: `${cfg.label} · ${Math.round((rev.size / safeCells) * 100)}% cleared`, progress: rev.size / safeCells },
+      {
+        label: `${cfg.label} · ${Math.round((rev.size / safeCells) * 100)}% cleared`,
+        progress: rev.size / safeCells,
+      },
     );
   };
 
@@ -187,7 +201,15 @@ export function MineSweeper({ api, paused }: GameProps<Save>) {
               data-mine={open && isMine}
               data-boom={boom === i}
               data-wrongflag={done && flagged && !isMine}
-              aria-label={open ? (isMine ? 'Mine' : `${nums?.[i] ?? 0} neighbouring mines`) : flagged ? 'Flagged' : 'Hidden'}
+              aria-label={
+                open
+                  ? isMine
+                    ? 'Mine'
+                    : `${nums?.[i] ?? 0} neighbouring mines`
+                  : flagged
+                    ? 'Flagged'
+                    : 'Hidden'
+              }
               onContextMenu={(e) => {
                 e.preventDefault();
                 toggleFlag(i);

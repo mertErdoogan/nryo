@@ -20,7 +20,13 @@ interface CommonProps {
   className?: string;
 }
 
-function classes({ variant = 'secondary', size = 'md', block, className, iconOnly }: CommonProps & { iconOnly: boolean }) {
+function classes({
+  variant = 'secondary',
+  size = 'md',
+  block,
+  className,
+  iconOnly,
+}: CommonProps & { iconOnly: boolean }) {
   return [
     styles.button,
     variant !== 'secondary' && styles[variant],

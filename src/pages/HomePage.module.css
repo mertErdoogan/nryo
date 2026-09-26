@@ -24,7 +24,11 @@
   border: 1px solid var(--border);
   background:
     radial-gradient(80% 120% at 0% 0%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 60%),
-    radial-gradient(60% 100% at 100% 100%, color-mix(in srgb, var(--accent-2) 22%, transparent), transparent 60%),
+    radial-gradient(
+      60% 100% at 100% 100%,
+      color-mix(in srgb, var(--accent-2) 22%, transparent),
+      transparent 60%
+    ),
     var(--surface);
   overflow: hidden;
 }

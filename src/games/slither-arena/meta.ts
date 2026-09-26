@@ -14,7 +14,10 @@ export default defineMeta({
   categories: ['action', 'versus', 'endless'],
   tags: ['snake', 'io', 'arena', 'multiplayer-style', 'bots', 'grow'],
   difficulty: 'medium',
-  controls: { desktop: 'Mouse to steer, hold click or Space to boost', touch: 'Drag to steer, hold ⚡ to boost' },
+  controls: {
+    desktop: 'Mouse to steer, hold click or Space to boost',
+    touch: 'Drag to steer, hold ⚡ to boost',
+  },
   score: { label: 'Length', format: 'points' },
   medals: { bronze: 150, silver: 400, gold: 900 },
   theme: { from: '#7c3aed', to: '#0f172a', accent: '#c084fc' },

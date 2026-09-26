@@ -5,7 +5,10 @@ import { levelFromXp, levelProgress, xpForLevel } from '../services/levels';
 
 describe('scoring', () => {
   const high = makeMeta();
-  const low = makeMeta({ score: { label: 'ms', format: 'ms', lowerIsBetter: true }, medals: { bronze: 350, silver: 280, gold: 230 } });
+  const low = makeMeta({
+    score: { label: 'ms', format: 'ms', lowerIsBetter: true },
+    medals: { bronze: 350, silver: 280, gold: 230 },
+  });
 
   it('awards medals in both directions', () => {
     expect(medalFor(9, high)).toBe(0);

@@ -1,5 +1,13 @@
 import { useEffect, useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, Shake, useGameLoop, useKeyDown, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  Shake,
+  useGameLoop,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { fillRoundRect, text } from '../../engine/draw';
 import { grid, num, obj, oneOf, type Infer } from '../../lib/schema';
@@ -34,14 +42,29 @@ const MOVES = 30;
 const COLORS = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#3b82f6', '#a855f7'];
 const LIGHT = ['#fecaca', '#fed7aa', '#fef08a', '#bbf7d0', '#bfdbfe', '#e9d5ff'];
 
-const cellSchema = obj({ t: num({ int: true, min: -1, max: 5 }), s: oneOf(['none', 'row', 'col', 'bomb', 'star'] as const) });
-const saveSchema = obj({ board: grid(cellSchema, SIZE, SIZE), moves: num({ int: true, min: 0, max: MOVES }), score: num({ min: 0 }) });
+const cellSchema = obj({
+  t: num({ int: true, min: -1, max: 5 }),
+  s: oneOf(['none', 'row', 'col', 'bomb', 'star'] as const),
+});
+const saveSchema = obj({
+  board: grid(cellSchema, SIZE, SIZE),
+  moves: num({ int: true, min: 0, max: MOVES }),
+  score: num({ min: 0 }),
+});
 type Save = Infer<typeof saveSchema>;
 export const saveSpec: VersionedSpec<Save> = { version: 1, is: saveSchema.is };
 
 type Phase =
   | { kind: 'idle' }
-  | { kind: 'swap'; a: [number, number]; z: [number, number]; valid: boolean; t: number; next: Board | null; star: Set<number> | null }
+  | {
+      kind: 'swap';
+      a: [number, number];
+      z: [number, number];
+      valid: boolean;
+      t: number;
+      next: Board | null;
+      star: Set<number> | null;
+    }
   | { kind: 'revert'; t: number }
   | { kind: 'clear'; t: number; cells: Set<number>; created: { r: number; c: number; gem: Gem }[] }
   | { kind: 'fall' }
@@ -79,7 +102,8 @@ function drawGem(ctx: CanvasRenderingContext2D, g: Gem, x: number, y: number, si
       ctx.lineTo(-s * 0.85, 0);
       break;
     case 1:
-      for (let i = 0; i < 6; i++) ctx.lineTo(Math.cos((i / 6) * Math.PI * 2) * s, Math.sin((i / 6) * Math.PI * 2) * s);
+      for (let i = 0; i < 6; i++)
+        ctx.lineTo(Math.cos((i / 6) * Math.PI * 2) * s, Math.sin((i / 6) * Math.PI * 2) * s);
       break;
     case 2:
       ctx.arc(0, 0, s * 0.92, 0, Math.PI * 2);
@@ -134,13 +158,21 @@ function drawGem(ctx: CanvasRenderingContext2D, g: Gem, x: number, y: number, si
 }
 
 function toSave(board: Board, moves: number, score: number): Save {
-  return { board: board.map((row) => row.map((g) => ({ t: g?.type ?? 0, s: g?.special ?? 'none' }))), moves, score };
+  return {
+    board: board.map((row) => row.map((g) => ({ t: g?.type ?? 0, s: g?.special ?? 'none' }))),
+    moves,
+    score,
+  };
 }
 
 export function GemSwap({ api, paused }: GameProps<Save>) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
-  const fx = useRef({ particles: new Particles(600, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(600, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
   const s = useRef({
     board: api.resume ? api.resume.board.map((row) => row.map((c) => newGem(c.t, c.s))) : createBoard(rng),
     moves: api.resume?.moves ?? MOVES,
@@ -193,9 +225,22 @@ export function GemSwap({ api, paused }: GameProps<Save>) {
       sx += p.x;
       sy += p.y;
       const g = s.board[Math.floor(k / SIZE)]![k % SIZE];
-      particles.burst(p.x, p.y, { count: 5, colors: [g && g.type >= 0 ? COLORS[g.type]! : '#fff', '#fff'], speed: 140, life: 0.45, size: 4 });
+      particles.burst(p.x, p.y, {
+        count: 5,
+        colors: [g && g.type >= 0 ? COLORS[g.type]! : '#fff', '#fff'],
+        speed: 140,
+        life: 0.45,
+        size: 4,
+      });
     }
-    if (cells.size) floaters.add(s.cascade > 1 ? `+${gained} ×${s.cascade}` : `+${gained}`, sx / cells.size, sy / cells.size, s.cascade > 1 ? '#fde047' : '#fff', 18);
+    if (cells.size)
+      floaters.add(
+        s.cascade > 1 ? `+${gained} ×${s.cascade}` : `+${gained}`,
+        sx / cells.size,
+        sy / cells.size,
+        s.cascade > 1 ? '#fde047' : '#fff',
+        18,
+      );
     if (fired > 0) {
       shake.add(4 + fired * 2);
       api.sfx('explode');
@@ -217,7 +262,8 @@ export function GemSwap({ api, paused }: GameProps<Save>) {
     const next = swap(s.board, a, z);
     let star: Set<number> | null = null;
     if (ga.special === 'star' || gz.special === 'star') {
-      if (ga.special === 'star' && gz.special === 'star') star = new Set(Array.from({ length: SIZE * SIZE }, (_, i) => i));
+      if (ga.special === 'star' && gz.special === 'star')
+        star = new Set(Array.from({ length: SIZE * SIZE }, (_, i) => i));
       else star = ga.special === 'star' ? starClear(next, z, gz.type) : starClear(next, a, ga.type);
     }
     const valid = star !== null || findRuns(next).length > 0;
@@ -238,7 +284,8 @@ export function GemSwap({ api, paused }: GameProps<Save>) {
     const dy = p.y - d.y;
     if (Math.max(Math.abs(dx), Math.abs(dy)) < CELL * 0.35) return;
     s.drag = null;
-    const to: [number, number] = Math.abs(dx) > Math.abs(dy) ? [d.r, d.c + Math.sign(dx)] : [d.r + Math.sign(dy), d.c];
+    const to: [number, number] =
+      Math.abs(dx) > Math.abs(dy) ? [d.r, d.c + Math.sign(dx)] : [d.r + Math.sign(dy), d.c];
     if (to[0] >= 0 && to[0] < SIZE && to[1] >= 0 && to[1] < SIZE) trySwap([d.r, d.c], to);
   };
   const onUp = () => {
@@ -255,10 +302,18 @@ export function GemSwap({ api, paused }: GameProps<Save>) {
 
   useKeyDown((code) => {
     const [r, c] = s.cursor;
-    const move: Record<string, [number, number]> = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+    const move: Record<string, [number, number]> = {
+      ArrowUp: [-1, 0],
+      ArrowDown: [1, 0],
+      ArrowLeft: [0, -1],
+      ArrowRight: [0, 1],
+    };
     if (move[code]) {
       const [dr, dc] = move[code]!;
-      const next: [number, number] = [Math.min(SIZE - 1, Math.max(0, r + dr)), Math.min(SIZE - 1, Math.max(0, c + dc))];
+      const next: [number, number] = [
+        Math.min(SIZE - 1, Math.max(0, r + dr)),
+        Math.min(SIZE - 1, Math.max(0, c + dc)),
+      ];
       if (s.selected && adjacent(s.selected, next)) trySwap(s.selected, next);
       s.cursor = next;
     } else if (code === 'Space' || code === 'Enter') {
@@ -290,7 +345,8 @@ export function GemSwap({ api, paused }: GameProps<Save>) {
             beginClear(cells, [], fired + 1);
           } else {
             const runs = findRuns(s.board);
-            const inRun = (cell: [number, number]) => runs.some((run) => run.cells.some(([r, c]) => r === cell[0] && c === cell[1]));
+            const inRun = (cell: [number, number]) =>
+              runs.some((run) => run.cells.some(([r, c]) => r === cell[0] && c === cell[1]));
             clearRuns(runs, inRun(ph.z) ? ph.z : ph.a);
           }
         }
@@ -416,7 +472,16 @@ export function GemSwap({ api, paused }: GameProps<Save>) {
       }
     }
     const sel = s.selected;
-    if (sel) fillRoundRect(ctx, BX + sel[1] * CELL + 2, BY + sel[0] * CELL + 2, CELL - 4, CELL - 4, 10, 'rgba(255,255,255,0.22)');
+    if (sel)
+      fillRoundRect(
+        ctx,
+        BX + sel[1] * CELL + 2,
+        BY + sel[0] * CELL + 2,
+        CELL - 4,
+        CELL - 4,
+        10,
+        'rgba(255,255,255,0.22)',
+      );
     ctx.save();
     ctx.beginPath();
     ctx.rect(BX - 6, BY - 6, CELL * SIZE + 12, CELL * SIZE + 12);

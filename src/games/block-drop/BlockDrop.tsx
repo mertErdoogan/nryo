@@ -1,5 +1,16 @@
 import { useRef } from 'react';
-import { CanvasStage, ControlBar, FloatingText, Particles, Shake, TouchButton, useGameLoop, useHeldKeys, useKeyDown, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  ControlBar,
+  FloatingText,
+  Particles,
+  Shake,
+  TouchButton,
+  useGameLoop,
+  useHeldKeys,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { fillRoundRect, prompt, text } from '../../engine/draw';
 import type { GameProps } from '../../platform/types';
@@ -32,7 +43,14 @@ const BY = 36;
 const HIDDEN = ROWS - VISIBLE;
 const LOCK_DELAY = 0.5;
 
-function drawBlock(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, alpha = 1) {
+function drawBlock(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  color: string,
+  alpha = 1,
+) {
   ctx.globalAlpha = alpha;
   fillRoundRect(ctx, x + 1, y + 1, size - 2, size - 2, 4, color);
   ctx.fillStyle = 'rgba(255,255,255,0.3)';
@@ -42,7 +60,13 @@ function drawBlock(ctx: CanvasRenderingContext2D, x: number, y: number, size: nu
   ctx.globalAlpha = 1;
 }
 
-function drawMini(ctx: CanvasRenderingContext2D, type: PieceType | null, cx: number, cy: number, size: number) {
+function drawMini(
+  ctx: CanvasRenderingContext2D,
+  type: PieceType | null,
+  cx: number,
+  cy: number,
+  size: number,
+) {
   if (!type) return;
   const cs = cells({ type, x: 0, y: 0, rot: 0 });
   const minX = Math.min(...cs.map(([x]) => x));
@@ -51,14 +75,19 @@ function drawMini(ctx: CanvasRenderingContext2D, type: PieceType | null, cx: num
   const maxY = Math.max(...cs.map(([, y]) => y));
   const w = (maxX - minX + 1) * size;
   const h = (maxY - minY + 1) * size;
-  for (const [x, y] of cs) drawBlock(ctx, cx - w / 2 + (x - minX) * size, cy - h / 2 + (y - minY) * size, size, COLORS[type]);
+  for (const [x, y] of cs)
+    drawBlock(ctx, cx - w / 2 + (x - minX) * size, cy - h / 2 + (y - minY) * size, size, COLORS[type]);
 }
 
 export function BlockDrop({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
-  const fx = useRef({ particles: new Particles(500, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(500, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
   const s = useRef({
     board: emptyBoard() as Board,
     queue: [...bag(rng), ...bag(rng)] as PieceType[],
@@ -80,7 +109,14 @@ export function BlockDrop({ api, paused }: GameProps) {
     ended: false,
     time: 0,
     started: false,
-    touch: null as null | { x: number; y: number; t: number; moved: boolean; lastCol: number; lastRow: number },
+    touch: null as null | {
+      x: number;
+      y: number;
+      t: number;
+      moved: boolean;
+      lastCol: number;
+      lastRow: number;
+    },
   }).current;
 
   const next = () => {
@@ -138,15 +174,35 @@ export function BlockDrop({ api, paused }: GameProps) {
       s.score += pts;
       s.lines += cleared.length;
       s.clearing = { rows: cleared, t: 0.25 };
-      const label = cleared.length === 4 ? 'BLOCK BUSTER!' : ['', 'Single', 'Double', 'Triple'][cleared.length]!;
-      fx.current.floaters.add(`${label} +${pts}`, BX + (COLS * CELL) / 2, BY + (cleared[0]! - HIDDEN) * CELL, cleared.length === 4 ? '#fde047' : '#fff', cleared.length === 4 ? 24 : 18, 1);
-      if (s.combo > 0) fx.current.floaters.add(`Combo ×${s.combo}`, BX + (COLS * CELL) / 2, BY + (cleared[0]! - HIDDEN) * CELL + 26, '#f0abfc', 15);
+      const label =
+        cleared.length === 4 ? 'BLOCK BUSTER!' : ['', 'Single', 'Double', 'Triple'][cleared.length]!;
+      fx.current.floaters.add(
+        `${label} +${pts}`,
+        BX + (COLS * CELL) / 2,
+        BY + (cleared[0]! - HIDDEN) * CELL,
+        cleared.length === 4 ? '#fde047' : '#fff',
+        cleared.length === 4 ? 24 : 18,
+        1,
+      );
+      if (s.combo > 0)
+        fx.current.floaters.add(
+          `Combo ×${s.combo}`,
+          BX + (COLS * CELL) / 2,
+          BY + (cleared[0]! - HIDDEN) * CELL + 26,
+          '#f0abfc',
+          15,
+        );
       fx.current.shake.add(cleared.length * 3);
       api.sfx(cleared.length === 4 ? 'win' : 'score');
       api.haptic(cleared.length * 15);
       for (const y of cleared) {
         for (let x = 0; x < COLS; x++) {
-          fx.current.particles.burst(BX + x * CELL + CELL / 2, BY + (y - HIDDEN) * CELL + CELL / 2, { count: 2, color: COLORS[board[y]![x]!], speed: 150, life: 0.5 });
+          fx.current.particles.burst(BX + x * CELL + CELL / 2, BY + (y - HIDDEN) * CELL + CELL / 2, {
+            count: 2,
+            color: COLORS[board[y]![x]!],
+            speed: 150,
+            life: 0.5,
+          });
         }
       }
       const newLevel = Math.floor(s.lines / 10) + 1;
@@ -263,7 +319,8 @@ export function BlockDrop({ api, paused }: GameProps) {
       }
     } else if (!s.over && s.piece && s.started) {
       // auto-shift
-      const held = (k.has('ArrowRight') || k.has('KeyD') ? 1 : 0) - (k.has('ArrowLeft') || k.has('KeyA') ? 1 : 0);
+      const held =
+        (k.has('ArrowRight') || k.has('KeyD') ? 1 : 0) - (k.has('ArrowLeft') || k.has('KeyA') ? 1 : 0);
       if (held && held === s.das.dir) {
         s.das.timer -= dt;
         while (s.das.timer <= 0) {
@@ -325,7 +382,14 @@ export function BlockDrop({ api, paused }: GameProps) {
         const c = s.board[y]![x];
         if (!c) continue;
         const flashing = s.clearing?.rows.includes(y);
-        drawBlock(ctx, BX + x * CELL, BY + (y - HIDDEN) * CELL, CELL, flashing ? '#ffffff' : COLORS[c], flashing ? 0.5 + s.clearing!.t * 2 : 1);
+        drawBlock(
+          ctx,
+          BX + x * CELL,
+          BY + (y - HIDDEN) * CELL,
+          CELL,
+          flashing ? '#ffffff' : COLORS[c],
+          flashing ? 0.5 + s.clearing!.t * 2 : 1,
+        );
       }
     }
     if (s.piece && !s.over) {
@@ -339,7 +403,8 @@ export function BlockDrop({ api, paused }: GameProps) {
           ctx.globalAlpha = 1;
         }
       }
-      for (const [x, y] of cells(s.piece)) if (y >= HIDDEN) drawBlock(ctx, BX + x * CELL, BY + (y - HIDDEN) * CELL, CELL, COLORS[s.piece.type]);
+      for (const [x, y] of cells(s.piece))
+        if (y >= HIDDEN) drawBlock(ctx, BX + x * CELL, BY + (y - HIDDEN) * CELL, CELL, COLORS[s.piece.type]);
     }
     particles.draw(ctx);
     floaters.draw(ctx);
@@ -355,7 +420,15 @@ export function BlockDrop({ api, paused }: GameProps) {
     drawMini(ctx, s.queue[1] ?? null, px + pw / 2, BY + 112, 10);
     drawMini(ctx, s.queue[2] ?? null, px + pw / 2, BY + 152, 10);
     text(ctx, 'HOLD', px + pw / 2, BY + 198, { size: 11, weight: 800, color: '#c4b5fd' });
-    fillRoundRect(ctx, px, BY + 208, pw, 64, 10, s.canHold ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)');
+    fillRoundRect(
+      ctx,
+      px,
+      BY + 208,
+      pw,
+      64,
+      10,
+      s.canHold ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)',
+    );
     drawMini(ctx, s.hold, px + pw / 2, BY + 240, 13);
     text(ctx, 'LEVEL', px + pw / 2, BY + 296, { size: 11, weight: 800, color: '#c4b5fd' });
     text(ctx, String(s.level), px + pw / 2, BY + 318, { size: 22, weight: 850 });
@@ -366,17 +439,49 @@ export function BlockDrop({ api, paused }: GameProps) {
   }, !paused);
 
   return (
-    <CanvasStage ref={view} width={W} height={H} label="Block Drop playfield" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp}>
+    <CanvasStage
+      ref={view}
+      width={W}
+      height={H}
+      label="Block Drop playfield"
+      onPointerDown={onDown}
+      onPointerMove={onMove}
+      onPointerUp={onUp}
+    >
       <ControlBar
         left={
           <>
-            <TouchButton label="Move left" size="small" repeatMs={70} onPress={() => { s.started = true; tryMove(-1, 0); }}>
+            <TouchButton
+              label="Move left"
+              size="small"
+              repeatMs={70}
+              onPress={() => {
+                s.started = true;
+                tryMove(-1, 0);
+              }}
+            >
               ◀
             </TouchButton>
-            <TouchButton label="Move right" size="small" repeatMs={70} onPress={() => { s.started = true; tryMove(1, 0); }}>
+            <TouchButton
+              label="Move right"
+              size="small"
+              repeatMs={70}
+              onPress={() => {
+                s.started = true;
+                tryMove(1, 0);
+              }}
+            >
               ▶
             </TouchButton>
-            <TouchButton label="Soft drop" size="small" onPress={() => { s.started = true; s.softDrop = true; }} onRelease={() => (s.softDrop = false)}>
+            <TouchButton
+              label="Soft drop"
+              size="small"
+              onPress={() => {
+                s.started = true;
+                s.softDrop = true;
+              }}
+              onRelease={() => (s.softDrop = false)}
+            >
               ▼
             </TouchButton>
           </>
@@ -386,7 +491,14 @@ export function BlockDrop({ api, paused }: GameProps) {
             <TouchButton label="Hold piece" size="small" onPress={holdPiece}>
               ⇄
             </TouchButton>
-            <TouchButton label="Rotate" size="small" onPress={() => { s.started = true; tryRotate(1); }}>
+            <TouchButton
+              label="Rotate"
+              size="small"
+              onPress={() => {
+                s.started = true;
+                tryRotate(1);
+              }}
+            >
               ⟳
             </TouchButton>
             <TouchButton label="Hard drop" size="small" onPress={hardDrop}>

@@ -48,7 +48,8 @@ export function findRuns(b: Board): Run[] {
       const t = b[r]![c]?.type;
       let e = c + 1;
       while (t !== undefined && t >= 0 && e < SIZE && b[r]![e]?.type === t) e++;
-      if (t !== undefined && t >= 0 && e - c >= 3) runs.push({ cells: Array.from({ length: e - c }, (_, k) => [r, c + k]), dir: 'h' });
+      if (t !== undefined && t >= 0 && e - c >= 3)
+        runs.push({ cells: Array.from({ length: e - c }, (_, k) => [r, c + k]), dir: 'h' });
       c = e;
     }
   }
@@ -58,7 +59,8 @@ export function findRuns(b: Board): Run[] {
       const t = b[r]![c]?.type;
       let e = r + 1;
       while (t !== undefined && t >= 0 && e < SIZE && b[e]![c]?.type === t) e++;
-      if (t !== undefined && t >= 0 && e - r >= 3) runs.push({ cells: Array.from({ length: e - r }, (_, k) => [r + k, c]), dir: 'v' });
+      if (t !== undefined && t >= 0 && e - r >= 3)
+        runs.push({ cells: Array.from({ length: e - r }, (_, k) => [r + k, c]), dir: 'v' });
       r = e;
     }
   }
@@ -75,7 +77,8 @@ export function swap(b: Board, a: [number, number], z: [number, number]): Board 
   return n;
 }
 
-export const adjacent = (a: [number, number], z: [number, number]) => Math.abs(a[0] - z[0]) + Math.abs(a[1] - z[1]) === 1;
+export const adjacent = (a: [number, number], z: [number, number]) =>
+  Math.abs(a[0] - z[0]) + Math.abs(a[1] - z[1]) === 1;
 
 export function hasMove(b: Board): boolean {
   for (let r = 0; r < SIZE; r++) {
@@ -110,7 +113,8 @@ export function resolveClears(b: Board, runs: Run[], focus: [number, number] | n
   const cleared = new Set<number>();
   const created: ClearResult['created'] = [];
   const counts = new Map<number, number>();
-  for (const run of runs) for (const [r, c] of run.cells) counts.set(key(r, c), (counts.get(key(r, c)) ?? 0) + 1);
+  for (const run of runs)
+    for (const [r, c] of run.cells) counts.set(key(r, c), (counts.get(key(r, c)) ?? 0) + 1);
 
   for (const run of runs) {
     const inRun = (r: number, c: number) => run.cells.some(([rr, cc]) => rr === r && cc === c);
@@ -161,7 +165,8 @@ export function expandSpecials(b: Board, cleared: Set<number>, rng: Rng): number
       }
     } else if (g.special === 'star') {
       const t = rng.int(0, TYPES - 1);
-      for (let y = 0; y < SIZE; y++) for (let x = 0; x < SIZE; x++) if (b[y]![x]?.type === t) hit.push(key(y, x));
+      for (let y = 0; y < SIZE; y++)
+        for (let x = 0; x < SIZE; x++) if (b[y]![x]?.type === t) hit.push(key(y, x));
     }
     for (const h of hit) {
       if (!cleared.has(h)) {
@@ -176,7 +181,8 @@ export function expandSpecials(b: Board, cleared: Set<number>, rng: Rng): number
 /** Clears every gem of `type` (star swapped with a normal gem). */
 export function starClear(b: Board, star: [number, number], type: number): Set<number> {
   const out = new Set<number>([key(star[0], star[1])]);
-  for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (b[r]![c]?.type === type) out.add(key(r, c));
+  for (let r = 0; r < SIZE; r++)
+    for (let c = 0; c < SIZE; c++) if (b[r]![c]?.type === type) out.add(key(r, c));
   return out;
 }
 

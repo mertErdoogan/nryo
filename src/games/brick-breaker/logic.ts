@@ -23,7 +23,7 @@ const PATTERNS: Pattern[] = [
   (r, c) => (r + c) % 2 === 0,
   (r, c, rows) => Math.abs(c - 3.5) <= (r / rows) * 4 + 0.5,
   (r, c, rows) => Math.abs(c - 3.5) + Math.abs(r - (rows - 1) / 2) <= 4,
-  (r, c) => c !== 3 && c !== 4 ? true : r % 2 === 0,
+  (r, c) => (c !== 3 && c !== 4 ? true : r % 2 === 0),
   (r) => r % 2 === 0,
   (_r, c) => c % 3 !== 1,
 ];
@@ -36,7 +36,12 @@ export function buildLevel(level: number, rng: Rng): Brick[] {
     for (let c = 0; c < COLS; c++) {
       if (!pattern(r, c, rows)) continue;
       const steel = level >= 4 && r === rows - 1 && (c === 1 || c === 6) && rng.chance(0.7);
-      const hp = steel ? 1 : Math.max(1, Math.min(3, 1 + Math.floor((rows - r - 1 + level - 1) / 4) - (rng.chance(0.3) ? 1 : 0)));
+      const hp = steel
+        ? 1
+        : Math.max(
+            1,
+            Math.min(3, 1 + Math.floor((rows - r - 1 + level - 1) / 4) - (rng.chance(0.3) ? 1 : 0)),
+          );
       bricks.push({ x: LEFT + c * (BRICK_W + GAP), y: TOP + r * (BRICK_H + GAP), hp, maxHp: hp, steel });
     }
   }

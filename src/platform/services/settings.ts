@@ -33,7 +33,9 @@ export function createSettingsStore(driver: StorageDriver) {
           typeof d.volume === 'number' && d.volume >= 0 && d.volume <= 1 ? d.volume : DEFAULT_SETTINGS.volume,
         haptics: typeof d.haptics === 'boolean' ? d.haptics : DEFAULT_SETTINGS.haptics,
         motion:
-          d.motion === 'system' || d.motion === 'reduce' || d.motion === 'full' ? d.motion : DEFAULT_SETTINGS.motion,
+          d.motion === 'system' || d.motion === 'reduce' || d.motion === 'full'
+            ? d.motion
+            : DEFAULT_SETTINGS.motion,
       };
     },
   });

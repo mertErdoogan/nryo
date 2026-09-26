@@ -28,14 +28,28 @@ describe('HomePage', () => {
     expect(screen.queryByRole('heading', { name: /continue playing/i })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /play now/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /popular games/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /play daily/i })).toHaveAttribute('href', expect.stringMatching(/\?daily=1$/));
+    expect(screen.getByRole('link', { name: /play daily/i })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/\?daily=1$/),
+    );
   });
 
   it('shows unfinished games with a Continue button and recently played games', () => {
     const merge = GAMES.find((g) => g.id === 'merge-2048')!;
     act(() => {
-      platform.saves.write('merge-2048', 1, { tiles: [], score: 88, moves: 3, won: false }, { label: 'Score 88 · best tile 16', progress: 0.3 });
-      platform.recordRound({ meta: GAMES.find((g) => g.id === 'stack-tower')!, result: { score: 12 }, mode: 'normal', durationMs: 10_000, daily: null });
+      platform.saves.write(
+        'merge-2048',
+        1,
+        { tiles: [], score: 88, moves: 3, won: false },
+        { label: 'Score 88 · best tile 16', progress: 0.3 },
+      );
+      platform.recordRound({
+        meta: GAMES.find((g) => g.id === 'stack-tower')!,
+        result: { score: 12 },
+        mode: 'normal',
+        durationMs: 10_000,
+        daily: null,
+      });
     });
     render(<HomePage />);
     expect(screen.getByRole('heading', { name: /continue playing/i })).toBeInTheDocument();

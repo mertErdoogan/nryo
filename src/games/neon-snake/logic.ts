@@ -23,7 +23,13 @@ export function nextHead(head: Cell, dir: Dir): Cell {
 }
 
 /** Collision against walls and the body (the tail tip moves away unless growing). */
-export function collides(head: Cell, body: readonly Cell[], cols: number, rows: number, growing: boolean): boolean {
+export function collides(
+  head: Cell,
+  body: readonly Cell[],
+  cols: number,
+  rows: number,
+  growing: boolean,
+): boolean {
   if (head.x < 0 || head.y < 0 || head.x >= cols || head.y >= rows) return true;
   const check = growing ? body : body.slice(0, -1);
   return check.some((c) => c.x === head.x && c.y === head.y);

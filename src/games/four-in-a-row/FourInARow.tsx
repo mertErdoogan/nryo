@@ -3,7 +3,18 @@ import { useEffect, useRef, useState } from 'react';
 import { DomStage, Hint, Stat, StatBar, useKeyDown, useSeededRng } from '../../engine';
 import { num, obj, type Infer } from '../../lib/schema';
 import type { GameProps, VersionedSpec } from '../../platform/types';
-import { bestMove, canPlay, COLS, emptyBoard, LEVELS, play, ROWS, validMoves, winningLine, type Board } from './logic';
+import {
+  bestMove,
+  canPlay,
+  COLS,
+  emptyBoard,
+  LEVELS,
+  play,
+  ROWS,
+  validMoves,
+  winningLine,
+  type Board,
+} from './logic';
 import styles from './FourInARow.module.css';
 
 const progressSchema = obj({ unlocked: num({ int: true, min: 0, max: LEVELS.length - 1 }) });
@@ -26,9 +37,11 @@ export function FourInARow({ api, paused }: GameProps<unknown, Progress>) {
     if (done.current || level === null) return;
     done.current = true;
     const lv = LEVELS[level]!;
-    const score = result === 'win' ? lv.points + Math.max(0, 42 - totalMoves) * 10 : result === 'draw' ? 100 : 0;
+    const score =
+      result === 'win' ? lv.points + Math.max(0, 42 - totalMoves) * 10 : result === 'draw' ? 100 : 0;
     api.setScore(score);
-    if (result === 'win' && level >= unlocked && level < LEVELS.length - 1 && api.mode === 'normal') api.saveProgress({ unlocked: level + 1 });
+    if (result === 'win' && level >= unlocked && level < LEVELS.length - 1 && api.mode === 'normal')
+      api.saveProgress({ unlocked: level + 1 });
     api.sfx(result === 'win' ? 'win' : result === 'draw' ? 'score' : 'gameover');
     setTimeout(
       () =>
@@ -39,7 +52,9 @@ export function FourInARow({ api, paused }: GameProps<unknown, Progress>) {
             { label: 'Opponent', value: lv.name },
             { label: 'Result', value: result === 'win' ? 'You win' : result === 'draw' ? 'Draw' : 'AI wins' },
             { label: 'Moves', value: String(totalMoves) },
-            ...(result === 'win' && level < LEVELS.length - 1 && level >= unlocked ? [{ label: 'Unlocked', value: LEVELS[level + 1]!.name }] : []),
+            ...(result === 'win' && level < LEVELS.length - 1 && level >= unlocked
+              ? [{ label: 'Unlocked', value: LEVELS[level + 1]!.name }]
+              : []),
           ],
         }),
       1400,
@@ -98,7 +113,13 @@ export function FourInARow({ api, paused }: GameProps<unknown, Progress>) {
         <div className={styles.picker}>
           <p className={styles.pickerTitle}>Choose your opponent</p>
           {LEVELS.map((lv, i) => (
-            <button key={lv.name} type="button" className={styles.level} disabled={i > unlocked} onClick={() => setLevel(i)}>
+            <button
+              key={lv.name}
+              type="button"
+              className={styles.level}
+              disabled={i > unlocked}
+              onClick={() => setLevel(i)}
+            >
               {i > unlocked ? '🔒 ' : ''}
               {lv.name}
               <small>{i > unlocked ? `Beat ${LEVELS[i - 1]!.name}` : `${lv.points} pts`}</small>
@@ -151,7 +172,10 @@ export function FourInARow({ api, paused }: GameProps<unknown, Progress>) {
                       data-win={isWin(c, r)}
                       style={
                         last && last[0] === c && last[1] === r
-                          ? ({ '--fall': `${(ROWS - r) * 112}%`, '--drop': `${180 + (ROWS - r) * 45}ms` } as CSSProperties)
+                          ? ({
+                              '--fall': `${(ROWS - r) * 112}%`,
+                              '--drop': `${180 + (ROWS - r) * 45}ms`,
+                            } as CSSProperties)
                           : ({ animation: isWin(c, r) ? undefined : 'none' } as CSSProperties)
                       }
                     />

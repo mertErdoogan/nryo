@@ -32,8 +32,7 @@ export interface PlatformOptions {
 }
 
 export type PlatformEvent =
-  | { type: 'achievement'; achievement: Achievement }
-  | { type: 'level-up'; level: number };
+  { type: 'achievement'; achievement: Achievement } | { type: 'level-up'; level: number };
 
 const MEDAL_XP: Record<1 | 2 | 3, number> = { 1: 20, 2: 40, 3: 80 };
 
@@ -134,7 +133,8 @@ export function createPlatform(driver: StorageDriver, options: PlatformOptions) 
     const best = isBetter(score, previousBest, low) ? score : (previousBest as number);
     const medalBefore = prev.medal;
     const medalAfter = Math.max(medalBefore, medalFor(best, meta)) as MedalTier;
-    const pointsContribution = meta.score.format === 'points' ? Math.min(Math.max(0, score), meta.medals.gold * 2) : 0;
+    const pointsContribution =
+      meta.score.format === 'points' ? Math.min(Math.max(0, score), meta.medals.gold * 2) : 0;
     stats.set((all) => ({
       ...all,
       [meta.id]: {
@@ -245,6 +245,7 @@ export function createPlatform(driver: StorageDriver, options: PlatformOptions) 
 
   function resetAll(): void {
     for (const key of driver.keys()) if (key.startsWith(KEY_PREFIX)) driver.remove(key);
+    eventBuffer.clear();
     for (const s of storeByKey.values()) s.reset();
     saves.rebuildIndex();
     // A fresh anonymous identity after a full reset.

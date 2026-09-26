@@ -14,12 +14,25 @@ interface FavoriteButtonProps {
   withLabel?: boolean;
 }
 
-export function FavoriteButton({ gameId, title, className, plain, size = 20, withLabel }: FavoriteButtonProps) {
+export function FavoriteButton({
+  gameId,
+  title,
+  className,
+  plain,
+  size = 20,
+  withLabel,
+}: FavoriteButtonProps) {
   const active = useIsFavorite(gameId);
   return (
     <button
       type="button"
-      className={[styles.fav, active && styles.on, plain && styles.plain, withLabel && styles.labelled, className]
+      className={[
+        styles.fav,
+        active && styles.on,
+        plain && styles.plain,
+        withLabel && styles.labelled,
+        className,
+      ]
         .filter(Boolean)
         .join(' ')}
       aria-pressed={active}

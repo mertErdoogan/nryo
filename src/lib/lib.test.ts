@@ -6,7 +6,12 @@ import { sanitizeName, normalizeQuery } from './sanitize';
 import { arr, bool, grid, literal, nullable, num, obj, oneOf, optional, record, str } from './schema';
 
 describe('schema', () => {
-  const player = obj({ name: str({ max: 5 }), level: num({ int: true, min: 1 }), tags: arr(str()), nick: optional(str()) });
+  const player = obj({
+    name: str({ max: 5 }),
+    level: num({ int: true, min: 1 }),
+    tags: arr(str()),
+    nick: optional(str()),
+  });
 
   it('accepts valid shapes and rejects invalid ones', () => {
     expect(player.is({ name: 'Ada', level: 2, tags: [] })).toBe(true);
@@ -32,7 +37,12 @@ describe('schema', () => {
     expect(bool().is(0)).toBe(false);
     expect(record(num(), { maxKeys: 2 }).is({ a: 1, b: 2 })).toBe(true);
     expect(record(num(), { maxKeys: 1 }).is({ a: 1, b: 2 })).toBe(false);
-    expect(grid(num(), 2, 2).is([[1, 2], [3, 4]])).toBe(true);
+    expect(
+      grid(num(), 2, 2).is([
+        [1, 2],
+        [3, 4],
+      ]),
+    ).toBe(true);
     expect(grid(num(), 2, 2).is([[1, 2], [3]])).toBe(false);
   });
 });

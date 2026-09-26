@@ -6,7 +6,11 @@ export default defineMeta({
   tagline: 'Tap to flap through the neon pillars.',
   description:
     'Keep your little bird airborne and thread it through gaps between pillars. The gaps tighten and the pace quickens the further you fly.',
-  howToPlay: ['Tap to flap upward — gravity does the rest.', 'Fly through the gaps between pillars.', 'Touching a pillar or the ground ends the run.'],
+  howToPlay: [
+    'Tap to flap upward — gravity does the rest.',
+    'Fly through the gaps between pillars.',
+    'Touching a pillar or the ground ends the run.',
+  ],
   categories: ['hyper-casual', 'endless', 'arcade'],
   tags: ['flappy', 'one-tap', 'bird', 'flying', 'timing'],
   difficulty: 'medium',

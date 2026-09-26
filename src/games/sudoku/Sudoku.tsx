@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActionRow, DomStage, GameButton, Hint, Stat, StatBar, useKeyDown, useSeededRng, useStopwatch } from '../../engine';
+import {
+  ActionRow,
+  DomStage,
+  GameButton,
+  Hint,
+  Stat,
+  StatBar,
+  useKeyDown,
+  useSeededRng,
+  useStopwatch,
+} from '../../engine';
 import { formatClock } from '../../lib/format';
 import { arr, num, obj, oneOf, type Infer } from '../../lib/schema';
 import type { GameProps, VersionedSpec } from '../../platform/types';
@@ -32,7 +42,11 @@ export function Sudoku({ api, paused }: GameProps<Save>) {
   const rng = useSeededRng(api.seed);
   const r = api.resume;
   const [game, setGame] = useState<Game | null>(() =>
-    r ? { level: r.level, puzzle: r.puzzle, solution: r.solution } : api.mode === 'daily' ? { level: 'medium', ...generate(rng, 'medium') } : null,
+    r
+      ? { level: r.level, puzzle: r.puzzle, solution: r.solution }
+      : api.mode === 'daily'
+        ? { level: 'medium', ...generate(rng, 'medium') }
+        : null,
   );
   const [entries, setEntries] = useState<number[]>(() => r?.entries ?? new Array(81).fill(0));
   const [notes, setNotes] = useState<number[]>(() => r?.notes ?? new Array(81).fill(0));
@@ -46,10 +60,23 @@ export function Sudoku({ api, paused }: GameProps<Save>) {
   const value = (i: number) => (game ? game.puzzle[i] || entries[i]! : 0);
   const persist = (e: number[], n: number[], m: number, h: number) => {
     if (!game) return;
-    const filled = e.filter((v, i) => v && v === game.solution[i]).length + game.puzzle.filter(Boolean).length;
+    const filled =
+      e.filter((v, i) => v && v === game.solution[i]).length + game.puzzle.filter(Boolean).length;
     api.save(
-      { level: game.level, puzzle: game.puzzle, solution: game.solution, entries: e, notes: n, mistakes: m, hints: h, elapsed: readElapsed() },
-      { label: `${LEVELS[game.level].label} · ${Math.round((filled / 81) * 100)}% filled`, progress: filled / 81 },
+      {
+        level: game.level,
+        puzzle: game.puzzle,
+        solution: game.solution,
+        entries: e,
+        notes: n,
+        mistakes: m,
+        hints: h,
+        elapsed: readElapsed(),
+      },
+      {
+        label: `${LEVELS[game.level].label} · ${Math.round((filled / 81) * 100)}% filled`,
+        progress: filled / 81,
+      },
     );
   };
   const latest = useRef(() => {});
@@ -162,7 +189,13 @@ export function Sudoku({ api, paused }: GameProps<Save>) {
       const rr = Math.floor(cur / 9);
       const cc = cur % 9;
       const next =
-        code === 'ArrowUp' ? ((rr + 8) % 9) * 9 + cc : code === 'ArrowDown' ? ((rr + 1) % 9) * 9 + cc : code === 'ArrowLeft' ? rr * 9 + ((cc + 8) % 9) : rr * 9 + ((cc + 1) % 9);
+        code === 'ArrowUp'
+          ? ((rr + 8) % 9) * 9 + cc
+          : code === 'ArrowDown'
+            ? ((rr + 1) % 9) * 9 + cc
+            : code === 'ArrowLeft'
+              ? rr * 9 + ((cc + 8) % 9)
+              : rr * 9 + ((cc + 1) % 9);
       setSelected(next);
     } else return false;
   }, !paused);
@@ -180,7 +213,12 @@ export function Sudoku({ api, paused }: GameProps<Save>) {
         <div className={styles.picker}>
           <p className={styles.pickerTitle}>Pick a difficulty</p>
           {(Object.keys(LEVELS) as Level[]).map((l) => (
-            <button key={l} type="button" className={styles.levelButton} onClick={() => setGame({ level: l, ...generate(rng, l) })}>
+            <button
+              key={l}
+              type="button"
+              className={styles.levelButton}
+              onClick={() => setGame({ level: l, ...generate(rng, l) })}
+            >
               {LEVELS[l].label}
             </button>
           ))}
@@ -197,7 +235,11 @@ export function Sudoku({ api, paused }: GameProps<Save>) {
     <DomStage>
       <StatBar>
         <Stat label={LEVELS[game.level].label} value={formatClock(elapsed)} />
-        <Stat label="Mistakes" value={`${mistakes}/${MAX_MISTAKES}`} tone={mistakes >= 2 ? 'warn' : undefined} />
+        <Stat
+          label="Mistakes"
+          value={`${mistakes}/${MAX_MISTAKES}`}
+          tone={mistakes >= 2 ? 'warn' : undefined}
+        />
         {hints > 0 && <Stat label="Hints" value={hints} />}
       </StatBar>
       <div className={styles.grid} role="group" aria-label="Sudoku grid">
@@ -234,7 +276,13 @@ export function Sudoku({ api, paused }: GameProps<Save>) {
       </div>
       <div className={styles.pad}>
         {Array.from({ length: 9 }, (_, k) => (
-          <button key={k} type="button" className={styles.digit} disabled={counts[k + 1] >= 9} onClick={() => place(k + 1)}>
+          <button
+            key={k}
+            type="button"
+            className={styles.digit}
+            disabled={counts[k + 1] >= 9}
+            onClick={() => place(k + 1)}
+          >
             {k + 1}
             <small>{9 - counts[k + 1]}</small>
           </button>

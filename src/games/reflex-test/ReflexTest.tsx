@@ -27,13 +27,16 @@ export function ReflexTest({ api, paused }: GameProps) {
   const beginWait = useCallback(() => {
     clearTimers();
     setState('waiting');
-    timer.current = setTimeout(() => {
-      setState('go');
-      // Start timing on the frame the green panel is painted.
-      raf.current = requestAnimationFrame(() => {
-        goAt.current = performance.now();
-      });
-    }, rng.range(1300, 3600));
+    timer.current = setTimeout(
+      () => {
+        setState('go');
+        // Start timing on the frame the green panel is painted.
+        raf.current = requestAnimationFrame(() => {
+          goAt.current = performance.now();
+        });
+      },
+      rng.range(1300, 3600),
+    );
   }, [rng]);
 
   // Pausing mid-round voids that round; resume starts it again.
@@ -98,14 +101,21 @@ export function ReflexTest({ api, paused }: GameProps) {
   }, !paused);
 
   const content: Record<State, { icon: string; big: string; sub: string }> = {
-    ready: { icon: '🎯', big: times.length ? `Round ${times.length + 1}` : 'Tap to start', sub: 'Wait for green, then tap fast.' },
+    ready: {
+      icon: '🎯',
+      big: times.length ? `Round ${times.length + 1}` : 'Tap to start',
+      sub: 'Wait for green, then tap fast.',
+    },
     waiting: { icon: '✋', big: 'Wait…', sub: 'Tap when it turns green' },
     go: { icon: '⚡', big: 'TAP!', sub: '' },
     early: { icon: '😅', big: 'Too soon!', sub: 'Tap to try this round again' },
     result: {
       icon: last !== null && last < 250 ? '🚀' : '⏱️',
       big: `${last ?? 0} ms`,
-      sub: times.length >= ROUNDS ? `Average ${Math.round(average(times))} ms` : `${verdict(last ?? 0)} · tap for round ${times.length + 1}`,
+      sub:
+        times.length >= ROUNDS
+          ? `Average ${Math.round(average(times))} ms`
+          : `${verdict(last ?? 0)} · tap for round ${times.length + 1}`,
     },
   };
   const c = content[state];

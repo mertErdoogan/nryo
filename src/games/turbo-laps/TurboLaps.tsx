@@ -1,5 +1,13 @@
 import { useMemo, useRef } from 'react';
-import { CanvasStage, ControlBar, Particles, TouchButton, useGameLoop, useHeldKeys, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  ControlBar,
+  Particles,
+  TouchButton,
+  useGameLoop,
+  useHeldKeys,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { fillRoundRect, text } from '../../engine/draw';
 import { formatClock } from '../../lib/format';
@@ -54,7 +62,11 @@ export function TurboLaps({ api, paused }: GameProps<unknown, Progress>) {
   const ghostData = api.progress?.ghost ?? [];
   const s = useRef({
     player: makeCar(points, 0, 18, 8),
-    rivals: RIVALS.map((r, i) => ({ ...r, car: makeCar(points, 0, i % 2 === 0 ? -18 : 18, i === 0 ? 8 : 16 + i * 4), skill: r.skill * rng.range(0.985, 1.01) })),
+    rivals: RIVALS.map((r, i) => ({
+      ...r,
+      car: makeCar(points, 0, i % 2 === 0 ? -18 : 18, i === 0 ? 8 : 16 + i * 4),
+      skill: r.skill * rng.range(0.985, 1.01),
+    })),
     countdown: 3.2,
     t: 0,
     touches: new Map<number, number>(),
@@ -91,7 +103,8 @@ export function TurboLaps({ api, paused }: GameProps<unknown, Progress>) {
     const W = v.width;
     const { particles } = fx.current;
     const k = keys.current;
-    let steer = (k.has('ArrowRight') || k.has('KeyD') ? 1 : 0) - (k.has('ArrowLeft') || k.has('KeyA') ? 1 : 0);
+    let steer =
+      (k.has('ArrowRight') || k.has('KeyD') ? 1 : 0) - (k.has('ArrowLeft') || k.has('KeyA') ? 1 : 0);
     for (const d of s.touches.values()) steer += d;
     steer += s.touchSteer;
     steer = Math.max(-1, Math.min(1, steer));
@@ -108,7 +121,13 @@ export function TurboLaps({ api, paused }: GameProps<unknown, Progress>) {
       if (!s.player.finished) {
         const lapDone = stepCar(s.player, points, steer, braking ? -1 : 1, MAX_SPEED, dt);
         if (s.player.offTrack && s.player.speed > 60 && rng.chance(0.5)) {
-          particles.burst(s.player.x, s.player.y, { count: 1, color: '#a3e635', speed: 40, life: 0.4, size: 4 });
+          particles.burst(s.player.x, s.player.y, {
+            count: 1,
+            color: '#a3e635',
+            speed: 40,
+            life: 0.4,
+            size: 4,
+          });
         }
         if (lapDone) {
           const lapTime = s.t - s.player.lapStart;
@@ -208,7 +227,8 @@ export function TurboLaps({ api, paused }: GameProps<unknown, Progress>) {
     ctx.fillStyle = 'rgba(22, 101, 52, 0.6)';
     const gx0 = Math.floor((s.cam.x - W) / 80) * 80;
     const gy0 = Math.floor((s.cam.y - H) / 80) * 80;
-    for (let x = gx0; x < s.cam.x + W; x += 80) for (let y = gy0; y < s.cam.y + H; y += 80) if (((x + y) / 80) % 2 === 0) ctx.fillRect(x, y, 80, 80);
+    for (let x = gx0; x < s.cam.x + W; x += 80)
+      for (let y = gy0; y < s.cam.y + H; y += 80) if (((x + y) / 80) % 2 === 0) ctx.fillRect(x, y, 80, 80);
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     ctx.strokeStyle = '#f8fafc';
@@ -258,11 +278,31 @@ export function TurboLaps({ api, paused }: GameProps<unknown, Progress>) {
     // ---- HUD
     const pos = position();
     fillRoundRect(ctx, 10, 10, 120, 58, 14, 'rgba(0,0,0,0.5)');
-    text(ctx, ORDINAL[pos - 1]!, 22, 32, { size: 24, weight: 850, align: 'left', color: pos === 1 ? '#fde047' : '#fff' });
-    text(ctx, `Lap ${Math.min(LAPS, s.player.lap + 1)}/${LAPS}`, 22, 55, { size: 13, weight: 700, align: 'left', color: '#cbd5e1' });
+    text(ctx, ORDINAL[pos - 1]!, 22, 32, {
+      size: 24,
+      weight: 850,
+      align: 'left',
+      color: pos === 1 ? '#fde047' : '#fff',
+    });
+    text(ctx, `Lap ${Math.min(LAPS, s.player.lap + 1)}/${LAPS}`, 22, 55, {
+      size: 13,
+      weight: 700,
+      align: 'left',
+      color: '#cbd5e1',
+    });
     fillRoundRect(ctx, W - 130, 10, 120, 58, 14, 'rgba(0,0,0,0.5)');
-    text(ctx, formatClock(s.player.finished ? s.player.finishTime : s.t, true), W - 20, 32, { size: 20, weight: 800, align: 'right' });
-    text(ctx, api.progress ? `Ghost ${formatClock(api.progress.bestTime / 1000, true)}` : 'No ghost yet', W - 20, 55, { size: 12, align: 'right', color: '#cbd5e1' });
+    text(ctx, formatClock(s.player.finished ? s.player.finishTime : s.t, true), W - 20, 32, {
+      size: 20,
+      weight: 800,
+      align: 'right',
+    });
+    text(
+      ctx,
+      api.progress ? `Ghost ${formatClock(api.progress.bestTime / 1000, true)}` : 'No ghost yet',
+      W - 20,
+      55,
+      { size: 12, align: 'right', color: '#cbd5e1' },
+    );
     // minimap
     const mm = 0.07;
     ctx.save();
@@ -287,14 +327,37 @@ export function TurboLaps({ api, paused }: GameProps<unknown, Progress>) {
 
     if (s.countdown > 0) {
       const n = Math.ceil(s.countdown);
-      text(ctx, n > 3 ? '' : String(n), W / 2, H / 2 - 40, { size: 90, weight: 900, stroke: 'rgba(0,0,0,0.5)', strokeWidth: 10 });
+      text(ctx, n > 3 ? '' : String(n), W / 2, H / 2 - 40, {
+        size: 90,
+        weight: 900,
+        stroke: 'rgba(0,0,0,0.5)',
+        strokeWidth: 10,
+      });
     } else if (s.t < 0.8) {
-      text(ctx, 'GO!', W / 2, H / 2 - 40, { size: 80, weight: 900, color: '#4ade80', stroke: 'rgba(0,0,0,0.5)', strokeWidth: 10 });
+      text(ctx, 'GO!', W / 2, H / 2 - 40, {
+        size: 80,
+        weight: 900,
+        color: '#4ade80',
+        stroke: 'rgba(0,0,0,0.5)',
+        strokeWidth: 10,
+      });
     }
     if (s.lapFlash > 0 && !s.player.finished) {
-      text(ctx, `Lap ${formatClock(s.lastLapTime, true)}`, W / 2, 100, { size: 22, weight: 800, color: '#fde047', alpha: Math.min(1, s.lapFlash) });
+      text(ctx, `Lap ${formatClock(s.lastLapTime, true)}`, W / 2, 100, {
+        size: 22,
+        weight: 800,
+        color: '#fde047',
+        alpha: Math.min(1, s.lapFlash),
+      });
     }
-    if (s.player.finished) text(ctx, `${ORDINAL[pos - 1]} place!`, W / 2, H / 2 - 40, { size: 44, weight: 900, color: pos === 1 ? '#fde047' : '#fff', stroke: 'rgba(0,0,0,0.5)', strokeWidth: 8 });
+    if (s.player.finished)
+      text(ctx, `${ORDINAL[pos - 1]} place!`, W / 2, H / 2 - 40, {
+        size: 44,
+        weight: 900,
+        color: pos === 1 ? '#fde047' : '#fff',
+        stroke: 'rgba(0,0,0,0.5)',
+        strokeWidth: 8,
+      });
   }, !paused);
 
   return (
@@ -312,16 +375,29 @@ export function TurboLaps({ api, paused }: GameProps<unknown, Progress>) {
       <ControlBar
         left={
           <>
-            <TouchButton label="Steer left" onPress={() => (s.touchSteer = -1)} onRelease={() => (s.touchSteer = 0)}>
+            <TouchButton
+              label="Steer left"
+              onPress={() => (s.touchSteer = -1)}
+              onRelease={() => (s.touchSteer = 0)}
+            >
               ◀
             </TouchButton>
-            <TouchButton label="Steer right" onPress={() => (s.touchSteer = 1)} onRelease={() => (s.touchSteer = 0)}>
+            <TouchButton
+              label="Steer right"
+              onPress={() => (s.touchSteer = 1)}
+              onRelease={() => (s.touchSteer = 0)}
+            >
               ▶
             </TouchButton>
           </>
         }
         right={
-          <TouchButton label="Brake" size="small" onPress={() => (s.brake = true)} onRelease={() => (s.brake = false)}>
+          <TouchButton
+            label="Brake"
+            size="small"
+            onPress={() => (s.brake = true)}
+            onRelease={() => (s.brake = false)}
+          >
             ⏷
           </TouchButton>
         }

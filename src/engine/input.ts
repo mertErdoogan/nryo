@@ -30,7 +30,10 @@ export function isGameKeyEvent(e: KeyboardEvent): boolean {
  * Discrete key presses (e.code). Prevents page scrolling for game keys.
  * Return `false` from the handler to let the event propagate normally.
  */
-export function useKeyDown(handler: (code: string, e: KeyboardEvent) => void | boolean, active: boolean): void {
+export function useKeyDown(
+  handler: (code: string, e: KeyboardEvent) => void | boolean,
+  active: boolean,
+): void {
   const ref = useRef(handler);
   useLayoutEffect(() => {
     ref.current = handler;
@@ -78,8 +81,11 @@ export function useHeldKeys(active: boolean): React.RefObject<Set<string>> {
 
 /** -1, 0 or 1 on each axis from arrow keys / WASD. */
 export function axisFromKeys(keys: Set<string>): { x: number; y: number } {
-  const x = (keys.has('ArrowRight') || keys.has('KeyD') ? 1 : 0) - (keys.has('ArrowLeft') || keys.has('KeyA') ? 1 : 0);
-  const y = (keys.has('ArrowDown') || keys.has('KeyS') ? 1 : 0) - (keys.has('ArrowUp') || keys.has('KeyW') ? 1 : 0);
+  const x =
+    (keys.has('ArrowRight') || keys.has('KeyD') ? 1 : 0) -
+    (keys.has('ArrowLeft') || keys.has('KeyA') ? 1 : 0);
+  const y =
+    (keys.has('ArrowDown') || keys.has('KeyS') ? 1 : 0) - (keys.has('ArrowUp') || keys.has('KeyW') ? 1 : 0);
   return { x, y };
 }
 

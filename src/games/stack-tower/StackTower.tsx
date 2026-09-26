@@ -1,5 +1,13 @@
 import { useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, Shake, useGameLoop, useKeyDown, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  Shake,
+  useGameLoop,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView } from '../../engine';
 import { fillRoundRect, hsl, prompt, text } from '../../engine/draw';
 import type { GameProps } from '../../platform/types';
@@ -42,7 +50,11 @@ export function StackTower({ api, paused }: GameProps) {
     time: 0,
     flash: 0,
   });
-  const fx = useRef({ particles: new Particles(400, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(400, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
 
   const levelY = (level: number) => H - 120 - level * BLOCK_H;
   const colorFor = (level: number, light = 55) => hsl(state.current.hue0 + level * 7, 80, light);
@@ -201,7 +213,12 @@ export function StackTower({ api, paused }: GameProps) {
     floaters.draw(ctx);
     ctx.restore();
 
-    text(ctx, String(s.score), W / 2, 70, { size: 56, weight: 800, stroke: 'rgba(0,0,0,0.25)', strokeWidth: 6 });
+    text(ctx, String(s.score), W / 2, 70, {
+      size: 56,
+      weight: 800,
+      stroke: 'rgba(0,0,0,0.25)',
+      strokeWidth: 6,
+    });
     if (s.combo >= 2) text(ctx, `Combo ×${s.combo}`, W / 2, 112, { size: 16, color: '#fde68a' });
     if (!s.started) prompt(ctx, 'Tap to drop the block', W / 2, H - 60, s.time);
   }, !paused);

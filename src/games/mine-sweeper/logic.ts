@@ -2,7 +2,10 @@ import type { Rng } from '../../lib/rng';
 
 export type Level = 'easy' | 'medium' | 'hard';
 
-export const LEVELS: Record<Level, { rows: number; cols: number; mines: number; base: number; par: number; label: string }> = {
+export const LEVELS: Record<
+  Level,
+  { rows: number; cols: number; mines: number; base: number; par: number; label: string }
+> = {
   easy: { rows: 9, cols: 9, mines: 10, base: 1000, par: 120, label: 'Easy · 9×9' },
   medium: { rows: 12, cols: 12, mines: 24, base: 2500, par: 300, label: 'Medium · 12×12' },
   hard: { rows: 18, cols: 12, mines: 42, base: 5000, par: 600, label: 'Hard · 12×18' },

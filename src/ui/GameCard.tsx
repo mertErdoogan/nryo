@@ -44,7 +44,14 @@ export const GameCard = memo(function GameCard({
     <article className={[styles.card, compact && styles.compact].filter(Boolean).join(' ')} style={style}>
       <div className={styles.thumb}>
         {game.thumbnail && (
-          <img className={styles.art} src={game.thumbnail} alt="" loading="lazy" decoding="async" draggable={false} />
+          <img
+            className={styles.art}
+            src={game.thumbnail}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+          />
         )}
         <span className={styles.play} aria-hidden="true">
           <Icon name="play" size={24} />

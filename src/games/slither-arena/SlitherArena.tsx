@@ -1,5 +1,13 @@
 import { useRef } from 'react';
-import { CanvasStage, ControlBar, TouchButton, useGameLoop, useHeldKeys, useKeyDown, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  ControlBar,
+  TouchButton,
+  useGameLoop,
+  useHeldKeys,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import { angleDiff, TAU } from '../../lib/math';
@@ -11,7 +19,23 @@ const H = 640;
 const WORLD_R = 1300;
 const FOOD_TARGET = 650;
 const BOTS = 10;
-const BOT_NAMES = ['NovaFox', 'Zippy', 'ByteBandit', 'LunaLoop', 'QuasarQ', 'MangoMax', 'Glitchy', 'RookRiley', 'BlazeBo', 'Sprocket', 'KikoKat', 'VexVolt', 'OrbitOli', 'Mochi', 'JinxJett'];
+const BOT_NAMES = [
+  'NovaFox',
+  'Zippy',
+  'ByteBandit',
+  'LunaLoop',
+  'QuasarQ',
+  'MangoMax',
+  'Glitchy',
+  'RookRiley',
+  'BlazeBo',
+  'Sprocket',
+  'KikoKat',
+  'VexVolt',
+  'OrbitOli',
+  'Mochi',
+  'JinxJett',
+];
 
 interface Snake {
   id: number;
@@ -47,8 +71,23 @@ let nextId = 1;
 function makeSnake(rng: Rng, at: Point, mass: number, player: boolean, name: string, hue: number): Snake {
   const angle = rng.range(0, TAU);
   const body: Point[] = [];
-  for (let i = 0; i < segmentsFor(mass); i++) body.push({ x: at.x - Math.cos(angle) * i * SPACING, y: at.y - Math.sin(angle) * i * SPACING });
-  return { id: nextId++, name, hue, body, angle, target: angle, mass, boost: false, alive: true, player, think: 0, kills: 0, dropTimer: 0 };
+  for (let i = 0; i < segmentsFor(mass); i++)
+    body.push({ x: at.x - Math.cos(angle) * i * SPACING, y: at.y - Math.sin(angle) * i * SPACING });
+  return {
+    id: nextId++,
+    name,
+    hue,
+    body,
+    angle,
+    target: angle,
+    mass,
+    boost: false,
+    alive: true,
+    player,
+    think: 0,
+    kills: 0,
+    dropTimer: 0,
+  };
 }
 
 export function SlitherArena({ api, paused }: GameProps) {
@@ -62,7 +101,9 @@ export function SlitherArena({ api, paused }: GameProps) {
     for (let i = 0; i < BOTS; i++) {
       let p = randomPointInWorld(rng, 200);
       while (Math.hypot(p.x, p.y) < 350) p = randomPointInWorld(rng, 200);
-      bots.push(makeSnake(rng, p, rng.range(15, 140), false, BOT_NAMES[i % BOT_NAMES.length]!, rng.int(0, 360)));
+      bots.push(
+        makeSnake(rng, p, rng.range(15, 140), false, BOT_NAMES[i % BOT_NAMES.length]!, rng.int(0, 360)),
+      );
     }
     const food: Food[] = [];
     for (let i = 0; i < FOOD_TARGET; i++) {
@@ -108,7 +149,13 @@ export function SlitherArena({ api, paused }: GameProps) {
     const drop = Math.max(8, Math.floor(snake.mass * 0.8));
     for (let i = 0; i < snake.body.length; i += Math.max(1, Math.floor(snake.body.length / drop))) {
       const p = snake.body[i]!;
-      s.food.push({ x: p.x + rng.range(-6, 6), y: p.y + rng.range(-6, 6), r: rng.range(5, 8), value: 2, hue: snake.hue });
+      s.food.push({
+        x: p.x + rng.range(-6, 6),
+        y: p.y + rng.range(-6, 6),
+        r: rng.range(5, 8),
+        value: 2,
+        hue: snake.hue,
+      });
     }
     if (snake.player) {
       s.dead = true;
@@ -144,7 +191,8 @@ export function SlitherArena({ api, paused }: GameProps) {
       if (danger(b.angle, dist)) {
         const left = !danger(b.angle - 0.9, dist) ? -0.9 : 0;
         const right = !danger(b.angle + 0.9, dist) ? 0.9 : 0;
-        b.target = b.angle + (left && right ? (rng.chance(0.5) ? left : right) : left || right || Math.PI * 0.8);
+        b.target =
+          b.angle + (left && right ? (rng.chance(0.5) ? left : right) : left || right || Math.PI * 0.8);
         return;
       }
     }
@@ -190,10 +238,12 @@ export function SlitherArena({ api, paused }: GameProps) {
         const zoom = s.cam.zoom;
         const hx = (me.body[0]!.x - s.cam.x) * zoom + W / 2;
         const hy = (me.body[0]!.y - s.cam.y) * zoom + H / 2;
-        if (Math.hypot(s.pointer.x - hx, s.pointer.y - hy) > 8) me.target = Math.atan2(s.pointer.y - hy, s.pointer.x - hx);
+        if (Math.hypot(s.pointer.x - hx, s.pointer.y - hy) > 8)
+          me.target = Math.atan2(s.pointer.y - hy, s.pointer.x - hx);
       }
       const k = keys.current;
-      const turn = (k.has('ArrowRight') || k.has('KeyD') ? 1 : 0) - (k.has('ArrowLeft') || k.has('KeyA') ? 1 : 0);
+      const turn =
+        (k.has('ArrowRight') || k.has('KeyD') ? 1 : 0) - (k.has('ArrowLeft') || k.has('KeyA') ? 1 : 0);
       if (turn) {
         s.started = true;
         me.target = me.angle + turn * 0.6;
@@ -284,7 +334,14 @@ export function SlitherArena({ api, paused }: GameProps) {
             const ph = me.body[0]!;
             while (Math.hypot(p.x - ph.x, p.y - ph.y) < 500) p = randomPointInWorld(rng, 200);
             const old = s.snakes[deadIndex]!;
-            s.snakes[deadIndex] = makeSnake(rng, p, rng.range(15, 60 + s.time * 1.5), false, rng.pick(BOT_NAMES), old.hue);
+            s.snakes[deadIndex] = makeSnake(
+              rng,
+              p,
+              rng.range(15, 60 + s.time * 1.5),
+              false,
+              rng.pick(BOT_NAMES),
+              old.hue,
+            );
           }
         }
       }
@@ -363,7 +420,11 @@ export function SlitherArena({ api, paused }: GameProps) {
       if (!sn.alive) continue;
       const r = radiusFor(sn.mass);
       const hx = sn.body[0]!;
-      if (Math.abs(hx.x - s.cam.x) > halfW + sn.body.length * SPACING || Math.abs(hx.y - s.cam.y) > halfH + sn.body.length * SPACING) continue;
+      if (
+        Math.abs(hx.x - s.cam.x) > halfW + sn.body.length * SPACING ||
+        Math.abs(hx.y - s.cam.y) > halfH + sn.body.length * SPACING
+      )
+        continue;
       // Body as one thick stroke (fast), with lighter stripes every few segments.
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -393,7 +454,8 @@ export function SlitherArena({ api, paused }: GameProps) {
         circle(ctx, ox, oy, r * 0.32, '#fff');
         circle(ctx, ox + ex * r * 0.1, oy + ey * r * 0.1, r * 0.16, '#111');
       }
-      if (!sn.player) text(ctx, sn.name, hx.x, hx.y - r - 12, { size: 11, weight: 700, color: 'rgba(255,255,255,0.55)' });
+      if (!sn.player)
+        text(ctx, sn.name, hx.x, hx.y - r - 12, { size: 11, weight: 700, color: 'rgba(255,255,255,0.55)' });
     }
     ctx.restore();
 
@@ -403,11 +465,21 @@ export function SlitherArena({ api, paused }: GameProps) {
     text(ctx, 'Leaderboard', W - 80, 24, { size: 11, weight: 700, color: '#c4b5fd' });
     ranked.slice(0, 5).forEach((sn, i) => {
       const y = 44 + i * 18;
-      text(ctx, `${i + 1}. ${sn.player ? 'You' : `${sn.name} · bot`}`, W - 142, y, { size: 11, align: 'left', weight: sn.player ? 800 : 500, color: sn.player ? '#fde047' : '#e2e8f0' });
+      text(ctx, `${i + 1}. ${sn.player ? 'You' : `${sn.name} · bot`}`, W - 142, y, {
+        size: 11,
+        align: 'left',
+        weight: sn.player ? 800 : 500,
+        color: sn.player ? '#fde047' : '#e2e8f0',
+      });
       text(ctx, String(Math.floor(sn.mass)), W - 16, y, { size: 11, align: 'right', weight: 700 });
     });
     const myRank = ranked.findIndex((sn) => sn.player) + 1;
-    if (me.alive) text(ctx, `Rank ${myRank}/${ranked.length} · Length ${Math.floor(me.mass)}`, 12, 22, { size: 13, align: 'left', weight: 700 });
+    if (me.alive)
+      text(ctx, `Rank ${myRank}/${ranked.length} · Length ${Math.floor(me.mass)}`, 12, 22, {
+        size: 13,
+        align: 'left',
+        weight: 700,
+      });
     const mmR = 42;
     ctx.save();
     ctx.translate(12 + mmR, H - 12 - mmR - (W < 700 ? 70 : 0));
@@ -420,7 +492,13 @@ export function SlitherArena({ api, paused }: GameProps) {
     for (const sn of s.snakes) {
       if (!sn.alive) continue;
       const p = sn.body[0]!;
-      circle(ctx, (p.x / WORLD_R) * mmR, (p.y / WORLD_R) * mmR, sn.player ? 3.5 : 2, sn.player ? '#fde047' : `hsl(${sn.hue} 80% 60%)`);
+      circle(
+        ctx,
+        (p.x / WORLD_R) * mmR,
+        (p.y / WORLD_R) * mmR,
+        sn.player ? 3.5 : 2,
+        sn.player ? '#fde047' : `hsl(${sn.hue} 80% 60%)`,
+      );
     }
     ctx.restore();
     if (!s.started) prompt(ctx, 'Move your finger or mouse to steer', W / 2, H * 0.72, s.time, 17);
@@ -446,7 +524,11 @@ export function SlitherArena({ api, paused }: GameProps) {
     >
       <ControlBar
         right={
-          <TouchButton label="Boost" onPress={() => (s.boostHeld = true)} onRelease={() => (s.boostHeld = false)}>
+          <TouchButton
+            label="Boost"
+            onPress={() => (s.boostHeld = true)}
+            onRelease={() => (s.boostHeld = false)}
+          >
             ⚡
           </TouchButton>
         }

@@ -1,5 +1,13 @@
 import { useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, Shake, useGameLoop, useKeyDown, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  Shake,
+  useGameLoop,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import { circleRect, rectsOverlap, TAU } from '../../lib/math';
@@ -40,7 +48,11 @@ type Obstacle = Spike | Saw | Coin;
 export function WallFlip({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
-  const fx = useRef({ particles: new Particles(400, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(400, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
   const s = useRef({
     side: 'L' as Side,
     jumping: false,
@@ -86,7 +98,14 @@ export function WallFlip({ api, paused }: GameProps) {
     const d = s.distance;
     const roll = rng.next();
     if (d > 600 && roll < 0.22) {
-      s.obstacles.push({ kind: 'saw', x: W / 2, y, r: 17, swing: d > 2500 ? 60 : 0, phase: rng.range(0, TAU) });
+      s.obstacles.push({
+        kind: 'saw',
+        x: W / 2,
+        y,
+        r: 17,
+        swing: d > 2500 ? 60 : 0,
+        phase: rng.range(0, TAU),
+      });
       return 170;
     }
     const side: Side = rng.chance(0.7) ? (s.lastSpikeSide === 'L' ? 'R' : 'L') : s.lastSpikeSide;
@@ -95,7 +114,8 @@ export function WallFlip({ api, paused }: GameProps) {
     s.lastSpikeSide = side;
     if (rng.chance(0.45)) {
       const coinSide = side === 'L' ? RIGHT_X : LEFT_X;
-      for (let i = 0; i < 3; i++) s.obstacles.push({ kind: 'coin', x: coinSide, y: y - h / 2 - 30 + i * 30, taken: false });
+      for (let i = 0; i < 3; i++)
+        s.obstacles.push({ kind: 'coin', x: coinSide, y: y - h / 2 - 30 + i * 30, taken: false });
     }
     // Minimum spacing leaves time for one flip at current speed.
     return Math.max(h + SIZE + s.speed * (JUMP_TIME + 0.22), 200 - Math.min(40, d / 100));
@@ -106,7 +126,13 @@ export function WallFlip({ api, paused }: GameProps) {
     s.dead = true;
     s.deadTimer = 0.9;
     fx.current.shake.add(12);
-    fx.current.particles.burst(s.x, RUNNER_Y, { count: 36, colors: ['#22d3ee', '#a5f3fc', '#fff'], speed: 280, life: 0.8, shape: 'square' });
+    fx.current.particles.burst(s.x, RUNNER_Y, {
+      count: 36,
+      colors: ['#22d3ee', '#a5f3fc', '#fff'],
+      speed: 280,
+      life: 0.8,
+      shape: 'square',
+    });
     api.sfx('explode');
     api.haptic([40, 30, 60]);
   };
@@ -288,9 +314,23 @@ export function WallFlip({ api, paused }: GameProps) {
     floaters.draw(ctx);
     ctx.restore();
 
-    text(ctx, String(s.score), W / 2, 56, { size: 44, weight: 800, stroke: 'rgba(0,0,0,0.4)', strokeWidth: 6 });
+    text(ctx, String(s.score), W / 2, 56, {
+      size: 44,
+      weight: 800,
+      stroke: 'rgba(0,0,0,0.4)',
+      strokeWidth: 6,
+    });
     if (!s.started) prompt(ctx, 'Tap to flip walls', W / 2, 560, s.time);
   }, !paused);
 
-  return <CanvasStage ref={view} width={W} height={H} label="Wall Flip game area" onPointerDown={flip} cursor="pointer" />;
+  return (
+    <CanvasStage
+      ref={view}
+      width={W}
+      height={H}
+      label="Wall Flip game area"
+      onPointerDown={flip}
+      cursor="pointer"
+    />
+  );
 }

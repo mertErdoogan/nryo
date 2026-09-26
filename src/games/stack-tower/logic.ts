@@ -4,9 +4,7 @@ export interface Slab {
 }
 
 export type DropResult =
-  | { kind: 'miss' }
-  | { kind: 'perfect'; placed: Slab }
-  | { kind: 'cut'; placed: Slab; debris: Slab };
+  { kind: 'miss' } | { kind: 'perfect'; placed: Slab } | { kind: 'cut'; placed: Slab; debris: Slab };
 
 /** Resolve dropping `moving` onto `top`. Perfect within `tolerance` snaps to the block below. */
 export function resolveDrop(top: Slab, moving: Slab, tolerance: number): DropResult {
@@ -17,7 +15,8 @@ export function resolveDrop(top: Slab, moving: Slab, tolerance: number): DropRes
     return { kind: 'perfect', placed: { x: top.x, w: top.w } };
   }
   const placed = { x: left, w: right - left };
-  const debris = moving.x < top.x ? { x: moving.x, w: top.x - moving.x } : { x: right, w: moving.x + moving.w - right };
+  const debris =
+    moving.x < top.x ? { x: moving.x, w: top.x - moving.x } : { x: right, w: moving.x + moving.w - right };
   return { kind: 'cut', placed, debris };
 }
 

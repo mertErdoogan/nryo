@@ -1,5 +1,15 @@
 import { useRef } from 'react';
-import { axisFromKeys, CanvasStage, FloatingText, makeStars, Particles, Shake, useGameLoop, useHeldKeys, useSeededRng } from '../../engine';
+import {
+  axisFromKeys,
+  CanvasStage,
+  FloatingText,
+  makeStars,
+  Particles,
+  Shake,
+  useGameLoop,
+  useHeldKeys,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import { clamp, dist2, TAU } from '../../lib/math';
@@ -41,7 +51,11 @@ export function StarDefender({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
-  const fx = useRef({ particles: new Particles(700, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(700, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
   const s = useRef({
     x: W / 2,
     y: H - 110,
@@ -96,7 +110,8 @@ export function StarDefender({ api, paused }: GameProps) {
     const at = s.clock + 1;
     if (w % 5 === 0) {
       s.queue.push({ at, spawn: () => ({ ...makeEnemy('hover', W / 2, 60 + w * 22, true), hoverY: 110 }) });
-      for (let i = 0; i < 4; i++) s.queue.push({ at: at + 3 + i * 2, spawn: () => makeEnemy('dive', rng.range(40, W - 40), 1) });
+      for (let i = 0; i < 4; i++)
+        s.queue.push({ at: at + 3 + i * 2, spawn: () => makeEnemy('dive', rng.range(40, W - 40), 1) });
       return;
     }
     const count = 6 + w * 2;
@@ -106,7 +121,10 @@ export function StarDefender({ api, paused }: GameProps) {
       const hp = pattern === 'hover' ? 3 : w >= 4 && rng.chance(0.3) ? 2 : 1;
       const group = Math.floor(i / 4);
       const x = pattern === 'sine' ? 60 + ((group * 97) % (W - 120)) : rng.range(40, W - 40);
-      s.queue.push({ at: at + i * Math.max(0.28, 0.6 - w * 0.03) + group * 0.6, spawn: () => makeEnemy(pattern, x, hp) });
+      s.queue.push({
+        at: at + i * Math.max(0.28, 0.6 - w * 0.03) + group * 0.6,
+        spawn: () => makeEnemy(pattern, x, hp),
+      });
     }
   };
 
@@ -187,7 +205,8 @@ export function StarDefender({ api, paused }: GameProps) {
       if (s.fire <= 0) {
         s.fire = 0.17;
         const spreads = s.gun === 1 ? [0] : s.gun === 2 ? [-8, 8] : [-12, 0, 12];
-        for (const off of spreads) s.shots.push({ x: s.x + off, y: s.y - 18, vx: s.gun === 3 ? off * 6 : 0, vy: -620, enemy: false });
+        for (const off of spreads)
+          s.shots.push({ x: s.x + off, y: s.y - 18, vx: s.gun === 3 ? off * 6 : 0, vy: -620, enemy: false });
         if (Math.floor(s.clock * 6) % 2 === 0) api.sfx('shoot');
       }
 
@@ -217,11 +236,23 @@ export function StarDefender({ api, paused }: GameProps) {
               const n = 7;
               for (let i = 0; i < n; i++) {
                 const a = Math.PI / 2 + (i - (n - 1) / 2) * 0.22 + Math.sin(e.t) * 0.3;
-                s.shots.push({ x: e.x, y: e.y + 30, vx: Math.cos(a) * 190, vy: Math.sin(a) * 190, enemy: true });
+                s.shots.push({
+                  x: e.x,
+                  y: e.y + 30,
+                  vx: Math.cos(a) * 190,
+                  vy: Math.sin(a) * 190,
+                  enemy: true,
+                });
               }
             } else {
               const a = Math.atan2(s.y - e.y, s.x - e.x);
-              s.shots.push({ x: e.x, y: e.y + 10, vx: Math.cos(a) * 210, vy: Math.sin(a) * 210, enemy: true });
+              s.shots.push({
+                x: e.x,
+                y: e.y + 10,
+                vx: Math.cos(a) * 210,
+                vy: Math.sin(a) * 210,
+                enemy: true,
+              });
             }
           }
         }
@@ -250,15 +281,26 @@ export function StarDefender({ api, paused }: GameProps) {
             if (e.hp <= 0) {
               s.score += e.points;
               api.setScore(s.score);
-              particles.burst(e.x, e.y, { count: e.boss ? 80 : 14, colors: [e.color, '#fde047', '#fff'], speed: e.boss ? 320 : 200, life: e.boss ? 1.2 : 0.5 });
+              particles.burst(e.x, e.y, {
+                count: e.boss ? 80 : 14,
+                colors: [e.color, '#fde047', '#fff'],
+                speed: e.boss ? 320 : 200,
+                life: e.boss ? 1.2 : 0.5,
+              });
               floaters.add(`+${e.points}`, e.x, e.y, '#fff', e.boss ? 26 : 14, 0.6);
               if (e.boss) {
                 shake.add(16);
                 api.sfx('win');
-                for (const k of ['P', 'S', '+'] as PowerKind[]) s.powers.push({ x: e.x + rng.range(-40, 40), y: e.y, kind: k });
+                for (const k of ['P', 'S', '+'] as PowerKind[])
+                  s.powers.push({ x: e.x + rng.range(-40, 40), y: e.y, kind: k });
               } else {
                 api.sfx('hit');
-                if (rng.chance(0.07)) s.powers.push({ x: e.x, y: e.y, kind: rng.chance(0.15) ? '+' : rng.chance(0.4) ? 'S' : 'P' });
+                if (rng.chance(0.07))
+                  s.powers.push({
+                    x: e.x,
+                    y: e.y,
+                    kind: rng.chance(0.15) ? '+' : rng.chance(0.4) ? 'S' : 'P',
+                  });
               }
             }
             break;
@@ -274,7 +316,13 @@ export function StarDefender({ api, paused }: GameProps) {
           if (p.kind === 'P') s.gun = Math.min(3, s.gun + 1);
           else if (p.kind === 'S') s.shield = 1;
           else s.lives = Math.min(5, s.lives + 1);
-          floaters.add(p.kind === 'P' ? 'Power up!' : p.kind === 'S' ? 'Shield!' : '+1 life', s.x, s.y - 30, '#93c5fd', 16);
+          floaters.add(
+            p.kind === 'P' ? 'Power up!' : p.kind === 'S' ? 'Shield!' : '+1 life',
+            s.x,
+            s.y - 30,
+            '#93c5fd',
+            16,
+          );
           api.sfx('powerup');
         }
       }
@@ -372,9 +420,26 @@ export function StarDefender({ api, paused }: GameProps) {
     text(ctx, s.score.toLocaleString('en'), 14, 24, { size: 18, weight: 850, align: 'left' });
     text(ctx, '♥'.repeat(Math.max(0, s.lives)), W - 14, 24, { size: 16, align: 'right', color: '#fb7185' });
     text(ctx, `Guns ${'▮'.repeat(s.gun)}`, W - 14, 44, { size: 11, align: 'right', color: '#f9a8d4' });
-    if (s.bannerT > 0) text(ctx, s.banner, W / 2, H * 0.4, { size: 30, weight: 900, alpha: Math.min(1, s.bannerT), stroke: 'rgba(0,0,0,0.5)', strokeWidth: 6 });
+    if (s.bannerT > 0)
+      text(ctx, s.banner, W / 2, H * 0.4, {
+        size: 30,
+        weight: 900,
+        alpha: Math.min(1, s.bannerT),
+        stroke: 'rgba(0,0,0,0.5)',
+        strokeWidth: 6,
+      });
     if (!s.started) prompt(ctx, 'Drag to fly — you fire automatically', W / 2, H * 0.55, s.time, 17);
   }, !paused);
 
-  return <CanvasStage ref={view} width={W} height={H} label="Star Defender" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} />;
+  return (
+    <CanvasStage
+      ref={view}
+      width={W}
+      height={H}
+      label="Star Defender"
+      onPointerDown={onDown}
+      onPointerMove={onMove}
+      onPointerUp={onUp}
+    />
+  );
 }

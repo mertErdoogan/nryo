@@ -12,7 +12,11 @@ export function useCardFlags() {
   const daily = useTodaysChallenge();
   return useMemo(() => {
     const newIds = new Set(newestGames(GAMES).map((g) => g.id));
-    const hotIds = new Set(rankPopular(GAMES, {}).slice(0, 6).map((g) => g.id));
+    const hotIds = new Set(
+      rankPopular(GAMES, {})
+        .slice(0, 6)
+        .map((g) => g.id),
+    );
     return { stats, newIds, hotIds, dailyId: daily?.gameId ?? null };
   }, [stats, daily]);
 }

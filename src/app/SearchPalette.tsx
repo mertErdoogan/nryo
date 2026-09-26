@@ -36,7 +36,11 @@ export function SearchPalette() {
 
   const close = () => setUi({ searchOpen: false });
   const open = (id: string) => {
-    if (query.trim()) platform.analytics.track('search_performed', { query: query.trim().slice(0, 40), results: results.length });
+    if (query.trim())
+      platform.analytics.track('search_performed', {
+        query: query.trim().slice(0, 40),
+        results: results.length,
+      });
     close();
     navigate(`/games/${id}`);
   };
@@ -93,7 +97,9 @@ export function SearchPalette() {
           </div>
         </>
       )}
-      <p className={styles.hint}>{query.trim() ? `${results.length ? 'Results' : 'No results'}` : 'Popular right now'}</p>
+      <p className={styles.hint}>
+        {query.trim() ? `${results.length ? 'Results' : 'No results'}` : 'Popular right now'}
+      </p>
       {results.length === 0 ? (
         <div className={styles.none}>
           Nothing matches “{query.trim()}”. Try a category:
@@ -121,7 +127,10 @@ export function SearchPalette() {
                 open(g.id);
               }}
             >
-              <span className={styles.thumb} style={{ background: `linear-gradient(135deg, ${g.theme.from}, ${g.theme.to})` }}>
+              <span
+                className={styles.thumb}
+                style={{ background: `linear-gradient(135deg, ${g.theme.from}, ${g.theme.to})` }}
+              >
                 {g.thumbnail && <img src={g.thumbnail} alt="" />}
               </span>
               <span className={styles.info}>

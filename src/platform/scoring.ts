@@ -28,7 +28,10 @@ export function medalThreshold(meta: ScoreMeta, tier: 1 | 2 | 3): number {
 }
 
 /** The next medal to chase, or null when gold is already secured. */
-export function nextMedal(score: number | null, meta: ScoreMeta): { tier: 1 | 2 | 3; threshold: number } | null {
+export function nextMedal(
+  score: number | null,
+  meta: ScoreMeta,
+): { tier: 1 | 2 | 3; threshold: number } | null {
   const current = medalFor(score, meta);
   if (current >= 3) return null;
   const tier = (current + 1) as 1 | 2 | 3;

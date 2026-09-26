@@ -1,7 +1,11 @@
 import type { GameEntry, GameModule } from '../platform/types';
 import { GAME_METAS } from './metas';
 
-const thumbnails = import.meta.glob<string>('./*/thumb.svg', { eager: true, query: '?url', import: 'default' });
+const thumbnails = import.meta.glob<string>('./*/thumb.svg', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+});
 const loaders = import.meta.glob<{ default: GameModule }>('./*/index.tsx');
 
 function folderOf(path: string): string {

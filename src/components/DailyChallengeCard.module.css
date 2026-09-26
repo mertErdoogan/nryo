@@ -9,7 +9,11 @@
   isolation: isolate;
   border: 1px solid color-mix(in srgb, var(--card-accent) 40%, transparent);
   background:
-    radial-gradient(120% 100% at 100% 0%, color-mix(in srgb, var(--card-to) 45%, transparent), transparent 60%),
+    radial-gradient(
+      120% 100% at 100% 0%,
+      color-mix(in srgb, var(--card-to) 45%, transparent),
+      transparent 60%
+    ),
     linear-gradient(160deg, color-mix(in srgb, var(--card-from) 40%, var(--surface)), var(--surface));
   box-shadow: var(--shadow-md);
 }
@@ -86,7 +90,57 @@
   color: var(--text);
 }
 
+.week {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 12px;
+  list-style: none;
+  border-radius: var(--radius-lg);
+  background: rgb(0 0 0 / 0.22);
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.dot {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  border: 2px solid rgb(255 255 255 / 0.14);
+  color: #052e16;
+}
+
+.day[data-state='done'] .dot {
+  border-color: transparent;
+  background: #4ade80;
+}
+
+.day[data-state='tried'] .dot {
+  border-color: #fdba74;
+}
+
+.day[data-state='today'] {
+  color: #fde68a;
+}
+
+.day[data-state='today'] .dot {
+  border-color: #fde68a;
+  border-style: dashed;
+}
+
 .status {
+  margin-top: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;

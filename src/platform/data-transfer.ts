@@ -43,7 +43,8 @@ function looksLikeEnvelope(raw: string): boolean {
  * invalid entries are skipped; if nothing valid remains the import is refused.
  */
 export function importProgress(platform: Platform, text: string): ImportResult {
-  if (text.length > MAX_IMPORT_BYTES) return { ok: false, error: 'That file is too large to be a Nryo backup.' };
+  if (text.length > MAX_IMPORT_BYTES)
+    return { ok: false, error: 'That file is too large to be a Nryo backup.' };
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -67,7 +68,9 @@ export function importProgress(platform: Platform, text: string): ImportResult {
       continue;
     }
     const store = platform.storeByKey.get(key);
-    const valid = store ? store.acceptsRaw(raw) : GameSaveService.isGameDataKey(key) && looksLikeEnvelope(raw);
+    const valid = store
+      ? store.acceptsRaw(raw)
+      : GameSaveService.isGameDataKey(key) && looksLikeEnvelope(raw);
     if (valid) accepted.push([key, raw]);
     else skipped++;
   }

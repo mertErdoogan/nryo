@@ -51,8 +51,20 @@ export const ACCENTS: readonly AccentTheme[] = [
   { id: 'cyan', name: 'Electric Cyan', accent: '#06b6d4', accent2: '#6366f1', unlock: atLevel(3) },
   { id: 'sunset', name: 'Sunset Drive', accent: '#f97316', accent2: '#e11d48', unlock: atLevel(5) },
   { id: 'lime', name: 'Toxic Lime', accent: '#65a30d', accent2: '#0d9488', unlock: atLevel(8) },
-  { id: 'gold', name: 'Gold Rush', accent: '#d97706', accent2: '#db2777', unlock: withAchievement('gold-1', 'Gold Rush') },
-  { id: 'ocean', name: 'Deep Ocean', accent: '#2563eb', accent2: '#0891b2', unlock: withAchievement('daily-1', 'Daily Player') },
+  {
+    id: 'gold',
+    name: 'Gold Rush',
+    accent: '#d97706',
+    accent2: '#db2777',
+    unlock: withAchievement('gold-1', 'Gold Rush'),
+  },
+  {
+    id: 'ocean',
+    name: 'Deep Ocean',
+    accent: '#2563eb',
+    accent2: '#0891b2',
+    unlock: withAchievement('daily-1', 'Daily Player'),
+  },
 ];
 
 export const getAvatar = (id: string) => AVATARS.find((a) => a.id === id) ?? AVATARS[0]!;

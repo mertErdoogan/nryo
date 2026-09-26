@@ -14,9 +14,19 @@ interface TouchButtonProps {
 }
 
 /** Large, touch-friendly game button with press/hold semantics. */
-export function TouchButton({ label, children, onPress, onRelease, repeatMs, size = 'normal', className }: TouchButtonProps) {
+export function TouchButton({
+  label,
+  children,
+  onPress,
+  onRelease,
+  repeatMs,
+  size = 'normal',
+  className,
+}: TouchButtonProps) {
   const [pressed, setPressed] = useState(false);
-  const timers = useRef<{ delay?: ReturnType<typeof setTimeout>; repeat?: ReturnType<typeof setInterval> }>({});
+  const timers = useRef<{ delay?: ReturnType<typeof setTimeout>; repeat?: ReturnType<typeof setInterval> }>(
+    {},
+  );
   const handlers = useRef({ onPress, onRelease });
   handlers.current = { onPress, onRelease };
 
@@ -70,7 +80,15 @@ export function TouchButton({ label, children, onPress, onRelease, repeatMs, siz
 }
 
 /** Bottom control bar with left and right button groups (touch devices only by default). */
-export function ControlBar({ left, right, alwaysVisible }: { left?: ReactNode; right?: ReactNode; alwaysVisible?: boolean }) {
+export function ControlBar({
+  left,
+  right,
+  alwaysVisible,
+}: {
+  left?: ReactNode;
+  right?: ReactNode;
+  alwaysVisible?: boolean;
+}) {
   return (
     <div className={[styles.bar, !alwaysVisible && styles.touchOnly].filter(Boolean).join(' ')}>
       <div className={styles.group}>{left}</div>
@@ -133,7 +151,13 @@ export class FloatingStick {
     ctx.fill();
     ctx.globalAlpha = 0.7;
     ctx.beginPath();
-    ctx.arc(this.originX + v.x * this.radius, this.originY + v.y * this.radius, this.radius * 0.42, 0, Math.PI * 2);
+    ctx.arc(
+      this.originX + v.x * this.radius,
+      this.originY + v.y * this.radius,
+      this.radius * 0.42,
+      0,
+      Math.PI * 2,
+    );
     ctx.fill();
     ctx.restore();
   }

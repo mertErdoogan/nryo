@@ -50,7 +50,12 @@ describe('platform.recordRound', () => {
     expect(third.previousBest).toBe(12);
     expect(third.newMedal).toBe(3);
     expect(third.xp.map((l) => l.label)).toEqual(
-      expect.arrayContaining(['New personal best', 'Silver medal unlocked', 'Gold medal unlocked', 'Victory']),
+      expect.arrayContaining([
+        'New personal best',
+        'Silver medal unlocked',
+        'Gold medal unlocked',
+        'Victory',
+      ]),
     );
 
     const stats = platform.stats.get()[racer.id]!;
@@ -90,7 +95,13 @@ describe('platform.recordRound', () => {
     const challenge = platform.todaysChallenge()!;
     const game = FIXTURE_GAMES.find((g) => g.id === challenge.gameId)!;
     const good = game.score.lowerIsBetter ? challenge.target - 1 : challenge.target + 1;
-    const r = platform.recordRound({ meta: game, result: { score: good }, mode: 'daily', durationMs: 20_000, daily: challenge });
+    const r = platform.recordRound({
+      meta: game,
+      result: { score: good },
+      mode: 'daily',
+      durationMs: 20_000,
+      daily: challenge,
+    });
     expect(r.daily).toMatchObject({ completed: true, firstCompletion: true, streak: 1 });
     expect(r.xp.some((l) => l.label === 'Daily challenge complete')).toBe(true);
     expect(r.achievements.map((a) => a.id)).toContain('daily-1');
@@ -156,7 +167,12 @@ describe('progress export / import', () => {
     p.recordRound(round(9));
     expect(importProgress(p, 'not json').ok).toBe(false);
     expect(importProgress(p, JSON.stringify({ app: 'other', format: 1, data: {} })).ok).toBe(false);
-    expect(importProgress(p, JSON.stringify({ app: 'nryo-arcade', format: 1, data: { 'nryo:stats': '{"v":1,"d":"bad"}' } })).ok).toBe(false);
+    expect(
+      importProgress(
+        p,
+        JSON.stringify({ app: 'nryo-arcade', format: 1, data: { 'nryo:stats': '{"v":1,"d":"bad"}' } }),
+      ).ok,
+    ).toBe(false);
     expect(p.stats.get().racer!.best).toBe(9);
   });
 });

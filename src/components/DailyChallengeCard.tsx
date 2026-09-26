@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { getGame } from '../games/catalog';
 import { useDaily, useTodaysChallenge, useTodayKey } from '../hooks/usePlatform';
 import { formatScore } from '../lib/format';
-import { msUntilTomorrow } from '../lib/date';
+import { addDays, msUntilTomorrow, parseDateKey } from '../lib/date';
 import { liveStreak } from '../platform/services/daily';
 import { ButtonLink } from '../ui/Button';
 import { Icon } from '../ui/Icon';
@@ -52,7 +52,10 @@ export function DailyChallengeCard() {
         )}
       </div>
       <div className={styles.row}>
-        <div className={styles.thumb} style={{ background: `linear-gradient(135deg, ${game.theme.from}, ${game.theme.to})` }}>
+        <div
+          className={styles.thumb}
+          style={{ background: `linear-gradient(135deg, ${game.theme.from}, ${game.theme.to})` }}
+        >
           {game.thumbnail && <img src={game.thumbnail} alt="" />}
         </div>
         <div className={styles.info}>
@@ -65,6 +68,28 @@ export function DailyChallengeCard() {
           </p>
         </div>
       </div>
+      <ol className={styles.week} aria-label="Your last 7 days">
+        {Array.from({ length: 7 }, (_, i) => addDays(today, i - 6)).map((key) => {
+          const rec = daily.records[key];
+          const state = rec?.completedAt ? 'done' : key === today ? 'today' : rec ? 'tried' : 'missed';
+          const date = parseDateKey(key);
+          const long = date?.toLocaleDateString(undefined, { weekday: 'long' }) ?? key;
+          const label = { done: 'completed', today: 'today', tried: 'attempted', missed: 'not played' }[
+            state
+          ];
+          return (
+            <li key={key} className={styles.day} data-state={state}>
+              <span className={styles.dayName} aria-hidden="true">
+                {date?.toLocaleDateString(undefined, { weekday: 'narrow' })}
+              </span>
+              <span className={styles.dot} aria-hidden="true">
+                {state === 'done' && <Icon name="check" size={12} />}
+              </span>
+              <span className="visually-hidden">{`${long}: ${label}`}</span>
+            </li>
+          );
+        })}
+      </ol>
       <div className={styles.status}>
         <div className={styles.meta}>
           {done ? (

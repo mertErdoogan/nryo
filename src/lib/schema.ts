@@ -70,7 +70,9 @@ export const optional = <T>(inner: Schema<T>): OptionalSchema<T> => ({
 });
 
 type Shape = Record<string, Schema<unknown>>;
-type OptionalKeys<S extends Shape> = { [K in keyof S]: S[K] extends OptionalSchema<unknown> ? K : never }[keyof S];
+type OptionalKeys<S extends Shape> = {
+  [K in keyof S]: S[K] extends OptionalSchema<unknown> ? K : never;
+}[keyof S];
 type RequiredKeys<S extends Shape> = Exclude<keyof S, OptionalKeys<S>>;
 type Simplify<T> = { [K in keyof T]: T[K] } & {};
 export type ObjectType<S extends Shape> = Simplify<

@@ -45,7 +45,10 @@ export function SettingsDialog() {
     const result = importProgress(platform, text);
     setMessage(
       result.ok
-        ? { tone: 'ok', text: `Progress restored (${result.imported} items${result.skipped ? `, ${result.skipped} skipped` : ''}).` }
+        ? {
+            tone: 'ok',
+            text: `Progress restored (${result.imported} items${result.skipped ? `, ${result.skipped} skipped` : ''}).`,
+          }
         : { tone: 'error', text: result.error },
     );
     if (fileRef.current) fileRef.current.value = '';
@@ -97,8 +100,8 @@ export function SettingsDialog() {
       <div className={styles.group}>
         <p className={styles.groupTitle}>Your progress</p>
         <p className={styles.note}>
-          No account needed — scores, saves and achievements live in this browser. Download a backup to move them to
-          another device.
+          No account needed — scores, saves and achievements live in this browser. Download a backup to move
+          them to another device.
         </p>
         <div className={styles.actions}>
           <Button icon="download" size="sm" onClick={onExport}>

@@ -32,13 +32,17 @@ export function ContinueCard({ game, save, stats, lastPlayedAt, index = 0 }: Con
 
   return (
     <article className={styles.card} style={style} aria-label={game.title}>
-      <div className={styles.thumb}>{game.thumbnail && <img src={game.thumbnail} alt="" loading="lazy" />}</div>
+      <div className={styles.thumb}>
+        {game.thumbnail && <img src={game.thumbnail} alt="" loading="lazy" />}
+      </div>
       <div className={styles.info}>
         <h3 className={styles.title}>{game.title}</h3>
         <p className={styles.label}>
           {!save && stats && <Medal tier={stats.medal} size={14} />} {label}
         </p>
-        <p className={styles.when}>{save ? 'Saved' : 'Played'} {formatRelativeTime(save?.updatedAt ?? lastPlayedAt)}</p>
+        <p className={styles.when}>
+          {save ? 'Saved' : 'Played'} {formatRelativeTime(save?.updatedAt ?? lastPlayedAt)}
+        </p>
       </div>
       <div className={styles.bottom}>
         <ProgressBar

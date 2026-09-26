@@ -9,10 +9,22 @@ export interface CategoryInfo {
 }
 
 export const CATEGORIES: readonly CategoryInfo[] = [
-  { id: 'hyper-casual', label: 'Hyper Casual', emoji: '⚡', blurb: 'One touch. Instant fun.', color: '#facc15' },
+  {
+    id: 'hyper-casual',
+    label: 'Hyper Casual',
+    emoji: '⚡',
+    blurb: 'One touch. Instant fun.',
+    color: '#facc15',
+  },
   { id: 'arcade', label: 'Arcade', emoji: '🕹️', blurb: 'Classic coin-op energy.', color: '#f472b6' },
   { id: 'action', label: 'Action', emoji: '🔫', blurb: 'Shoot, dodge, survive.', color: '#f87171' },
-  { id: 'racing', label: 'Racing', emoji: '🏎️', blurb: 'Speed, traffic and tight corners.', color: '#fb923c' },
+  {
+    id: 'racing',
+    label: 'Racing',
+    emoji: '🏎️',
+    blurb: 'Speed, traffic and tight corners.',
+    color: '#fb923c',
+  },
   { id: 'puzzle', label: 'Puzzle', emoji: '🧩', blurb: 'Think, then conquer.', color: '#34d399' },
   { id: 'brain', label: 'Brain', emoji: '🧠', blurb: 'Quick thinking under pressure.', color: '#a78bfa' },
   { id: 'word', label: 'Word', emoji: '🔤', blurb: 'Letters, anagrams and guesses.', color: '#60a5fa' },

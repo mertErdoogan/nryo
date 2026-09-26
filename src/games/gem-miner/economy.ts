@@ -66,7 +66,14 @@ export const UPGRADES: Upgrade[] = [
       visible: (s: EconomyState) => (s.owned[i] ?? 0) >= need,
     })),
   ),
-  { id: 'lucky', name: 'Lucky Veins', icon: '🍀', cost: 5_000, description: '5% of taps strike a vein for ×15 gold', visible: (s) => s.clicks >= 100 || s.runEarned >= 2_000 },
+  {
+    id: 'lucky',
+    name: 'Lucky Veins',
+    icon: '🍀',
+    cost: 5_000,
+    description: '5% of taps strike a vein for ×15 gold',
+    visible: (s) => s.clicks >= 100 || s.runEarned >= 2_000,
+  },
 ];
 
 export function buildingMultiplier(index: number, upgrades: readonly string[]): number {
@@ -98,7 +105,8 @@ export function tapPower(upgrades: readonly string[], gems: number, perSecond: n
 }
 
 export const DESCEND_AT = 1_000_000;
-export const gemsForRun = (earned: number) => (earned < DESCEND_AT ? 0 : Math.floor(Math.sqrt(earned / DESCEND_AT) * 3));
+export const gemsForRun = (earned: number) =>
+  earned < DESCEND_AT ? 0 : Math.floor(Math.sqrt(earned / DESCEND_AT) * 3);
 
 export interface Goal {
   id: string;
@@ -117,7 +125,12 @@ export const GOALS: Goal[] = [
   { id: 'rate1k', label: 'Reach 1,000 gold per second', reward: 60_000, progress: (_s, ps) => [ps, 1_000] },
   { id: 'earn1m', label: 'Dig 1,000,000 gold', reward: 150_000, progress: (s) => [s.runEarned, 1_000_000] },
   { id: 'magma', label: 'Build a Magma Bore', reward: 800_000, progress: (s) => [s.owned[5] ?? 0, 1] },
-  { id: 'earn50m', label: 'Dig 50,000,000 gold', reward: 5_000_000, progress: (s) => [s.runEarned, 50_000_000] },
+  {
+    id: 'earn50m',
+    label: 'Dig 50,000,000 gold',
+    reward: 5_000_000,
+    progress: (s) => [s.runEarned, 50_000_000],
+  },
 ];
 
 /** Gold earned while away: half speed, capped at 8 hours. */

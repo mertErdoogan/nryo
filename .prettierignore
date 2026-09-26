@@ -5,3 +5,5 @@ playwright-report
 test-results
 src/games/_shared/words/*.data.ts
 package-lock.json
+public/*.svg
+src/games/*/thumb.svg

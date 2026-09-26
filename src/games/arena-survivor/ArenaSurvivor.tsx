@@ -1,5 +1,15 @@
 import { useRef, useState } from 'react';
-import { axisFromKeys, CanvasStage, FloatingStick, FloatingText, Particles, Shake, useGameLoop, useHeldKeys, useSeededRng } from '../../engine';
+import {
+  axisFromKeys,
+  CanvasStage,
+  FloatingStick,
+  FloatingText,
+  Particles,
+  Shake,
+  useGameLoop,
+  useHeldKeys,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import { clamp, dist2, TAU } from '../../lib/math';
@@ -11,13 +21,14 @@ const H = 640;
 const WORLD = 1100;
 
 type Kind = 'grunt' | 'runner' | 'tank' | 'spitter' | 'boss';
-const KINDS: Record<Kind, { hp: number; speed: number; r: number; dmg: number; xp: number; color: string }> = {
-  grunt: { hp: 20, speed: 72, r: 13, dmg: 12, xp: 1, color: '#ef4444' },
-  runner: { hp: 11, speed: 128, r: 10, dmg: 9, xp: 1, color: '#fb923c' },
-  tank: { hp: 95, speed: 46, r: 22, dmg: 22, xp: 4, color: '#a855f7' },
-  spitter: { hp: 26, speed: 62, r: 14, dmg: 10, xp: 2, color: '#22c55e' },
-  boss: { hp: 900, speed: 58, r: 40, dmg: 35, xp: 30, color: '#e11d48' },
-};
+const KINDS: Record<Kind, { hp: number; speed: number; r: number; dmg: number; xp: number; color: string }> =
+  {
+    grunt: { hp: 20, speed: 72, r: 13, dmg: 12, xp: 1, color: '#ef4444' },
+    runner: { hp: 11, speed: 128, r: 10, dmg: 9, xp: 1, color: '#fb923c' },
+    tank: { hp: 95, speed: 46, r: 22, dmg: 22, xp: 4, color: '#a855f7' },
+    spitter: { hp: 26, speed: 62, r: 14, dmg: 10, xp: 2, color: '#22c55e' },
+    boss: { hp: 900, speed: 58, r: 40, dmg: 35, xp: 30, color: '#e11d48' },
+  };
 
 interface Enemy {
   kind: Kind;
@@ -45,7 +56,11 @@ export function ArenaSurvivor({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
-  const fx = useRef({ particles: new Particles(700, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(700, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
   const stick = useRef(new FloatingStick(56)).current;
   const [choices, setChoices] = useState<Upgrade[] | null>(null);
   const s = useRef({
@@ -98,7 +113,15 @@ export function ArenaSurvivor({ api, paused }: GameProps) {
   const spawnEnemy = (W: number, kind?: Kind) => {
     const t = s.t;
     const roll = rng.next();
-    const k: Kind = kind ?? (t > 90 && roll < 0.14 ? 'spitter' : t > 40 && roll < 0.3 ? 'tank' : t > 15 && roll < 0.55 ? 'runner' : 'grunt');
+    const k: Kind =
+      kind ??
+      (t > 90 && roll < 0.14
+        ? 'spitter'
+        : t > 40 && roll < 0.3
+          ? 'tank'
+          : t > 15 && roll < 0.55
+            ? 'runner'
+            : 'grunt');
     const def = KINDS[k];
     const a = rng.range(0, TAU);
     const d = Math.hypot(W, H) / 2 + 50;
@@ -121,8 +144,14 @@ export function ArenaSurvivor({ api, paused }: GameProps) {
     if (e.hp <= 0) {
       const def = KINDS[e.kind];
       s.kills += 1;
-      fx.current.particles.burst(e.x, e.y, { count: e.kind === 'boss' ? 60 : 10, colors: [def.color, '#fff'], speed: 180, life: 0.5 });
-      for (let i = 0; i < Math.min(8, def.xp); i++) s.gems.push({ x: e.x + rng.range(-10, 10), y: e.y + rng.range(-10, 10), v: def.xp > 8 ? 4 : 1 });
+      fx.current.particles.burst(e.x, e.y, {
+        count: e.kind === 'boss' ? 60 : 10,
+        colors: [def.color, '#fff'],
+        speed: 180,
+        life: 0.5,
+      });
+      for (let i = 0; i < Math.min(8, def.xp); i++)
+        s.gems.push({ x: e.x + rng.range(-10, 10), y: e.y + rng.range(-10, 10), v: def.xp > 8 ? 4 : 1 });
       if (e.kind === 'boss') {
         fx.current.floaters.add('BOSS DOWN!', e.x, e.y - 50, '#fde047', 26, 1.4);
         api.sfx('win');
@@ -187,7 +216,16 @@ export function ArenaSurvivor({ api, paused }: GameProps) {
         const spread = 0.16;
         for (let i = 0; i < st.projectiles; i++) {
           const a = s.facing + (i - (st.projectiles - 1) / 2) * spread;
-          s.bullets.push({ x: s.x, y: s.y, vx: Math.cos(a) * 480, vy: Math.sin(a) * 480, life: 0.9, pierce: st.pierce, hostile: false, hits: new Set() });
+          s.bullets.push({
+            x: s.x,
+            y: s.y,
+            vx: Math.cos(a) * 480,
+            vy: Math.sin(a) * 480,
+            life: 0.9,
+            pierce: st.pierce,
+            hostile: false,
+            hits: new Set(),
+          });
         }
         api.sfx('shoot');
       }
@@ -208,7 +246,16 @@ export function ArenaSurvivor({ api, paused }: GameProps) {
           e.shoot -= dt;
           if (e.shoot <= 0 && d < 420) {
             e.shoot = rng.range(1.8, 2.8);
-            s.bullets.push({ x: e.x, y: e.y, vx: (dx / d) * 190, vy: (dy / d) * 190, life: 3, pierce: 0, hostile: true, hits: new Set() });
+            s.bullets.push({
+              x: e.x,
+              y: e.y,
+              vx: (dx / d) * 190,
+              vy: (dy / d) * 190,
+              life: 3,
+              pierce: 0,
+              hostile: true,
+              hits: new Set(),
+            });
           }
         }
         if (d < def.r + 14) {
@@ -330,7 +377,10 @@ export function ArenaSurvivor({ api, paused }: GameProps) {
         api.gameOver({
           score: s.score,
           stats: [
-            { label: 'Survived', value: `${Math.floor(s.t / 60)}:${String(Math.floor(s.t % 60)).padStart(2, '0')}` },
+            {
+              label: 'Survived',
+              value: `${Math.floor(s.t / 60)}:${String(Math.floor(s.t % 60)).padStart(2, '0')}`,
+            },
             { label: 'Kills', value: String(s.kills) },
             { label: 'Level', value: String(s.level) },
           ],
@@ -387,7 +437,15 @@ export function ArenaSurvivor({ api, paused }: GameProps) {
       circle(ctx, e.x + Math.cos(ang) * def.r * 0.4, e.y + Math.sin(ang) * def.r * 0.4, def.r * 0.28, '#111');
       if (e.kind === 'boss' || e.kind === 'tank') {
         fillRoundRect(ctx, e.x - def.r, e.y - def.r - 10, def.r * 2, 4, 2, 'rgba(0,0,0,0.5)');
-        fillRoundRect(ctx, e.x - def.r, e.y - def.r - 10, def.r * 2 * Math.max(0, e.hp / e.maxHp), 4, 2, '#f87171');
+        fillRoundRect(
+          ctx,
+          e.x - def.r,
+          e.y - def.r - 10,
+          def.r * 2 * Math.max(0, e.hp / e.maxHp),
+          4,
+          2,
+          '#f87171',
+        );
       }
     }
     for (const b of s.bullets) circle(ctx, b.x, b.y, b.hostile ? 6 : 4, b.hostile ? '#4ade80' : '#fde047');
@@ -422,13 +480,25 @@ export function ArenaSurvivor({ api, paused }: GameProps) {
     const barW = Math.min(W - 24, 360);
     const bx = (W - barW) / 2;
     fillRoundRect(ctx, bx, 10, barW, 12, 6, 'rgba(0,0,0,0.5)');
-    fillRoundRect(ctx, bx, 10, barW * Math.max(0, s.hp / s.stats.maxHp), 12, 6, s.hp < s.stats.maxHp * 0.3 ? '#ef4444' : '#22c55e');
+    fillRoundRect(
+      ctx,
+      bx,
+      10,
+      barW * Math.max(0, s.hp / s.stats.maxHp),
+      12,
+      6,
+      s.hp < s.stats.maxHp * 0.3 ? '#ef4444' : '#22c55e',
+    );
     fillRoundRect(ctx, bx, 26, barW, 7, 4, 'rgba(0,0,0,0.5)');
     fillRoundRect(ctx, bx, 26, barW * (s.xp / xpForLevel(s.level)), 7, 4, '#38bdf8');
     text(ctx, `Lv ${s.level}`, bx, 48, { size: 13, align: 'left', weight: 800, color: '#bae6fd' });
-    text(ctx, `${Math.floor(s.t / 60)}:${String(Math.floor(s.t % 60)).padStart(2, '0')}`, W / 2, 48, { size: 14, weight: 800 });
+    text(ctx, `${Math.floor(s.t / 60)}:${String(Math.floor(s.t % 60)).padStart(2, '0')}`, W / 2, 48, {
+      size: 14,
+      weight: 800,
+    });
     text(ctx, `☠ ${s.kills}`, bx + barW, 48, { size: 13, align: 'right', weight: 700, color: '#fca5a5' });
-    if (!s.started) prompt(ctx, 'Drag or use WASD to move', W / 2, H * 0.7, s.t + performance.now() / 1000, 18);
+    if (!s.started)
+      prompt(ctx, 'Drag or use WASD to move', W / 2, H * 0.7, s.t + performance.now() / 1000, 18);
   }, !paused);
 
   return (

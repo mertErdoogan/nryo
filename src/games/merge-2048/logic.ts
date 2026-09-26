@@ -65,7 +65,12 @@ export function move(tiles: readonly Tile[], dir: Dir): MoveResult {
       slot++;
     }
   }
-  return { tiles: moved ? out : tiles.map((t) => ({ ...t, merged: false, isNew: false })), ghosts, moved, gained };
+  return {
+    tiles: moved ? out : tiles.map((t) => ({ ...t, merged: false, isNew: false })),
+    ghosts,
+    moved,
+    gained,
+  };
 }
 
 export function emptyCells(tiles: readonly Tile[]): [number, number][] {

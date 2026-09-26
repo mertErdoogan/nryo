@@ -25,7 +25,8 @@ export function generateMap(rng: Rng, level: number, width: number, height: numb
   const count = Math.min(18, 10 + level);
   const ais = level >= 3 ? 2 : 1;
   const planets: Planet[] = [];
-  const fits = (x: number, y: number, r: number) => planets.every((p) => Math.hypot(p.x - x, p.y - y) > p.r + r + 22);
+  const fits = (x: number, y: number, r: number) =>
+    planets.every((p) => Math.hypot(p.x - x, p.y - y) > p.r + r + 22);
   planets.push({ id: 0, x: width / 2, y: height - 80, r: 30, owner: 1, ships: 30 });
   planets.push({ id: 1, x: width / 2, y: 90, r: 30, owner: 2, ships: 30 + level * 4 });
   if (ais === 2) planets.push({ id: 2, x: 60, y: height / 2 - 40, r: 26, owner: 3, ships: 24 + level * 3 });
@@ -61,7 +62,12 @@ export interface AiOrder {
 }
 
 /** Greedy AI: attack the most attractive target it can overwhelm. */
-export function aiOrders(planets: readonly Planet[], fleets: readonly Fleet[], owner: number, aggression: number): AiOrder[] {
+export function aiOrders(
+  planets: readonly Planet[],
+  fleets: readonly Fleet[],
+  owner: number,
+  aggression: number,
+): AiOrder[] {
   const mine = planets.filter((p) => p.owner === owner);
   const orders: AiOrder[] = [];
   for (const src of mine) {
@@ -71,7 +77,9 @@ export function aiOrders(planets: readonly Planet[], fleets: readonly Fleet[], o
     let bestScore = -Infinity;
     for (const t of planets) {
       if (t.id === src.id) continue;
-      const incoming = fleets.filter((f) => f.to === t.id).reduce((s, f) => s + (f.owner === owner ? f.ships : -f.ships), 0);
+      const incoming = fleets
+        .filter((f) => f.to === t.id)
+        .reduce((s, f) => s + (f.owner === owner ? f.ships : -f.ships), 0);
       const d = Math.hypot(t.x - src.x, t.y - src.y);
       if (t.owner === owner) {
         // Reinforce threatened planets.

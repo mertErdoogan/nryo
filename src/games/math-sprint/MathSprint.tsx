@@ -60,7 +60,11 @@ export function MathSprint({ api, paused }: GameProps) {
   return (
     <DomStage>
       <StatBar>
-        <Stat label="Time" value={`${Math.ceil(clock.remaining)}s`} tone={clock.remaining < 8 ? 'warn' : undefined} />
+        <Stat
+          label="Time"
+          value={`${Math.ceil(clock.remaining)}s`}
+          tone={clock.remaining < 8 ? 'warn' : undefined}
+        />
         <Stat label="Level" value={problem.tier} />
         <Stat label="Streak" value={g.current.streak} tone={g.current.streak >= 5 ? 'good' : undefined} />
       </StatBar>

@@ -29,7 +29,8 @@ import styles from './HomePage.module.css';
 
 function greeting(name: string, returning: boolean): string {
   const hour = new Date().getHours();
-  const part = hour < 5 ? 'Late night' : hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const part =
+    hour < 5 ? 'Late night' : hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   if (!returning) return 'Welcome to the arcade';
   return name ? `${part}, ${name}` : `${part} — welcome back`;
 }
@@ -139,11 +140,19 @@ export function HomePage() {
   const forYou = useMemo(() => recommendForPlayer(GAMES, stats, recent, 8), [stats, recent]);
   const fresh = useMemo(() => newestGames(GAMES, 8), []);
   const brainy = useMemo(
-    () => GAMES.filter((g) => g.categories.some((c) => c === 'brain' || c === 'word' || c === 'puzzle')).slice(0, 10),
+    () =>
+      GAMES.filter((g) => g.categories.some((c) => c === 'brain' || c === 'word' || c === 'puzzle')).slice(
+        0,
+        10,
+      ),
     [],
   );
   const fast = useMemo(
-    () => GAMES.filter((g) => g.categories.some((c) => c === 'racing' || c === 'action' || c === 'versus')).slice(0, 10),
+    () =>
+      GAMES.filter((g) => g.categories.some((c) => c === 'racing' || c === 'action' || c === 'versus')).slice(
+        0,
+        10,
+      ),
     [],
   );
 
@@ -163,8 +172,8 @@ export function HomePage() {
             Pick a game. <em>Play in seconds.</em>
           </h1>
           <p className={styles.lede}>
-            {GAMES.length} handcrafted browser games — arcade, puzzles, words, racing and strategy. Short rounds, real
-            progress, zero sign-up.
+            {GAMES.length} handcrafted browser games — arcade, puzzles, words, racing and strategy. Short
+            rounds, real progress, zero sign-up.
           </p>
           <div className={styles.ctas}>
             <Button variant="primary" size="lg" icon="shuffle" onClick={playRandom}>
@@ -195,7 +204,12 @@ export function HomePage() {
         <GameShelf games={featured} label="Play now" />
       </Section>
 
-      <Section id="categories" title="Categories" emoji="🗂️" action={{ label: 'All categories', to: '/categories' }}>
+      <Section
+        id="categories"
+        title="Categories"
+        emoji="🗂️"
+        action={{ label: 'All categories', to: '/categories' }}
+      >
         <div className={styles.categoryRow}>
           {CATEGORIES.map((c) => (
             <Link
@@ -208,7 +222,9 @@ export function HomePage() {
                 {c.emoji}
               </span>
               <span className={styles.categoryName}>{c.label}</span>
-              <span className={styles.categoryCount}>{GAMES.filter((g) => g.categories.includes(c.id)).length} games</span>
+              <span className={styles.categoryCount}>
+                {GAMES.filter((g) => g.categories.includes(c.id)).length} games
+              </span>
             </Link>
           ))}
         </div>
@@ -220,21 +236,41 @@ export function HomePage() {
         </Section>
       )}
 
-      <Section id="popular" title="Popular games" emoji="🔥" action={{ label: 'See all', to: '/games?sort=popular' }}>
+      <Section
+        id="popular"
+        title="Popular games"
+        emoji="🔥"
+        action={{ label: 'See all', to: '/games?sort=popular' }}
+      >
         <GameGrid games={popular} />
       </Section>
 
       <AdSlot placement="home-banner" />
 
-      <Section id="new" title="New arrivals" emoji="✨" action={{ label: 'See all', to: '/games?filter=new' }}>
+      <Section
+        id="new"
+        title="New arrivals"
+        emoji="✨"
+        action={{ label: 'See all', to: '/games?filter=new' }}
+      >
         <GameShelf games={fresh} label="New arrivals" />
       </Section>
 
-      <Section id="brain" title="Train your brain" emoji="🧠" action={{ label: 'More', to: '/games?category=brain' }}>
+      <Section
+        id="brain"
+        title="Train your brain"
+        emoji="🧠"
+        action={{ label: 'More', to: '/games?category=brain' }}
+      >
         <GameShelf games={brainy} label="Brain games" />
       </Section>
 
-      <Section id="adrenaline" title="Adrenaline rush" emoji="🏁" action={{ label: 'More', to: '/games?category=action' }}>
+      <Section
+        id="adrenaline"
+        title="Adrenaline rush"
+        emoji="🏁"
+        action={{ label: 'More', to: '/games?category=action' }}
+      >
         <GameShelf games={fast} label="Racing and action games" />
       </Section>
 

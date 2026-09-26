@@ -33,7 +33,13 @@ export function resizeChain(body: Point[], count: number): void {
 }
 
 /** True when a head circle overlaps any body point of another snake. */
-export function headHitsBody(head: Point, headR: number, body: readonly Point[], bodyR: number, skip = 0): boolean {
+export function headHitsBody(
+  head: Point,
+  headR: number,
+  body: readonly Point[],
+  bodyR: number,
+  skip = 0,
+): boolean {
   const lim = (headR * 0.6 + bodyR) ** 2;
   for (let i = skip; i < body.length; i += 1) {
     const p = body[i]!;

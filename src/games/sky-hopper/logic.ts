@@ -16,7 +16,14 @@ export interface Pillar {
 }
 
 /** Circle-vs-pillar collision: shafts plus the wider caps at the gap edges. */
-export function hitsPillar(bx: number, by: number, r: number, p: Pillar, width: number, floorY: number): boolean {
+export function hitsPillar(
+  bx: number,
+  by: number,
+  r: number,
+  p: Pillar,
+  width: number,
+  floorY: number,
+): boolean {
   const top = p.gapY - p.gap / 2;
   const bottom = p.gapY + p.gap / 2;
   const rects = [

@@ -54,7 +54,12 @@ export function GameInfo({ game }: { game: GameEntry }) {
             </h2>
             <div className={styles.actions}>
               <FavoriteButton gameId={game.id} title={game.title} plain withLabel size={18} />
-              <button type="button" className={styles.share} onClick={() => void shareGame(game)} aria-label={`Share ${game.title}`}>
+              <button
+                type="button"
+                className={styles.share}
+                onClick={() => void shareGame(game)}
+                aria-label={`Share ${game.title}`}
+              >
                 <Icon name="share" size={18} />
               </button>
             </div>
@@ -99,7 +104,8 @@ export function GameInfo({ game }: { game: GameEntry }) {
           <h3 className={styles.title}>Medals</h3>
           <div className={styles.medals}>
             {([3, 2, 1] as const).map((tier) => {
-              const threshold = tier === 3 ? game.medals.gold : tier === 2 ? game.medals.silver : game.medals.bronze;
+              const threshold =
+                tier === 3 ? game.medals.gold : tier === 2 ? game.medals.silver : game.medals.bronze;
               const earned = (mine?.medal ?? 0) >= tier;
               return (
                 <div key={tier} className={styles.medalRow} data-earned={earned}>
@@ -130,7 +136,8 @@ export function GameInfo({ game }: { game: GameEntry }) {
             ))}
           </ol>
           <p className={styles.note}>
-            Bots are local AI benchmarks to chase — no data leaves your browser. Your best score is saved on this device.
+            Bots are local AI benchmarks to chase — no data leaves your browser. Your best score is saved on
+            this device.
           </p>
         </section>
       </div>

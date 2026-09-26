@@ -61,10 +61,26 @@ export function SkyClimber({ api, paused }: GameProps) {
     else if (height > 300 && roll < 0.32) kind = 'moving';
     else if (height > 500 && roll < 0.45) kind = 'crumble';
     else if (height > 900 && roll < 0.55) kind = 'cloud';
-    s.platforms.push({ x: rng.range(8, W - PW - 8), y, kind, dir: rng.chance(0.5) ? 1 : -1, broken: false, used: false });
+    s.platforms.push({
+      x: rng.range(8, W - PW - 8),
+      y,
+      kind,
+      dir: rng.chance(0.5) ? 1 : -1,
+      broken: false,
+      used: false,
+    });
     // Crumbling platforms never stand alone: add a safe one nearby.
-    if (kind === 'crumble' || kind === 'cloud') s.platforms.push({ x: rng.range(8, W - PW - 8), y: y - rng.range(20, 40), kind: 'normal', dir: 1, broken: false, used: false });
-    if (height > 1500 && rng.chance(0.06)) s.drones.push({ x: rng.range(30, W - 30), y: y - 60, dir: rng.chance(0.5) ? 1 : -1 });
+    if (kind === 'crumble' || kind === 'cloud')
+      s.platforms.push({
+        x: rng.range(8, W - PW - 8),
+        y: y - rng.range(20, 40),
+        kind: 'normal',
+        dir: 1,
+        broken: false,
+        used: false,
+      });
+    if (height > 1500 && rng.chance(0.06))
+      s.drones.push({ x: rng.range(30, W - 30), y: y - 60, dir: rng.chance(0.5) ? 1 : -1 });
   };
 
   if (s.platforms.length === 0) {
@@ -121,7 +137,14 @@ export function SkyClimber({ api, paused }: GameProps) {
         if (prevFeet <= p.y && feet >= p.y && s.x > p.x - 8 && s.x < p.x + PW + 8) {
           if (p.kind === 'crumble') {
             p.broken = true;
-            particles.burst(p.x + PW / 2, p.y, { count: 12, colors: ['#a16207', '#78350f'], speed: 120, life: 0.5, gravity: 600, shape: 'square' });
+            particles.burst(p.x + PW / 2, p.y, {
+              count: 12,
+              colors: ['#a16207', '#78350f'],
+              speed: 120,
+              life: 0.5,
+              gravity: 600,
+              shape: 'square',
+            });
             api.sfx('miss');
             continue;
           }
@@ -170,7 +193,15 @@ export function SkyClimber({ api, paused }: GameProps) {
       if (score > s.maxHeight) {
         s.maxHeight = score;
         api.setScore(score);
-        if (score % 1000 < 3 && score >= 1000) floaters.add(`${Math.floor(score / 1000) * 1000}!`, W / 2, s.y - s.cam - 80 + s.cam, '#fff', 30, 1.2);
+        if (score % 1000 < 3 && score >= 1000)
+          floaters.add(
+            `${Math.floor(score / 1000) * 1000}!`,
+            W / 2,
+            s.y - s.cam - 80 + s.cam,
+            '#fff',
+            30,
+            1.2,
+          );
       }
       if (s.y - s.cam > H + 40) {
         s.dead = true;
@@ -201,13 +232,26 @@ export function SkyClimber({ api, paused }: GameProps) {
     ctx.fillRect(0, 0, W, H);
     if (skyTop > 0.3) {
       ctx.fillStyle = `rgba(255,255,255,${(skyTop - 0.3) * 0.8})`;
-      for (let i = 0; i < 40; i++) ctx.fillRect((i * 97) % W, (i * 53 - s.cam * 0.05) % H < 0 ? ((i * 53 - s.cam * 0.05) % H) + H : (i * 53 - s.cam * 0.05) % H, 2, 2);
+      for (let i = 0; i < 40; i++)
+        ctx.fillRect(
+          (i * 97) % W,
+          (i * 53 - s.cam * 0.05) % H < 0 ? ((i * 53 - s.cam * 0.05) % H) + H : (i * 53 - s.cam * 0.05) % H,
+          2,
+          2,
+        );
     }
     ctx.save();
     ctx.translate(0, -s.cam);
     for (const p of s.platforms) {
       if (p.broken) continue;
-      const color = p.kind === 'moving' ? '#3b82f6' : p.kind === 'crumble' ? '#a16207' : p.kind === 'cloud' ? '#f8fafc' : '#22c55e';
+      const color =
+        p.kind === 'moving'
+          ? '#3b82f6'
+          : p.kind === 'crumble'
+            ? '#a16207'
+            : p.kind === 'cloud'
+              ? '#f8fafc'
+              : '#22c55e';
       fillRoundRect(ctx, p.x, p.y, PW, PH, 7, color);
       ctx.fillStyle = 'rgba(255,255,255,0.35)';
       ctx.fillRect(p.x + 6, p.y + 2, PW - 12, 3);
@@ -255,9 +299,24 @@ export function SkyClimber({ api, paused }: GameProps) {
     particles.draw(ctx);
     floaters.draw(ctx);
     ctx.restore();
-    text(ctx, `${s.maxHeight} m`, W / 2, 40, { size: 32, weight: 850, stroke: 'rgba(0,0,0,0.3)', strokeWidth: 6 });
+    text(ctx, `${s.maxHeight} m`, W / 2, 40, {
+      size: 32,
+      weight: 850,
+      stroke: 'rgba(0,0,0,0.3)',
+      strokeWidth: 6,
+    });
     if (!s.started) prompt(ctx, 'Hold left or right to start', W / 2, H * 0.35, s.time, 18);
   }, !paused);
 
-  return <CanvasStage ref={view} width={W} height={H} label="Sky Climber" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} />;
+  return (
+    <CanvasStage
+      ref={view}
+      width={W}
+      height={H}
+      label="Sky Climber"
+      onPointerDown={onDown}
+      onPointerMove={onMove}
+      onPointerUp={onUp}
+    />
+  );
 }

@@ -11,7 +11,8 @@ export interface Row {
 }
 
 /** Screen y of a row's top edge given the current scroll distance and screen height. */
-export const rowTop = (index: number, scroll: number, height: number) => height - (index + 1) * ROW_H + scroll;
+export const rowTop = (index: number, scroll: number, height: number) =>
+  height - (index + 1) * ROW_H + scroll;
 
 /** Lane for a new row: avoids repeating the same lane too often. */
 export function nextLane(prev: number, roll: number): number {

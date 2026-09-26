@@ -1,5 +1,14 @@
 import { useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, Shake, useGameLoop, useHeldKeys, useKeyDown, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  Shake,
+  useGameLoop,
+  useHeldKeys,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import { clamp } from '../../lib/math';
@@ -13,7 +22,12 @@ const PADDLE_H = 12;
 const BALL_R = 6;
 
 type PowerKind = 'wide' | 'multi' | 'slow' | 'life';
-const POWER_COLORS: Record<PowerKind, string> = { wide: '#60a5fa', multi: '#f472b6', slow: '#a3e635', life: '#f43f5e' };
+const POWER_COLORS: Record<PowerKind, string> = {
+  wide: '#60a5fa',
+  multi: '#f472b6',
+  slow: '#a3e635',
+  life: '#f43f5e',
+};
 const POWER_LABEL: Record<PowerKind, string> = { wide: 'W', multi: 'M', slow: 'S', life: '♥' };
 
 interface Ball {
@@ -30,7 +44,11 @@ export function BrickBreaker({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
-  const fx = useRef({ particles: new Particles(500, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(500, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
   const s = useRef({
     level: 1,
     bricks: buildLevel(1, rng),
@@ -99,7 +117,14 @@ export function BrickBreaker({ api, paused }: GameProps) {
     s.combo += 1;
     addScore(10 * brick.maxHp + (s.combo >= 3 ? s.combo * 5 : 0));
     if (s.combo >= 3 && s.combo % 3 === 0) floaters.add(`Combo ×${s.combo}`, cx, cy, '#fde047', 16, 0.8);
-    particles.burst(cx, cy, { count: 12, colors: [HP_COLORS[brick.maxHp - 1] ?? '#fff', '#fff'], speed: 160, life: 0.5, shape: 'square', size: 5 });
+    particles.burst(cx, cy, {
+      count: 12,
+      colors: [HP_COLORS[brick.maxHp - 1] ?? '#fff', '#fff'],
+      speed: 160,
+      life: 0.5,
+      shape: 'square',
+      size: 5,
+    });
     api.sfx('score');
     if (rng.chance(0.13)) {
       const roll = rng.next();
@@ -116,7 +141,9 @@ export function BrickBreaker({ api, paused }: GameProps) {
     s.wideTimer = Math.max(0, s.wideTimer - dt);
     s.slowTimer = Math.max(0, s.slowTimer - dt);
 
-    const axis = (keys.current.has('ArrowRight') || keys.current.has('KeyD') ? 1 : 0) - (keys.current.has('ArrowLeft') || keys.current.has('KeyA') ? 1 : 0);
+    const axis =
+      (keys.current.has('ArrowRight') || keys.current.has('KeyD') ? 1 : 0) -
+      (keys.current.has('ArrowLeft') || keys.current.has('KeyA') ? 1 : 0);
     if (axis) s.targetX = s.paddleX + axis * 30;
     const pw = paddleW();
     s.targetX = clamp(s.targetX, pw / 2, W - pw / 2);
@@ -161,7 +188,10 @@ export function BrickBreaker({ api, paused }: GameProps) {
             ball.vy = Math.abs(ball.vy);
           }
           // paddle
-          if (ball.vy > 0 && collideCircleRect(ball.x, ball.y, BALL_R, s.paddleX - pw / 2, PADDLE_Y, pw, PADDLE_H)) {
+          if (
+            ball.vy > 0 &&
+            collideCircleRect(ball.x, ball.y, BALL_R, s.paddleX - pw / 2, PADDLE_Y, pw, PADDLE_H)
+          ) {
             const nv = paddleBounce((ball.x - s.paddleX) / (pw / 2), speed);
             ball.vx = nv.vx;
             ball.vy = nv.vy;
@@ -210,7 +240,12 @@ export function BrickBreaker({ api, paused }: GameProps) {
         const bonus = 200 * s.level;
         addScore(bonus);
         floaters.add(`Wall ${s.level} cleared! +${bonus}`, W / 2, H / 2, '#86efac', 22, 1.4);
-        particles.burst(W / 2, H / 2, { count: 60, colors: ['#f472b6', '#c084fc', '#60a5fa', '#fde047'], speed: 320, life: 1 });
+        particles.burst(W / 2, H / 2, {
+          count: 60,
+          colors: ['#f472b6', '#c084fc', '#60a5fa', '#fde047'],
+          speed: 320,
+          life: 1,
+        });
         api.sfx('win');
         s.clearTimer = 1.5;
         s.balls = [];
@@ -228,7 +263,13 @@ export function BrickBreaker({ api, paused }: GameProps) {
       if (p.y > PADDLE_Y - 8 && p.y < PADDLE_Y + PADDLE_H + 8 && Math.abs(p.x - s.paddleX) < pw / 2 + 12) {
         p.y = H + 100;
         api.sfx('powerup');
-        floaters.add({ wide: 'Wide paddle!', multi: 'Multiball!', slow: 'Slow-mo!', life: '+1 life' }[p.kind], s.paddleX, PADDLE_Y - 30, POWER_COLORS[p.kind], 16);
+        floaters.add(
+          { wide: 'Wide paddle!', multi: 'Multiball!', slow: 'Slow-mo!', life: '+1 life' }[p.kind],
+          s.paddleX,
+          PADDLE_Y - 30,
+          POWER_COLORS[p.kind],
+          16,
+        );
         if (p.kind === 'wide') s.wideTimer = 12;
         else if (p.kind === 'slow') s.slowTimer = 8;
         else if (p.kind === 'life') s.lives = Math.min(5, s.lives + 1);
@@ -261,7 +302,7 @@ export function BrickBreaker({ api, paused }: GameProps) {
     ctx.fillRect(0, 38, W, 2);
 
     for (const b of s.bricks) {
-      const color = b.steel ? '#94a3b8' : HP_COLORS[b.hp - 1] ?? '#fff';
+      const color = b.steel ? '#94a3b8' : (HP_COLORS[b.hp - 1] ?? '#fff');
       fillRoundRect(ctx, b.x, b.y, BRICK_W, BRICK_H, 4, color);
       ctx.fillStyle = 'rgba(255,255,255,0.3)';
       ctx.fillRect(b.x + 3, b.y + 2, BRICK_W - 6, 3);
@@ -285,7 +326,15 @@ export function BrickBreaker({ api, paused }: GameProps) {
     const pwNow = paddleW();
     ctx.shadowColor = s.wideTimer > 0 ? '#60a5fa' : '#f472b6';
     ctx.shadowBlur = 16;
-    fillRoundRect(ctx, s.paddleX - pwNow / 2, PADDLE_Y, pwNow, PADDLE_H, 6, s.wideTimer > 0 ? '#93c5fd' : '#f9a8d4');
+    fillRoundRect(
+      ctx,
+      s.paddleX - pwNow / 2,
+      PADDLE_Y,
+      pwNow,
+      PADDLE_H,
+      6,
+      s.wideTimer > 0 ? '#93c5fd' : '#f9a8d4',
+    );
     ctx.shadowBlur = 0;
     for (const b of s.balls) {
       ctx.shadowColor = '#fff';

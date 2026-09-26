@@ -27,7 +27,12 @@ describe('PersistentStore', () => {
   });
 
   it('recovers from corrupted JSON, wrong shapes and future versions', () => {
-    for (const raw of ['{not json', JSON.stringify({ v: 2, d: { count: -1 } }), JSON.stringify({ v: 9, d: { count: 1 } }), '"string"']) {
+    for (const raw of [
+      '{not json',
+      JSON.stringify({ v: 2, d: { count: -1 } }),
+      JSON.stringify({ v: 9, d: { count: 1 } }),
+      '"string"',
+    ]) {
       const driver = createMemoryDriver({ [`${KEY_PREFIX}test`]: raw });
       expect(new PersistentStore(driver, options).get()).toEqual({ count: 0 });
     }
@@ -39,13 +44,19 @@ describe('PersistentStore', () => {
       migrate: (_from, data) => ({ count: (data as { n: number }).n }),
     });
     expect(migrated).toEqual({ count: 4 });
-    const repaired = decodeEnvelope(JSON.stringify({ v: 2, d: { count: 'x' } }), { ...options, repair: () => ({ count: 1 }) });
+    const repaired = decodeEnvelope(JSON.stringify({ v: 2, d: { count: 'x' } }), {
+      ...options,
+      repair: () => ({ count: 1 }),
+    });
     expect(repaired).toEqual({ count: 1 });
   });
 });
 
 describe('GameSaveService', () => {
-  const spec = { version: 1, is: (d: unknown): d is { score: number } => typeof (d as { score?: unknown })?.score === 'number' };
+  const spec = {
+    version: 1,
+    is: (d: unknown): d is { score: number } => typeof (d as { score?: unknown })?.score === 'number',
+  };
 
   it('writes, indexes, loads and clears saves', () => {
     let now = 1000;
@@ -72,7 +83,11 @@ describe('GameSaveService', () => {
   it('migrates old save versions when the game supports it', () => {
     const saves = new GameSaveService(createMemoryDriver());
     saves.write('a', 1, { points: 7 }, { label: '', progress: 0 });
-    const v2 = { version: 2, is: spec.is, migrate: (_v: number, d: unknown) => ({ score: (d as { points: number }).points }) };
+    const v2 = {
+      version: 2,
+      is: spec.is,
+      migrate: (_v: number, d: unknown) => ({ score: (d as { points: number }).points }),
+    };
     expect(saves.load('a', v2)).toEqual({ score: 7 });
   });
 

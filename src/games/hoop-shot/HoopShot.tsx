@@ -3,7 +3,16 @@ import { CanvasStage, FloatingText, Particles, Shake, useGameLoop, useSeededRng 
 import type { CanvasView, StagePointer } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import type { GameProps } from '../../platform/types';
-import { BALL_R, basketPoints, bounceOffPoint, GRAVITY, launchVelocity, RIM_HALF, RIM_R, type Ball } from './physics';
+import {
+  BALL_R,
+  basketPoints,
+  bounceOffPoint,
+  GRAVITY,
+  launchVelocity,
+  RIM_HALF,
+  RIM_R,
+  type Ball,
+} from './physics';
 
 const W = 360;
 const H = 640;
@@ -13,7 +22,11 @@ const LIVES = 3;
 export function HoopShot({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
-  const fx = useRef({ particles: new Particles(300, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(300, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
   const s = useRef({
     ball: { x: W / 2, y: FLOOR - BALL_R - 40, vx: 0, vy: 0 } as Ball,
     home: { x: W / 2, y: FLOOR - BALL_R - 40 },
@@ -59,7 +72,13 @@ export function HoopShot({ api, paused }: GameProps) {
       s.streak = 0;
       api.sfx('miss');
       api.haptic(40);
-      fx.current.floaters.add(s.misses >= LIVES ? 'Game over' : `Miss! ${LIVES - s.misses} left`, W / 2, H / 2, '#fca5a5', 22);
+      fx.current.floaters.add(
+        s.misses >= LIVES ? 'Game over' : `Miss! ${LIVES - s.misses} left`,
+        W / 2,
+        H / 2,
+        '#fca5a5',
+        22,
+      );
       if (s.misses >= LIVES) {
         s.over = true;
         s.overTimer = 1;
@@ -101,7 +120,8 @@ export function HoopShot({ api, paused }: GameProps) {
     const h = s.hoop;
     // hoop movement ramps up with makes
     h.t += dt;
-    if (s.makes >= 5) h.x = h.baseX + Math.sin(h.t * (s.makes >= 15 ? 1.6 : 0.9)) * Math.min(70, 30 + s.makes * 2);
+    if (s.makes >= 5)
+      h.x = h.baseX + Math.sin(h.t * (s.makes >= 15 ? 1.6 : 0.9)) * Math.min(70, 30 + s.makes * 2);
     if (s.makes >= 15) h.y = h.baseY + Math.sin(h.t * 1.3) * 25;
     h.x = Math.max(60, Math.min(W - 60, h.x));
     const board = h.side > 0 ? h.x + RIM_HALF + 8 : h.x - RIM_HALF - 8;
@@ -140,7 +160,14 @@ export function HoopShot({ api, paused }: GameProps) {
           b.vx = -Math.abs(b.vx) * 0.7;
         }
         // score: crossing the rim plane downward inside the hoop
-        if (!s.scored && prevY < h.y && b.y >= h.y && b.vy > 0 && b.x > h.x - RIM_HALF + 4 && b.x < h.x + RIM_HALF - 4) {
+        if (
+          !s.scored &&
+          prevY < h.y &&
+          b.y >= h.y &&
+          b.vy > 0 &&
+          b.x > h.x - RIM_HALF + 4 &&
+          b.x < h.x + RIM_HALF - 4
+        ) {
           s.scored = true;
           s.makes += 1;
           s.streak += 1;
@@ -150,9 +177,21 @@ export function HoopShot({ api, paused }: GameProps) {
           s.score += pts;
           api.setScore(s.score);
           s.netWave = 1;
-          floaters.add(swish ? `SWISH! +${pts}` : `+${pts}`, h.x, h.y - 40, swish ? '#fde047' : '#fff', swish ? 26 : 22);
-          if (s.streak === 3 || s.streak === 6) floaters.add(s.streak === 6 ? 'UNSTOPPABLE ×3' : 'ON FIRE ×2', W / 2, 120, '#fb923c', 24, 1.3);
-          particles.burst(h.x, h.y + 20, { count: swish ? 30 : 16, colors: ['#fde047', '#fb923c', '#fff'], speed: 200, life: 0.6 });
+          floaters.add(
+            swish ? `SWISH! +${pts}` : `+${pts}`,
+            h.x,
+            h.y - 40,
+            swish ? '#fde047' : '#fff',
+            swish ? 26 : 22,
+          );
+          if (s.streak === 3 || s.streak === 6)
+            floaters.add(s.streak === 6 ? 'UNSTOPPABLE ×3' : 'ON FIRE ×2', W / 2, 120, '#fb923c', 24, 1.3);
+          particles.burst(h.x, h.y + 20, {
+            count: swish ? 30 : 16,
+            colors: ['#fde047', '#fb923c', '#fff'],
+            speed: 200,
+            life: 0.6,
+          });
           api.sfx(swish ? 'perfect' : 'score');
           api.haptic(20);
         }
@@ -267,11 +306,32 @@ export function HoopShot({ api, paused }: GameProps) {
     floaters.draw(ctx);
     ctx.restore();
 
-    text(ctx, String(s.score), W / 2, 56, { size: 44, weight: 850, stroke: 'rgba(0,0,0,0.35)', strokeWidth: 6 });
+    text(ctx, String(s.score), W / 2, 56, {
+      size: 44,
+      weight: 850,
+      stroke: 'rgba(0,0,0,0.35)',
+      strokeWidth: 6,
+    });
     text(ctx, '🏀'.repeat(Math.max(0, LIVES - s.misses)), 14, 24, { size: 16, align: 'left' });
-    if (s.streak >= 3) text(ctx, `🔥 ×${s.streak >= 6 ? 3 : 2}`, W - 14, 24, { size: 16, align: 'right', color: '#fb923c', weight: 800 });
+    if (s.streak >= 3)
+      text(ctx, `🔥 ×${s.streak >= 6 ? 3 : 2}`, W - 14, 24, {
+        size: 16,
+        align: 'right',
+        color: '#fb923c',
+        weight: 800,
+      });
     if (s.shots === 0 && !s.drag) prompt(ctx, 'Drag back and release to shoot', W / 2, H - 16, s.time, 16);
   }, !paused);
 
-  return <CanvasStage ref={view} width={W} height={H} label="Hoop Shot court" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} />;
+  return (
+    <CanvasStage
+      ref={view}
+      width={W}
+      height={H}
+      label="Hoop Shot court"
+      onPointerDown={onDown}
+      onPointerMove={onMove}
+      onPointerUp={onUp}
+    />
+  );
 }

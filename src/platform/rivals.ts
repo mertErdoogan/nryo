@@ -8,9 +8,30 @@ export interface LeaderboardEntry {
 }
 
 const BOT_NAMES = [
-  'NovaFox', 'PixelPete', 'Zippy', 'ByteBandit', 'LunaLoop', 'TurboTia', 'QuasarQ', 'MangoMax',
-  'EchoEmi', 'Glitchy', 'RookRiley', 'BlazeBo', 'Sprocket', 'KikoKat', 'VexVolt', 'OrbitOli',
-  'DashDee', 'Mochi', 'NimbusNia', 'JinxJett', 'PogoPia', 'ComboKai', 'FizzFinn', 'ArcadeAce',
+  'NovaFox',
+  'PixelPete',
+  'Zippy',
+  'ByteBandit',
+  'LunaLoop',
+  'TurboTia',
+  'QuasarQ',
+  'MangoMax',
+  'EchoEmi',
+  'Glitchy',
+  'RookRiley',
+  'BlazeBo',
+  'Sprocket',
+  'KikoKat',
+  'VexVolt',
+  'OrbitOli',
+  'DashDee',
+  'Mochi',
+  'NimbusNia',
+  'JinxJett',
+  'PogoPia',
+  'ComboKai',
+  'FizzFinn',
+  'ArcadeAce',
 ];
 
 type RivalMeta = Pick<GameMeta, 'id' | 'medals' | 'score'>;
@@ -35,7 +56,11 @@ function valueAt(meta: RivalMeta, t: number): number {
  * player's best merged in. It gives every game a "beat the next name" target
  * without needing a server — and without pretending the bots are people.
  */
-export function getLeaderboard(meta: RivalMeta, playerBest: number | null, playerName: string): LeaderboardEntry[] {
+export function getLeaderboard(
+  meta: RivalMeta,
+  playerBest: number | null,
+  playerName: string,
+): LeaderboardEntry[] {
   const seed = hashString(meta.id);
   const names = [...BOT_NAMES]
     .map((n, i) => ({ n, k: hashString(`${n}:${seed}:${i}`) }))
@@ -47,9 +72,14 @@ export function getLeaderboard(meta: RivalMeta, playerBest: number | null, playe
   const bots: LeaderboardEntry[] = BOT_POSITIONS.map((t, i) => {
     const jitter = 1 + (((hashString(`${meta.id}:${i}`) % 1000) / 1000) * 0.1 - 0.05);
     const raw = Math.max(1, valueAt(meta, t) * jitter);
-    return { name: names[i]!, score: precise ? Math.round(raw) : Math.max(1, Math.round(raw)), isPlayer: false };
+    return {
+      name: names[i]!,
+      score: precise ? Math.round(raw) : Math.max(1, Math.round(raw)),
+      isPlayer: false,
+    };
   });
-  const entries = playerBest === null ? bots : [...bots, { name: playerName, score: playerBest, isPlayer: true }];
+  const entries =
+    playerBest === null ? bots : [...bots, { name: playerName, score: playerBest, isPlayer: true }];
   return entries.sort((a, b) => (meta.score.lowerIsBetter ? a.score - b.score : b.score - a.score));
 }
 

@@ -33,4 +33,5 @@ export const approach = (value: number, target: number, step: number) =>
   value < target ? Math.min(value + step, target) : Math.max(value - step, target);
 
 /** Exponential smoothing factor independent of frame rate. */
-export const damp = (a: number, b: number, lambda: number, dt: number) => lerp(a, b, 1 - Math.exp(-lambda * dt));
+export const damp = (a: number, b: number, lambda: number, dt: number) =>
+  lerp(a, b, 1 - Math.exp(-lambda * dt));

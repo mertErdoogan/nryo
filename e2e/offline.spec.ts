@@ -10,7 +10,9 @@ test('the app and previously opened games work offline', async ({ page, context,
     return reg.active?.state;
   });
   // Let the precache finish, then take the network away.
-  await expect.poll(() => page.evaluate(async () => (await caches.keys()).length), { timeout: 15_000 }).toBeGreaterThan(0);
+  await expect
+    .poll(() => page.evaluate(async () => (await caches.keys()).length), { timeout: 15_000 })
+    .toBeGreaterThan(0);
   await page.reload();
   await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);
   await context.setOffline(true);

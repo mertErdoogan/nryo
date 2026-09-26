@@ -1,5 +1,13 @@
 import { useEffect, useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, useGameLoop, useHeldKeys, useKeyDown, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  useGameLoop,
+  useHeldKeys,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import { grid as gridSchema, num, obj, type Infer } from '../../lib/schema';
@@ -99,12 +107,18 @@ export function BounceBarrage({ api, paused }: GameProps<Save>) {
     if (!res.alive) {
       s.over = true;
       api.sfx('gameover');
-      setTimeout(() => api.gameOver({ score: s.turn - 1, stats: [{ label: 'Balls', value: String(s.balls) }] }), 700);
+      setTimeout(
+        () => api.gameOver({ score: s.turn - 1, stats: [{ label: 'Balls', value: String(s.balls) }] }),
+        700,
+      );
       return;
     }
     s.grid = res.grid;
     api.setScore(s.turn - 1);
-    api.save({ grid: s.grid, balls: s.balls, turn: s.turn, x: s.x }, { label: `Turn ${s.turn} · ${s.balls} balls`, progress: Math.min(1, s.turn / 80) });
+    api.save(
+      { grid: s.grid, balls: s.balls, turn: s.turn, x: s.x },
+      { label: `Turn ${s.turn} · ${s.balls} balls`, progress: Math.min(1, s.turn / 80) },
+    );
   };
 
   useGameLoop((dt) => {
@@ -129,7 +143,13 @@ export function BounceBarrage({ api, paused }: GameProps<Save>) {
           if (s.launchTimer <= 0) {
             s.launchTimer = 0.07;
             s.toLaunch -= 1;
-            s.flying.push({ x: s.x, y: FLOOR - BALL_R, vx: Math.cos(s.aim) * SPEED, vy: Math.sin(s.aim) * SPEED, done: false });
+            s.flying.push({
+              x: s.x,
+              y: FLOOR - BALL_R,
+              vx: Math.cos(s.aim) * SPEED,
+              vy: Math.sin(s.aim) * SPEED,
+              done: false,
+            });
           }
         }
         for (const b of s.flying) {
@@ -180,7 +200,13 @@ export function BounceBarrage({ api, paused }: GameProps<Save>) {
               }
               s.grid[rr]![cc] = val - 1;
               if (val - 1 <= 0) {
-                particles.burst(rect.x + BLOCK / 2, rect.y + BLOCK / 2, { count: 12, colors: [`hsl(${hue(val, s.turn)} 80% 60%)`, '#fff'], speed: 160, life: 0.45, shape: 'square' });
+                particles.burst(rect.x + BLOCK / 2, rect.y + BLOCK / 2, {
+                  count: 12,
+                  colors: [`hsl(${hue(val, s.turn)} 80% 60%)`, '#fff'],
+                  speed: 160,
+                  life: 0.45,
+                  shape: 'square',
+                });
                 api.sfx('score');
               } else if (rng.chance(0.3)) api.sfx('tick');
             }
@@ -228,7 +254,10 @@ export function BounceBarrage({ api, paused }: GameProps<Save>) {
           continue;
         }
         fillRoundRect(ctx, rect.x, rect.y, rect.w, rect.h, 8, `hsl(${hue(val, s.turn)} 75% 52%)`);
-        text(ctx, String(val), rect.x + BLOCK / 2, rect.y + BLOCK / 2 + 1, { size: val > 99 ? 15 : 18, weight: 850 });
+        text(ctx, String(val), rect.x + BLOCK / 2, rect.y + BLOCK / 2 + 1, {
+          size: val > 99 ? 15 : 18,
+          weight: 850,
+        });
       }
     }
     // danger line hint when blocks are close
@@ -258,9 +287,21 @@ export function BounceBarrage({ api, paused }: GameProps<Save>) {
     floaters.draw(ctx);
     text(ctx, `Turn ${s.turn}`, 14, 22, { size: 15, weight: 800, align: 'left' });
     text(ctx, `Balls ${s.balls}`, W - 14, 22, { size: 15, weight: 800, align: 'right', color: '#5eead4' });
-    if (s.turn === 1 && !s.aiming && !busy()) prompt(ctx, 'Drag to aim, release to fire', W / 2, 470, s.time, 17);
-    if (busy() && s.shotTime > 5) text(ctx, s.shotTime > 10 ? '⏩ ×3' : '⏩ ×2', W / 2, 22, { size: 13, color: '#94a3b8' });
+    if (s.turn === 1 && !s.aiming && !busy())
+      prompt(ctx, 'Drag to aim, release to fire', W / 2, 470, s.time, 17);
+    if (busy() && s.shotTime > 5)
+      text(ctx, s.shotTime > 10 ? '⏩ ×3' : '⏩ ×2', W / 2, 22, { size: 13, color: '#94a3b8' });
   }, !paused);
 
-  return <CanvasStage ref={view} width={W} height={H} label="Bounce Barrage board" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} />;
+  return (
+    <CanvasStage
+      ref={view}
+      width={W}
+      height={H}
+      label="Bounce Barrage board"
+      onPointerDown={onDown}
+      onPointerMove={onMove}
+      onPointerUp={onUp}
+    />
+  );
 }

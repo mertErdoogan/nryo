@@ -52,14 +52,30 @@
   text-decoration: line-through;
 }
 
-.n1 { color: #60a5fa; }
-.n2 { color: #4ade80; }
-.n3 { color: #f87171; }
-.n4 { color: #c084fc; }
-.n5 { color: #fb923c; }
-.n6 { color: #22d3ee; }
-.n7 { color: #f472b6; }
-.n8 { color: #e2e8f0; }
+.n1 {
+  color: #60a5fa;
+}
+.n2 {
+  color: #4ade80;
+}
+.n3 {
+  color: #f87171;
+}
+.n4 {
+  color: #c084fc;
+}
+.n5 {
+  color: #fb923c;
+}
+.n6 {
+  color: #22d3ee;
+}
+.n7 {
+  color: #f472b6;
+}
+.n8 {
+  color: #e2e8f0;
+}
 
 .picker {
   display: flex;

@@ -31,7 +31,8 @@ export function Reversi({ api, paused }: GameProps<unknown, Progress>) {
     const result = mine > theirs ? 'win' : mine === theirs ? 'draw' : 'loss';
     const score = result === 'win' ? lv.points + (mine - theirs) * 10 : result === 'draw' ? 150 : mine * 3;
     api.setScore(score);
-    if (result === 'win' && level >= unlocked && level < LEVELS.length - 1 && api.mode === 'normal') api.saveProgress({ unlocked: level + 1 });
+    if (result === 'win' && level >= unlocked && level < LEVELS.length - 1 && api.mode === 'normal')
+      api.saveProgress({ unlocked: level + 1 });
     api.sfx(result === 'win' ? 'win' : 'gameover');
     setTimeout(
       () =>
@@ -81,7 +82,13 @@ export function Reversi({ api, paused }: GameProps<unknown, Progress>) {
         <div className={styles.picker}>
           <p className={styles.pickerTitle}>Choose your opponent</p>
           {LEVELS.map((lv, i) => (
-            <button key={lv.name} type="button" className={styles.level} disabled={i > unlocked} onClick={() => setLevel(i)}>
+            <button
+              key={lv.name}
+              type="button"
+              className={styles.level}
+              disabled={i > unlocked}
+              onClick={() => setLevel(i)}
+            >
               {i > unlocked ? '🔒 ' : ''}
               {lv.name}
               <small>{i > unlocked ? `Beat ${LEVELS[i - 1]!.name}` : `${lv.points}+ pts`}</small>
@@ -95,7 +102,13 @@ export function Reversi({ api, paused }: GameProps<unknown, Progress>) {
 
   const mine = count(board, 1);
   const theirs = count(board, 2);
-  const status = done.current ? (mine > theirs ? 'You win! 🎉' : mine === theirs ? 'Draw' : 'The AI wins') : note ?? (turn === 1 ? 'Your move' : 'AI is thinking…');
+  const status = done.current
+    ? mine > theirs
+      ? 'You win! 🎉'
+      : mine === theirs
+        ? 'Draw'
+        : 'The AI wins'
+    : (note ?? (turn === 1 ? 'Your move' : 'AI is thinking…'));
 
   return (
     <DomStage>

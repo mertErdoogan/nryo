@@ -2,7 +2,15 @@ import type { ReactNode } from 'react';
 import { useId } from 'react';
 import styles from './Toggle.module.css';
 
-export function SettingRow({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+export function SettingRow({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
   return (
     <div className={styles.row}>
       <div className={styles.label}>
@@ -14,7 +22,15 @@ export function SettingRow({ title, description, children }: { title: string; de
   );
 }
 
-export function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+export function Switch({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
   return (
     <button
       type="button"

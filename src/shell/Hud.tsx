@@ -79,7 +79,9 @@ export function Hud(props: HudProps) {
           onClick={props.onPauseToggle}
         />
       )}
-      {props.canRestart && <Button variant="ghost" icon="restart" label="Restart" onClick={props.onRestart} />}
+      {props.canRestart && (
+        <Button variant="ghost" icon="restart" label="Restart" onClick={props.onRestart} />
+      )}
       <Button
         variant="ghost"
         icon={settings.sound ? 'volume' : 'mute'}

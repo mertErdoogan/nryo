@@ -5,17 +5,31 @@ import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import { arr, num, obj, type Infer } from '../../lib/schema';
 import type { GameProps, VersionedSpec } from '../../platform/types';
 import { COURSE, HOLES, scoreName, TOTAL_PAR, type HoleDef, type Mover } from './holes';
-import { applyFriction, BALL_R, bounceCircle, bounceRect, checkCup, CUP_R, inRect, MAX_SPEED, type BallState } from './physics';
+import {
+  applyFriction,
+  BALL_R,
+  bounceCircle,
+  bounceRect,
+  checkCup,
+  CUP_R,
+  inRect,
+  MAX_SPEED,
+  type BallState,
+} from './physics';
 
 const W = 360;
 const H = 600;
 const MAX_STROKES = 8;
 
-const saveSchema = obj({ hole: num({ int: true, min: 0, max: HOLES.length - 1 }), cards: arr(num({ int: true, min: 1, max: 20 }), { max: HOLES.length }) });
+const saveSchema = obj({
+  hole: num({ int: true, min: 0, max: HOLES.length - 1 }),
+  cards: arr(num({ int: true, min: 1, max: 20 }), { max: HOLES.length }),
+});
 type Save = Infer<typeof saveSchema>;
 export const saveSpec: VersionedSpec<Save> = { version: 1, is: saveSchema.is };
 
-const moverVelocity = (m: Mover & { dir: number }) => (m.axis === 'x' ? { x: m.speed * m.dir, y: 0 } : { x: 0, y: m.speed * m.dir });
+const moverVelocity = (m: Mover & { dir: number }) =>
+  m.axis === 'x' ? { x: m.speed * m.dir, y: 0 } : { x: 0, y: m.speed * m.dir };
 
 export function MiniGolf({ api, paused }: GameProps<Save>) {
   const rng = useSeededRng(api.seed);
@@ -55,14 +69,24 @@ export function MiniGolf({ api, paused }: GameProps<Save>) {
   const persist = () =>
     api.save(
       { hole: s.hole, cards: s.cards },
-      { label: `Hole ${s.hole + 1} of ${HOLES.length} · ${total()} strokes`, progress: s.hole / HOLES.length },
+      {
+        label: `Hole ${s.hole + 1} of ${HOLES.length} · ${total()} strokes`,
+        progress: s.hole / HOLES.length,
+      },
     );
 
   const finishHole = (strokes: number) => {
     const def = s.def;
     s.cards = [...s.cards, strokes];
     api.setScore(total());
-    fx.current.floaters.add(scoreName(strokes, def.par), W / 2, H / 2 - 20, strokes <= def.par ? '#fde047' : '#fff', 30, 1.4);
+    fx.current.floaters.add(
+      scoreName(strokes, def.par),
+      W / 2,
+      H / 2 - 20,
+      strokes <= def.par ? '#fde047' : '#fff',
+      30,
+      1.4,
+    );
     api.sfx(strokes < def.par ? 'win' : strokes === def.par ? 'score' : 'tap');
     s.transition = 1.4;
   };
@@ -168,7 +192,12 @@ export function MiniGolf({ api, paused }: GameProps<Save>) {
           s.sinking = 0.45;
           b.vx = 0;
           b.vy = 0;
-          particles.burst(def.cup[0], def.cup[1], { count: 24, colors: ['#fde047', '#fff', '#86efac'], speed: 160, life: 0.6 });
+          particles.burst(def.cup[0], def.cup[1], {
+            count: 24,
+            colors: ['#fde047', '#fff', '#86efac'],
+            speed: 160,
+            life: 0.6,
+          });
           break;
         } else if (cup === 'lip') {
           b.vx *= 0.8;
@@ -203,7 +232,15 @@ export function MiniGolf({ api, paused }: GameProps<Save>) {
               won: strokes <= TOTAL_PAR,
               stats: [
                 { label: 'Par', value: String(TOTAL_PAR) },
-                { label: 'Result', value: strokes === TOTAL_PAR ? 'Even' : strokes < TOTAL_PAR ? `${strokes - TOTAL_PAR}` : `+${strokes - TOTAL_PAR}` },
+                {
+                  label: 'Result',
+                  value:
+                    strokes === TOTAL_PAR
+                      ? 'Even'
+                      : strokes < TOTAL_PAR
+                        ? `${strokes - TOTAL_PAR}`
+                        : `+${strokes - TOTAL_PAR}`,
+                },
                 { label: 'Holes in one', value: String(s.cards.filter((c) => c === 1).length) },
               ],
             });
@@ -269,7 +306,15 @@ export function MiniGolf({ api, paused }: GameProps<Save>) {
       ctx.stroke();
       ctx.setLineDash([]);
       fillRoundRect(ctx, W - 34, 110, 14, 200, 7, 'rgba(0,0,0,0.4)');
-      fillRoundRect(ctx, W - 34, 110 + 200 * (1 - power), 14, 200 * power, 7, `hsl(${120 - power * 120} 90% 55%)`);
+      fillRoundRect(
+        ctx,
+        W - 34,
+        110 + 200 * (1 - power),
+        14,
+        200 * power,
+        7,
+        `hsl(${120 - power * 120} 90% 55%)`,
+      );
     }
     // ball
     const scale = s.sinking > 0 ? Math.max(0.2, s.sinking / 0.45) : 1;
@@ -282,13 +327,32 @@ export function MiniGolf({ api, paused }: GameProps<Save>) {
     floaters.draw(ctx);
 
     // header
-    text(ctx, `Hole ${s.hole + 1}/${HOLES.length} · ${def.name}`, 20, 22, { size: 15, weight: 800, align: 'left' });
+    text(ctx, `Hole ${s.hole + 1}/${HOLES.length} · ${def.name}`, 20, 22, {
+      size: 15,
+      weight: 800,
+      align: 'left',
+    });
     text(ctx, `Par ${def.par} · Strokes ${s.strokes}`, 20, 44, { size: 13, align: 'left', color: '#bbf7d0' });
     text(ctx, `Total ${total() + s.strokes}`, W - 20, 22, { size: 15, weight: 800, align: 'right' });
     const diff = total() - s.cards.reduce((a, _c, i) => a + HOLES[i]!.par, 0);
-    text(ctx, diff === 0 ? 'Even' : diff > 0 ? `+${diff}` : String(diff), W - 20, 44, { size: 13, align: 'right', color: diff <= 0 ? '#86efac' : '#fca5a5' });
-    if (s.hole === 0 && s.strokes === 0 && !s.drag) prompt(ctx, 'Drag back, then release to putt', W / 2, H - 8 - 12, s.time, 15);
+    text(ctx, diff === 0 ? 'Even' : diff > 0 ? `+${diff}` : String(diff), W - 20, 44, {
+      size: 13,
+      align: 'right',
+      color: diff <= 0 ? '#86efac' : '#fca5a5',
+    });
+    if (s.hole === 0 && s.strokes === 0 && !s.drag)
+      prompt(ctx, 'Drag back, then release to putt', W / 2, H - 8 - 12, s.time, 15);
   }, !paused);
 
-  return <CanvasStage ref={view} width={W} height={H} label="Mini Golf course" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} />;
+  return (
+    <CanvasStage
+      ref={view}
+      width={W}
+      height={H}
+      label="Mini Golf course"
+      onPointerDown={onDown}
+      onPointerMove={onMove}
+      onPointerUp={onUp}
+    />
+  );
 }

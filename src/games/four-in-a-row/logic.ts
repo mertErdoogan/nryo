@@ -56,7 +56,7 @@ function windowScore(cells: Cell[], who: Cell): number {
 /** Static evaluation from `who`'s perspective. */
 export function evaluate(b: Board, who: Cell): number {
   let score = 0;
-  for (let r = 0; r < ROWS; r++) score += (b[3]![r] === who ? 3 : b[3]![r] ? -3 : 0);
+  for (let r = 0; r < ROWS; r++) score += b[3]![r] === who ? 3 : b[3]![r] ? -3 : 0;
   for (let c = 0; c < COLS; c++) {
     for (let r = 0; r < ROWS; r++) {
       for (const [dc, dr] of DIRS) {
@@ -104,7 +104,9 @@ export function bestMove(b: Board, depth: number, random: () => number, blunder 
   for (const c of options) {
     const r = play(board, c, 2);
     const win = winningLine(board, c, r);
-    const score = win ? 100_000 : -negamax(board, depth - 1, -Infinity, Infinity, 1, 1) + (random() - 0.5) * 0.5;
+    const score = win
+      ? 100_000
+      : -negamax(board, depth - 1, -Infinity, Infinity, 1, 1) + (random() - 0.5) * 0.5;
     board[c]![r] = 0;
     if (score > bestScore) {
       bestScore = score;

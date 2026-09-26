@@ -1,10 +1,28 @@
 import { useEffect, useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, Shake, useGameLoop, useKeyDown, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  Shake,
+  useGameLoop,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { fillRoundRect, text } from '../../engine/draw';
 import { arr, grid, nullable, num, obj, type Infer } from '../../lib/schema';
 import type { GameProps, VersionedSpec } from '../../platform/types';
-import { emptyBoard, fits, fitsAnywhere, PIECES, place, placePoints, randomPiece, SIZE, type Board } from './logic';
+import {
+  emptyBoard,
+  fits,
+  fitsAnywhere,
+  PIECES,
+  place,
+  placePoints,
+  randomPiece,
+  SIZE,
+  type Board,
+} from './logic';
 
 const W = 360;
 const H = 600;
@@ -13,7 +31,20 @@ const BX = (W - CELL * SIZE) / 2;
 const BY = 64;
 const TRAY_Y = 430;
 const TRAY_CELL = 22;
-const COLORS = ['#f472b6', '#fb923c', '#facc15', '#22d3ee', '#60a5fa', '#a3e635', '#34d399', '#c084fc', '#f87171', '#818cf8', '#2dd4bf', '#fbbf24'];
+const COLORS = [
+  '#f472b6',
+  '#fb923c',
+  '#facc15',
+  '#22d3ee',
+  '#60a5fa',
+  '#a3e635',
+  '#34d399',
+  '#c084fc',
+  '#f87171',
+  '#818cf8',
+  '#2dd4bf',
+  '#fbbf24',
+];
 
 const saveSchema = obj({
   board: grid(num({ int: true, min: -1, max: 11 }), SIZE, SIZE),
@@ -29,7 +60,14 @@ function pieceSize(piece: number) {
   return { rows: Math.max(...cells.map(([r]) => r)) + 1, cols: Math.max(...cells.map(([, c]) => c)) + 1 };
 }
 
-function drawCell(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string, alpha = 1) {
+function drawCell(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  color: string,
+  alpha = 1,
+) {
   ctx.globalAlpha = alpha;
   fillRoundRect(ctx, x + 1.5, y + 1.5, size - 3, size - 3, size * 0.18, color);
   ctx.fillStyle = 'rgba(255,255,255,0.28)';
@@ -42,7 +80,11 @@ function drawCell(ctx: CanvasRenderingContext2D, x: number, y: number, size: num
 export function BlockFit({ api, paused }: GameProps<Save>) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
-  const fx = useRef({ particles: new Particles(500, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(500, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
   const deal = () => [randomPiece(rng), randomPiece(rng), randomPiece(rng)];
   const s = useRef({
     board: (api.resume?.board ?? emptyBoard()) as Board,
@@ -70,7 +112,10 @@ export function BlockFit({ api, paused }: GameProps<Save>) {
     if (left.length > 0 && left.every((p) => !fitsAnywhere(s.board, p))) {
       s.over = true;
       api.sfx('gameover');
-      setTimeout(() => api.gameOver({ score: s.score, stats: [{ label: 'Lines cleared', value: String(s.lines) }] }), 900);
+      setTimeout(
+        () => api.gameOver({ score: s.score, stats: [{ label: 'Lines cleared', value: String(s.lines) }] }),
+        900,
+      );
       return true;
     }
     return false;
@@ -100,10 +145,34 @@ export function BlockFit({ api, paused }: GameProps<Save>) {
     s.tray[slot] = null;
     api.setScore(s.score);
     if (lines > 0) {
-      for (const y of res.rows) for (let x = 0; x < SIZE; x++) s.flashes.push({ k: y * SIZE + x, t: 0.35, color: COLORS[before[y]![x]! >= 0 ? before[y]![x]! : PIECES[piece]!.color]! });
-      for (const x of res.cols) for (let y = 0; y < SIZE; y++) s.flashes.push({ k: y * SIZE + x, t: 0.35, color: COLORS[before[y]![x]! >= 0 ? before[y]![x]! : PIECES[piece]!.color]! });
-      for (const f of s.flashes) particles.burst(BX + (f.k % SIZE) * CELL + CELL / 2, BY + Math.floor(f.k / SIZE) * CELL + CELL / 2, { count: 2, color: f.color, speed: 120, life: 0.5 });
-      floaters.add(lines > 1 ? `${lines} lines! +${pts}` : `+${pts}`, W / 2, BY + CELL * 4, s.streak > 1 ? '#fde047' : '#fff', lines > 1 ? 24 : 20);
+      for (const y of res.rows)
+        for (let x = 0; x < SIZE; x++)
+          s.flashes.push({
+            k: y * SIZE + x,
+            t: 0.35,
+            color: COLORS[before[y]![x]! >= 0 ? before[y]![x]! : PIECES[piece]!.color]!,
+          });
+      for (const x of res.cols)
+        for (let y = 0; y < SIZE; y++)
+          s.flashes.push({
+            k: y * SIZE + x,
+            t: 0.35,
+            color: COLORS[before[y]![x]! >= 0 ? before[y]![x]! : PIECES[piece]!.color]!,
+          });
+      for (const f of s.flashes)
+        particles.burst(BX + (f.k % SIZE) * CELL + CELL / 2, BY + Math.floor(f.k / SIZE) * CELL + CELL / 2, {
+          count: 2,
+          color: f.color,
+          speed: 120,
+          life: 0.5,
+        });
+      floaters.add(
+        lines > 1 ? `${lines} lines! +${pts}` : `+${pts}`,
+        W / 2,
+        BY + CELL * 4,
+        s.streak > 1 ? '#fde047' : '#fff',
+        lines > 1 ? 24 : 20,
+      );
       if (s.streak > 1) floaters.add(`Streak ×${s.streak}`, W / 2, BY + CELL * 4 + 30, '#f472b6', 16);
       shake.add(3 + lines * 2);
       api.sfx(lines > 1 ? 'powerup' : 'score');
@@ -183,7 +252,8 @@ export function BlockFit({ api, paused }: GameProps<Save>) {
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
     text(ctx, s.score.toLocaleString('en'), W / 2, 34, { size: 30, weight: 850 });
-    if (s.streak > 1) text(ctx, `Streak ×${s.streak}`, W - 20, 34, { size: 13, align: 'right', color: '#f472b6' });
+    if (s.streak > 1)
+      text(ctx, `Streak ×${s.streak}`, W - 20, 34, { size: 13, align: 'right', color: '#f472b6' });
 
     ctx.save();
     shake.apply(ctx);
@@ -206,7 +276,8 @@ export function BlockFit({ api, paused }: GameProps<Save>) {
 
     // ghost preview (drag or keyboard)
     const kb = s.keyboard;
-    const ghost = s.ghost ?? (kb ? { r: kb.r, c: kb.c, ok: fits(s.board, s.tray[kb.slot]!, kb.r, kb.c) } : null);
+    const ghost =
+      s.ghost ?? (kb ? { r: kb.r, c: kb.c, ok: fits(s.board, s.tray[kb.slot]!, kb.r, kb.c) } : null);
     const ghostPiece = s.drag ? s.tray[s.drag.slot] : kb ? s.tray[kb.slot] : null;
     if (ghost && ghostPiece !== null && ghostPiece !== undefined) {
       const def = PIECES[ghostPiece]!;
@@ -221,7 +292,14 @@ export function BlockFit({ api, paused }: GameProps<Save>) {
         const r = ghost.r + dr;
         const c = ghost.c + dc;
         if (r < 0 || c < 0 || r >= SIZE || c >= SIZE) continue;
-        drawCell(ctx, BX + c * CELL, BY + r * CELL, CELL, ghost.ok ? COLORS[def.color]! : '#ef4444', ghost.ok ? 0.45 : 0.3);
+        drawCell(
+          ctx,
+          BX + c * CELL,
+          BY + r * CELL,
+          CELL,
+          ghost.ok ? COLORS[def.color]! : '#ef4444',
+          ghost.ok ? 0.45 : 0.3,
+        );
       }
     }
     particles.draw(ctx);
@@ -266,7 +344,11 @@ export function BlockFit({ api, paused }: GameProps<Save>) {
     }
     floaters.draw(ctx);
     if (s.score === 0 && s.board.every((row) => row.every((v) => v < 0)) && !s.drag) {
-      text(ctx, 'Drag a piece onto the board', W / 2, TRAY_Y - 18, { size: 15, color: '#94a3b8', weight: 600 });
+      text(ctx, 'Drag a piece onto the board', W / 2, TRAY_Y - 18, {
+        size: 15,
+        color: '#94a3b8',
+        weight: 600,
+      });
     }
   }, !paused);
 

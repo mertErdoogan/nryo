@@ -55,7 +55,11 @@ export const gameMeta = (game: GameMeta): PageMeta => {
   const cat = getCategory(game.categories[0]!);
   return {
     title: `${game.title} — Play free online | ${SITE_NAME}`,
-    description: `${game.description} Free ${cat?.label.toLowerCase() ?? ''} game — no download, no sign-up.`.replace(/\s+/g, ' '),
+    description:
+      `${game.description} Free ${cat?.label.toLowerCase() ?? ''} game — no download, no sign-up.`.replace(
+        /\s+/g,
+        ' ',
+      ),
     path: `/games/${game.id}`,
     jsonLd: {
       '@context': 'https://schema.org',

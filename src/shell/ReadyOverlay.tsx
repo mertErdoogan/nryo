@@ -48,7 +48,8 @@ export function ReadyOverlay(props: ReadyOverlayProps) {
           </span>
           {best !== null && (
             <span className={styles.pill}>
-              <Medal tier={stats?.medal ?? 0} size={16} /> Best <strong>{formatScore(best, game.score.format)}</strong>
+              <Medal tier={stats?.medal ?? 0} size={16} /> Best{' '}
+              <strong>{formatScore(best, game.score.format)}</strong>
             </span>
           )}
         </div>
@@ -87,7 +88,14 @@ export function ReadyOverlay(props: ReadyOverlayProps) {
           <div className={styles.actions}>
             {props.canContinue ? (
               <>
-                <Button ref={primaryRef} variant="primary" size="lg" icon="play" onClick={props.onContinue} disabled={loading}>
+                <Button
+                  ref={primaryRef}
+                  variant="primary"
+                  size="lg"
+                  icon="play"
+                  onClick={props.onContinue}
+                  disabled={loading}
+                >
                   Continue
                 </Button>
                 <Button size="lg" icon="restart" onClick={props.onPlay} disabled={loading}>
@@ -119,10 +127,13 @@ export function ReadyOverlay(props: ReadyOverlayProps) {
             )}
           </div>
         )}
-        {props.canContinue && props.continueLabel && <p className={styles.hint}>Saved: {props.continueLabel}</p>}
+        {props.canContinue && props.continueLabel && (
+          <p className={styles.hint}>Saved: {props.continueLabel}</p>
+        )}
         {!touch && !props.loadError && (
           <p className={styles.hint}>
-            Press <kbd className={styles.kbd}>Enter</kbd> to start · <kbd className={styles.kbd}>Esc</kbd> to pause
+            Press <kbd className={styles.kbd}>Enter</kbd> to start · <kbd className={styles.kbd}>Esc</kbd> to
+            pause
           </p>
         )}
       </div>

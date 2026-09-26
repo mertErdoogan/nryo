@@ -70,7 +70,8 @@ export function GameShell({ game }: { game: GameEntry }) {
     if (phase === 'playing') {
       segmentStartRef.current = performance.now();
       return () => {
-        if (segmentStartRef.current !== null) activeMsRef.current += performance.now() - segmentStartRef.current;
+        if (segmentStartRef.current !== null)
+          activeMsRef.current += performance.now() - segmentStartRef.current;
         segmentStartRef.current = null;
       };
     }
@@ -88,7 +89,8 @@ export function GameShell({ game }: { game: GameEntry }) {
       const mode: PlayMode = dailyAvailable ? 'daily' : 'normal';
       let resume: unknown = null;
       if (opts.resume && module.save && mode === 'normal') resume = platform.saves.load(game.id, module.save);
-      else if (!opts.resume && mode === 'normal' && platform.saves.has(game.id)) platform.saves.clear(game.id);
+      else if (!opts.resume && mode === 'normal' && platform.saves.has(game.id))
+        platform.saves.clear(game.id);
       const progress = module.progress ? platform.saves.loadProgress(game.id, module.progress) : null;
       activeMsRef.current = 0;
       scoreStore.set(0);
@@ -188,7 +190,11 @@ export function GameShell({ game }: { game: GameEntry }) {
   useEffect(
     () => () => {
       const r = runRef.current;
-      if (r && endedRunRef.current !== r.key && (phaseRef.current === 'playing' || phaseRef.current === 'paused')) {
+      if (
+        r &&
+        endedRunRef.current !== r.key &&
+        (phaseRef.current === 'playing' || phaseRef.current === 'paused')
+      ) {
         platform.analytics.track('game_abandoned', { gameId: game.id, score: scoreStore.get() });
       }
     },
@@ -210,7 +216,12 @@ export function GameShell({ game }: { game: GameEntry }) {
 
   const requestRestart = useCallback(() => {
     // Restarting a resumable game throws away saved progress — confirm first.
-    if (game.resumable && run?.mode === 'normal' && platform.saves.has(game.id) && phaseRef.current !== 'over') {
+    if (
+      game.resumable &&
+      run?.mode === 'normal' &&
+      platform.saves.has(game.id) &&
+      phaseRef.current !== 'over'
+    ) {
       if (phaseRef.current === 'playing') setPhase('paused');
       setConfirmRestart(true);
     } else doRestart();
@@ -242,7 +253,8 @@ export function GameShell({ game }: { game: GameEntry }) {
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const target = e.target as HTMLElement | null;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.closest('dialog'))) return;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.closest('dialog')))
+        return;
       const p = phaseRef.current;
       if (e.key === 'Escape' || (e.key.toLowerCase() === 'p' && p !== 'ready')) {
         if (p === 'playing') {
@@ -295,7 +307,12 @@ export function GameShell({ game }: { game: GameEntry }) {
       <div className={styles.stage} data-testid="game-stage" data-phase={phase}>
         {run && api && Component && (
           <div className={styles.gameRoot} inert={phase === 'paused' || phase === 'over' ? true : undefined}>
-            <GameErrorBoundary key={run.key} gameId={game.id} onRestart={doRestart} onExit={() => navigate('/')}>
+            <GameErrorBoundary
+              key={run.key}
+              gameId={game.id}
+              onRestart={doRestart}
+              onExit={() => navigate('/')}
+            >
               <Component key={run.key} api={api} paused={phase !== 'playing'} />
             </GameErrorBoundary>
           </div>
@@ -315,14 +332,22 @@ export function GameShell({ game }: { game: GameEntry }) {
           />
         )}
         {phase === 'paused' && !confirmRestart && (
-          <PauseOverlay game={game} onResume={resume} onRestart={requestRestart} onExit={exit} resumable={!!game.resumable} />
+          <PauseOverlay
+            game={game}
+            onResume={resume}
+            onRestart={requestRestart}
+            onExit={exit}
+            resumable={!!game.resumable}
+          />
         )}
         {phase === 'over' && outcome && (
           <ResultsOverlay game={game} outcome={outcome} onPlayAgain={playAgain} onExit={exit} />
         )}
       </div>
       <Dialog open={confirmRestart} onClose={() => setConfirmRestart(false)} title="Start over?">
-        <p style={{ color: 'var(--text-muted)' }}>Your current saved progress in {game.title} will be lost.</p>
+        <p style={{ color: 'var(--text-muted)' }}>
+          Your current saved progress in {game.title} will be lost.
+        </p>
         <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
           <Button variant="danger" icon="restart" onClick={doRestart}>
             Restart

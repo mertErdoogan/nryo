@@ -27,7 +27,10 @@ export class GameErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, info: ErrorInfo): void {
-    platform.analytics.track('game_crashed', { gameId: this.props.gameId, message: error.message.slice(0, 120) });
+    platform.analytics.track('game_crashed', {
+      gameId: this.props.gameId,
+      message: error.message.slice(0, 120),
+    });
     console.error(`Game "${this.props.gameId}" crashed`, error, info.componentStack);
   }
 

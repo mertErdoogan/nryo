@@ -20,7 +20,8 @@ function useCountUp(target: number, durationMs = 800): number {
   useEffect(() => {
     const reduce =
       document.documentElement.dataset.motion === 'reduce' ||
-      (document.documentElement.dataset.motion !== 'full' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+      (document.documentElement.dataset.motion !== 'full' &&
+        window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
     if (reduce || target === 0) {
       setValue(target);
       return;
@@ -81,13 +82,26 @@ export function ResultsOverlay({ game, outcome, onPlayAgain, onExit }: ResultsOv
   else if (outcome.previousBest === null) kicker = outcome.won ? 'Victory!' : 'First score on the board!';
 
   return (
-    <div className={styles.overlay} data-game-overlay data-testid="results-overlay" role="dialog" aria-label="Results">
+    <div
+      className={styles.overlay}
+      data-game-overlay
+      data-testid="results-overlay"
+      role="dialog"
+      aria-label="Results"
+    >
       <div className={`${styles.panel} ${styles.results}`}>
-        <p className={styles.resultKicker} data-best={outcome.isNewBest || outcome.daily?.firstCompletion === true}>
+        <p
+          className={styles.resultKicker}
+          data-best={outcome.isNewBest || outcome.daily?.firstCompletion === true}
+        >
           {kicker}
         </p>
         <div className={styles.scoreHero}>
-          <span className={styles.scoreBig} data-testid="result-score" aria-label={`Your score: ${fmt(outcome.score)}`}>
+          <span
+            className={styles.scoreBig}
+            data-testid="result-score"
+            aria-label={`Your score: ${fmt(outcome.score)}`}
+          >
             {precise ? fmt(outcome.score) : fmt(Math.round(shown))}
           </span>
           <span className={styles.scoreSub}>{game.score.label}</span>
@@ -137,8 +151,8 @@ export function ResultsOverlay({ game, outcome, onPlayAgain, onExit }: ResultsOv
               <span className={styles.cardValue}>
                 {outcome.daily.completed ? (
                   <>
-                    <Icon name="check" size={18} /> Target {fmt(outcome.daily.target)} reached · 🔥 {outcome.daily.streak}{' '}
-                    day streak
+                    <Icon name="check" size={18} /> Target {fmt(outcome.daily.target)} reached · 🔥{' '}
+                    {outcome.daily.streak} day streak
                   </>
                 ) : (
                   <>Target {fmt(outcome.daily.target)} — keep trying!</>
@@ -150,10 +164,16 @@ export function ResultsOverlay({ game, outcome, onPlayAgain, onExit }: ResultsOv
             <span className={styles.cardLabel}>Arcade bots leaderboard</span>
             <span className={styles.cardValue}>
               #{rank} of {board.length}
-              {passed > 0 && <span className={styles.cardNote}>· passed {passed} bot{passed > 1 ? 's' : ''}</span>}
+              {passed > 0 && (
+                <span className={styles.cardNote}>
+                  · passed {passed} bot{passed > 1 ? 's' : ''}
+                </span>
+              )}
             </span>
             <span className={styles.cardNote}>
-              {rival ? `Next up: ${rival.name} (bot) at ${fmt(rival.score)}` : 'You’re at the top of the board!'}
+              {rival
+                ? `Next up: ${rival.name} (bot) at ${fmt(rival.score)}`
+                : 'You’re at the top of the board!'}
             </span>
           </div>
           <div className={`${styles.card} ${styles.cardWide}`}>
@@ -168,7 +188,11 @@ export function ResultsOverlay({ game, outcome, onPlayAgain, onExit }: ResultsOv
             </div>
             <ProgressBar value={level.ratio} label="Level progress" size="thin" />
             <span className={styles.cardNote}>
-              {leveledUp ? <span className={styles.levelUp}>Level up! You’re now level {outcome.levelAfter}.</span> : `Level ${level.level} · ${level.needed - level.current} XP to next`}
+              {leveledUp ? (
+                <span className={styles.levelUp}>Level up! You’re now level {outcome.levelAfter}.</span>
+              ) : (
+                `Level ${level.level} · ${level.needed - level.current} XP to next`
+              )}
             </span>
           </div>
         </div>
@@ -184,7 +208,14 @@ export function ResultsOverlay({ game, outcome, onPlayAgain, onExit }: ResultsOv
         )}
 
         <div className={styles.actions}>
-          <Button ref={again} variant="primary" size="lg" icon="restart" onClick={onPlayAgain} data-testid="play-again">
+          <Button
+            ref={again}
+            variant="primary"
+            size="lg"
+            icon="restart"
+            onClick={onPlayAgain}
+            data-testid="play-again"
+          >
             Play Again
           </Button>
           <Button size="lg" icon="home" onClick={onExit}>
@@ -201,7 +232,10 @@ export function ResultsOverlay({ game, outcome, onPlayAgain, onExit }: ResultsOv
               className={styles.rec}
               onClick={() => platform.analytics.track('recommendation_clicked', { from: game.id, to: g.id })}
             >
-              <span className={styles.recThumb} style={{ background: `linear-gradient(135deg, ${g.theme.from}, ${g.theme.to})` }}>
+              <span
+                className={styles.recThumb}
+                style={{ background: `linear-gradient(135deg, ${g.theme.from}, ${g.theme.to})` }}
+              >
                 {g.thumbnail && <img src={g.thumbnail} alt="" loading="lazy" />}
               </span>
               <span className={styles.recTitle}>{g.title}</span>

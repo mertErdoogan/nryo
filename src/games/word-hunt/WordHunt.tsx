@@ -80,7 +80,17 @@ export function WordHunt({ api, paused }: GameProps) {
     const a = centre(cells[0]!);
     const b = centre(cells[cells.length - 1]!);
     return (
-      <line key={key} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={color} strokeWidth={8.2} strokeLinecap="round" opacity={opacity} />
+      <line
+        key={key}
+        x1={a.x}
+        y1={a.y}
+        x2={b.x}
+        y2={b.y}
+        stroke={color}
+        strokeWidth={8.2}
+        strokeLinecap="round"
+        opacity={opacity}
+      />
     );
   };
 
@@ -88,7 +98,11 @@ export function WordHunt({ api, paused }: GameProps) {
     <DomStage>
       <StatBar>
         <Stat label="Theme" value={<span className={styles.theme}>{puzzle.theme}</span>} />
-        <Stat label="Time" value={`${Math.ceil(clock.remaining)}s`} tone={clock.remaining < 15 ? 'warn' : undefined} />
+        <Stat
+          label="Time"
+          value={`${Math.ceil(clock.remaining)}s`}
+          tone={clock.remaining < 15 ? 'warn' : undefined}
+        />
         <Stat label="Found" value={`${found.length}/${puzzle.placements.length}`} />
       </StatBar>
       <TimerBar ratio={clock.remaining / ROUND} label="Time remaining" />

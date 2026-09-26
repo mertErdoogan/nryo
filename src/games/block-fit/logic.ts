@@ -19,24 +19,140 @@ const rotations = (cells: Cells, n: number): Cells[] => {
   return out;
 };
 
-const L3: Cells = [[0, 0], [1, 0], [1, 1]];
-const BIG_L: Cells = [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]];
-const T4: Cells = [[0, 0], [0, 1], [0, 2], [1, 1]];
-const S4: Cells = [[0, 1], [0, 2], [1, 0], [1, 1]];
-const L4: Cells = [[0, 0], [1, 0], [2, 0], [2, 1]];
+const L3: Cells = [
+  [0, 0],
+  [1, 0],
+  [1, 1],
+];
+const BIG_L: Cells = [
+  [0, 0],
+  [1, 0],
+  [2, 0],
+  [2, 1],
+  [2, 2],
+];
+const T4: Cells = [
+  [0, 0],
+  [0, 1],
+  [0, 2],
+  [1, 1],
+];
+const S4: Cells = [
+  [0, 1],
+  [0, 2],
+  [1, 0],
+  [1, 1],
+];
+const L4: Cells = [
+  [0, 0],
+  [1, 0],
+  [2, 0],
+  [2, 1],
+];
 
 export const PIECES: PieceDef[] = [
   { cells: [[0, 0]], color: 0, weight: 3 },
-  { cells: [[0, 0], [0, 1]], color: 1, weight: 4 },
-  { cells: [[0, 0], [1, 0]], color: 1, weight: 4 },
-  { cells: [[0, 0], [0, 1], [0, 2]], color: 2, weight: 4 },
-  { cells: [[0, 0], [1, 0], [2, 0]], color: 2, weight: 4 },
-  { cells: [[0, 0], [0, 1], [0, 2], [0, 3]], color: 3, weight: 3 },
-  { cells: [[0, 0], [1, 0], [2, 0], [3, 0]], color: 3, weight: 3 },
-  { cells: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]], color: 4, weight: 1.5 },
-  { cells: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]], color: 4, weight: 1.5 },
-  { cells: [[0, 0], [0, 1], [1, 0], [1, 1]], color: 5, weight: 4 },
-  { cells: [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]], color: 6, weight: 1.2 },
+  {
+    cells: [
+      [0, 0],
+      [0, 1],
+    ],
+    color: 1,
+    weight: 4,
+  },
+  {
+    cells: [
+      [0, 0],
+      [1, 0],
+    ],
+    color: 1,
+    weight: 4,
+  },
+  {
+    cells: [
+      [0, 0],
+      [0, 1],
+      [0, 2],
+    ],
+    color: 2,
+    weight: 4,
+  },
+  {
+    cells: [
+      [0, 0],
+      [1, 0],
+      [2, 0],
+    ],
+    color: 2,
+    weight: 4,
+  },
+  {
+    cells: [
+      [0, 0],
+      [0, 1],
+      [0, 2],
+      [0, 3],
+    ],
+    color: 3,
+    weight: 3,
+  },
+  {
+    cells: [
+      [0, 0],
+      [1, 0],
+      [2, 0],
+      [3, 0],
+    ],
+    color: 3,
+    weight: 3,
+  },
+  {
+    cells: [
+      [0, 0],
+      [0, 1],
+      [0, 2],
+      [0, 3],
+      [0, 4],
+    ],
+    color: 4,
+    weight: 1.5,
+  },
+  {
+    cells: [
+      [0, 0],
+      [1, 0],
+      [2, 0],
+      [3, 0],
+      [4, 0],
+    ],
+    color: 4,
+    weight: 1.5,
+  },
+  {
+    cells: [
+      [0, 0],
+      [0, 1],
+      [1, 0],
+      [1, 1],
+    ],
+    color: 5,
+    weight: 4,
+  },
+  {
+    cells: [
+      [0, 0],
+      [0, 1],
+      [0, 2],
+      [1, 0],
+      [1, 1],
+      [1, 2],
+      [2, 0],
+      [2, 1],
+      [2, 2],
+    ],
+    color: 6,
+    weight: 1.2,
+  },
   ...rotations(L3, 4).map((cells) => ({ cells, color: 7, weight: 2.5 })),
   ...rotations(BIG_L, 4).map((cells) => ({ cells, color: 8, weight: 1 })),
   ...rotations(T4, 4).map((cells) => ({ cells, color: 9, weight: 1.2 })),

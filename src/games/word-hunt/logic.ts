@@ -66,7 +66,8 @@ export function generate(rng: Rng): Puzzle {
       placed = true;
     }
   }
-  for (const row of grid) for (let c = 0; c < SIZE; c++) if (row[c] === '') row[c] = FILLER[rng.int(0, FILLER.length - 1)]!;
+  for (const row of grid)
+    for (let c = 0; c < SIZE; c++) if (row[c] === '') row[c] = FILLER[rng.int(0, FILLER.length - 1)]!;
   return { theme, grid, placements };
 }
 
@@ -101,7 +102,9 @@ export function matchSelection(cells: Cell[], placements: readonly Placement[]):
     if (cells.length !== p.word.length) continue;
     const forward = cells.every((cell, i) => cell.r === p.r + p.dr * i && cell.c === p.c + p.dc * i);
     const last = p.word.length - 1;
-    const backward = cells.every((cell, i) => cell.r === p.r + p.dr * (last - i) && cell.c === p.c + p.dc * (last - i));
+    const backward = cells.every(
+      (cell, i) => cell.r === p.r + p.dr * (last - i) && cell.c === p.c + p.dc * (last - i),
+    );
     if (forward || backward) return p;
   }
   return null;

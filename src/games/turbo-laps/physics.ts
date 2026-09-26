@@ -44,7 +44,14 @@ export function makeCar(points: readonly Point[], startIndex: number, lateral: n
 }
 
 /** Advances a car one step with steering in [-1, 1] and throttle in [-1, 1]. Returns true on lap completion. */
-export function stepCar(car: Car, points: readonly Point[], steer: number, throttle: number, maxSpeed: number, dt: number): boolean {
+export function stepCar(
+  car: Car,
+  points: readonly Point[],
+  steer: number,
+  throttle: number,
+  maxSpeed: number,
+  dt: number,
+): boolean {
   const n = points.length;
   const near = nearestIndex(points, car.x, car.y, car.index);
   car.offTrack = near.dist > TRACK_WIDTH / 2;
@@ -69,7 +76,11 @@ export function stepCar(car: Car, points: readonly Point[], steer: number, throt
 }
 
 /** Simple racing AI: aim at a point ahead on the centreline, slow for corners. */
-export function aiControls(car: Car, points: readonly Point[], skill: number): { steer: number; throttle: number; maxSpeed: number } {
+export function aiControls(
+  car: Car,
+  points: readonly Point[],
+  skill: number,
+): { steer: number; throttle: number; maxSpeed: number } {
   const n = points.length;
   const look = 14 + Math.round(car.speed / 40);
   const target = points[(car.index + look) % n]!;
@@ -83,4 +94,6 @@ export function aiControls(car: Car, points: readonly Point[], skill: number): {
 
 /** Total race progress used for positions. */
 export const raceProgress = (car: Car, n: number) =>
-  car.finished ? 1e9 - car.finishTime : car.lap * n + (car.halfway || car.index < n * 0.5 ? car.index : car.index - n);
+  car.finished
+    ? 1e9 - car.finishTime
+    : car.lap * n + (car.halfway || car.index < n * 0.5 ? car.index : car.index - n);

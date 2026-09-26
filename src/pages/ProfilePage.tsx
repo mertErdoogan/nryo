@@ -19,6 +19,8 @@ import { ProgressBar } from '../ui/ProgressBar';
 import { EmptyState, Section } from '../ui/Section';
 import styles from './ProfilePage.module.css';
 
+const ACHIEVEMENTS_PREVIEW = 9;
+
 function NameEditor() {
   const player = usePlayer();
   const [editing, setEditing] = useState(false);
@@ -73,6 +75,7 @@ function NameEditor() {
 }
 
 export default function ProfilePage() {
+  const [showAllAchievements, setShowAllAchievements] = useState(false);
   useDocumentMeta(profileMeta());
   const player = usePlayer();
   const level = useLevel();
@@ -97,12 +100,21 @@ export default function ProfilePage() {
   const totalMs = Object.values(stats).reduce((sum, s) => sum + s.timePlayedMs, 0);
   const minutes = Math.round(totalMs / 60_000);
 
+  // Unlocked first (newest first), then the ones closest to completion.
+  const ratio = (a: (typeof ACHIEVEMENTS)[number]) => {
+    const [cur, goal] = a.progress?.(snapshot) ?? [0, 1];
+    return goal > 0 ? cur / goal : 0;
+  };
   const achievements = [...ACHIEVEMENTS].sort((a, b) => {
-    const ua = unlocked[a.id] !== undefined;
-    const ub = unlocked[b.id] !== undefined;
-    if (ua !== ub) return ua ? -1 : 1;
-    return 0;
+    const ua = unlocked[a.id];
+    const ub = unlocked[b.id];
+    if (ua !== undefined && ub !== undefined) return ub - ua;
+    if (ua !== undefined || ub !== undefined) return ua !== undefined ? -1 : 1;
+    return ratio(b) - ratio(a);
   });
+  const visibleAchievements = showAllAchievements
+    ? achievements
+    : achievements.slice(0, ACHIEVEMENTS_PREVIEW);
 
   return (
     <div className={`container ${styles.page}`}>
@@ -123,7 +135,11 @@ export default function ProfilePage() {
           <ProgressBar value={level.ratio} label="Experience toward next level" size="thick" />
           <p className={styles.anon}>
             Anonymous local profile — nothing leaves this browser.{' '}
-            <button type="button" onClick={() => setUi({ settingsOpen: true })} style={{ textDecoration: 'underline' }}>
+            <button
+              type="button"
+              onClick={() => setUi({ settingsOpen: true })}
+              style={{ textDecoration: 'underline' }}
+            >
               Back up or move progress
             </button>
           </p>
@@ -158,7 +174,8 @@ export default function ProfilePage() {
           </div>
           <div className={styles.stat}>
             <span className={styles.statValue}>
-              🔥 {liveStreak(daily, today)} <small style={{ fontSize: 14, color: 'var(--text-dim)' }}>best {daily.bestStreak}</small>
+              🔥 {liveStreak(daily, today)}{' '}
+              <small style={{ fontSize: 14, color: 'var(--text-dim)' }}>best {daily.bestStreak}</small>
             </span>
             <span className={styles.statLabel}>Daily streak</span>
           </div>
@@ -188,9 +205,65 @@ export default function ProfilePage() {
         </div>
       </Section>
 
-      <Section id="achievements" title="Achievements" emoji="🏆" subtitle="Milestones that reward exploring and improving.">
+      <Section id="records" title="Personal records" emoji="📈">
+        {played.length === 0 ? (
+          <EmptyState icon="🕹️" title="No records yet" action={<Link to="/games">Browse games →</Link>}>
+            Finish a round in any game and your best score shows up here.
+          </EmptyState>
+        ) : (
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th scope="col">Game</th>
+                  <th scope="col">Best</th>
+                  <th scope="col">Medal</th>
+                  <th scope="col" className={styles.hideSm}>
+                    Plays
+                  </th>
+                  <th scope="col" className={styles.hideSm}>
+                    Last played
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {played.map(({ game, s }) => (
+                  <tr key={game.id}>
+                    <td>
+                      <Link to={`/games/${game.id}`} className={styles.gameCell}>
+                        <span
+                          className={styles.mini}
+                          style={{
+                            background: `linear-gradient(135deg, ${game.theme.from}, ${game.theme.to})`,
+                          }}
+                        >
+                          {game.thumbnail && <img src={game.thumbnail} alt="" loading="lazy" />}
+                        </span>
+                        {game.title}
+                      </Link>
+                    </td>
+                    <td>{s.best !== null ? formatScore(s.best, game.score.format) : '—'}</td>
+                    <td>
+                      <Medal tier={s.medal} showEmpty size={20} />
+                    </td>
+                    <td className={styles.hideSm}>{s.plays}</td>
+                    <td className={styles.hideSm}>{formatRelativeTime(s.lastPlayedAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Section>
+
+      <Section
+        id="achievements"
+        title="Achievements"
+        emoji="🏆"
+        subtitle="Milestones that reward exploring and improving."
+      >
         <div className={styles.achievements}>
-          {achievements.map((a) => {
+          {visibleAchievements.map((a) => {
             const isUnlocked = unlocked[a.id] !== undefined;
             const [cur, goal] = a.progress?.(snapshot) ?? [isUnlocked ? 1 : 0, 1];
             return (
@@ -201,7 +274,9 @@ export default function ProfilePage() {
                 <div className={styles.achBody}>
                   <span className={styles.achTitle}>
                     {a.title}
-                    <span className={styles.achXp}>{isUnlocked ? formatRelativeTime(unlocked[a.id]!) : `+${a.xp} XP`}</span>
+                    <span className={styles.achXp}>
+                      {isUnlocked ? formatRelativeTime(unlocked[a.id]!) : `+${a.xp} XP`}
+                    </span>
                   </span>
                   <span className={styles.achDesc}>{a.description}</span>
                   {!isUnlocked && goal > 1 && (
@@ -216,9 +291,26 @@ export default function ProfilePage() {
             );
           })}
         </div>
+        {achievements.length > ACHIEVEMENTS_PREVIEW && (
+          <div className={styles.showAll}>
+            <Button
+              variant="ghost"
+              icon={showAllAchievements ? 'shrink' : 'expand'}
+              aria-expanded={showAllAchievements}
+              onClick={() => setShowAllAchievements((v) => !v)}
+            >
+              {showAllAchievements ? 'Show fewer' : `Show all ${achievements.length} achievements`}
+            </Button>
+          </div>
+        )}
       </Section>
 
-      <Section id="avatars" title="Avatars" emoji="🎭" subtitle="Unlock more by leveling up and earning achievements.">
+      <Section
+        id="avatars"
+        title="Avatars"
+        emoji="🎭"
+        subtitle="Unlock more by leveling up and earning achievements."
+      >
         <div className={styles.cosmetics}>
           {AVATARS.map((a) => {
             const open = a.unlock.isUnlocked(cosmeticState);
@@ -258,61 +350,15 @@ export default function ProfilePage() {
                 onClick={() => platform.player.set((p) => ({ ...p, accent: a.id }))}
               >
                 {!open && <Icon name="lock" size={14} className={styles.lock} />}
-                <span className={styles.swatch} style={{ background: `linear-gradient(135deg, ${a.accent}, ${a.accent2})` }} />
+                <span
+                  className={styles.swatch}
+                  style={{ background: `linear-gradient(135deg, ${a.accent}, ${a.accent2})` }}
+                />
                 {open ? a.name : a.unlock.label}
               </button>
             );
           })}
         </div>
-      </Section>
-
-      <Section id="records" title="Personal records" emoji="📈">
-        {played.length === 0 ? (
-          <EmptyState icon="🕹️" title="No records yet" action={<Link to="/games">Browse games →</Link>}>
-            Finish a round in any game and your best score shows up here.
-          </EmptyState>
-        ) : (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th scope="col">Game</th>
-                  <th scope="col">Best</th>
-                  <th scope="col">Medal</th>
-                  <th scope="col" className={styles.hideSm}>
-                    Plays
-                  </th>
-                  <th scope="col" className={styles.hideSm}>
-                    Last played
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {played.map(({ game, s }) => (
-                  <tr key={game.id}>
-                    <td>
-                      <Link to={`/games/${game.id}`} className={styles.gameCell}>
-                        <span
-                          className={styles.mini}
-                          style={{ background: `linear-gradient(135deg, ${game.theme.from}, ${game.theme.to})` }}
-                        >
-                          {game.thumbnail && <img src={game.thumbnail} alt="" loading="lazy" />}
-                        </span>
-                        {game.title}
-                      </Link>
-                    </td>
-                    <td>{s.best !== null ? formatScore(s.best, game.score.format) : '—'}</td>
-                    <td>
-                      <Medal tier={s.medal} showEmpty size={20} />
-                    </td>
-                    <td className={styles.hideSm}>{s.plays}</td>
-                    <td className={styles.hideSm}>{formatRelativeTime(s.lastPlayedAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </Section>
     </div>
   );

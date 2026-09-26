@@ -327,3 +327,9 @@
   background: var(--surface);
   overflow-x: auto;
 }
+
+.showAll {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-3);
+}

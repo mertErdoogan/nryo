@@ -33,7 +33,13 @@ export function Chip({ children, active, count, to, onClick, className }: ChipPr
   );
 }
 
-export function Badge({ children, tone }: { children: ReactNode; tone?: 'new' | 'hot' | 'daily' | 'accent' }) {
+export function Badge({
+  children,
+  tone,
+}: {
+  children: ReactNode;
+  tone?: 'new' | 'hot' | 'daily' | 'accent';
+}) {
   return (
     <span className={styles.badge} data-tone={tone}>
       {children}

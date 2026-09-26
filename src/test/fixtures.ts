@@ -24,10 +24,28 @@ export function makeMeta(overrides: Partial<GameMeta> = {}): GameMeta {
 }
 
 export const FIXTURE_GAMES: GameMeta[] = [
-  makeMeta({ id: 'racer', title: 'Racer', categories: ['racing', 'arcade'], tags: ['race', 'cars'], popularity: 90 }),
-  makeMeta({ id: 'drifter', title: 'Drifter', categories: ['racing'], tags: ['race', 'drift'], popularity: 60 }),
+  makeMeta({
+    id: 'racer',
+    title: 'Racer',
+    categories: ['racing', 'arcade'],
+    tags: ['race', 'cars'],
+    popularity: 90,
+  }),
+  makeMeta({
+    id: 'drifter',
+    title: 'Drifter',
+    categories: ['racing'],
+    tags: ['race', 'drift'],
+    popularity: 60,
+  }),
   makeMeta({ id: 'wordy', title: 'Wordy', categories: ['word', 'brain'], tags: ['letters'], popularity: 70 }),
-  makeMeta({ id: 'blaster', title: 'Blaster', categories: ['action'], tags: ['shoot', 'space'], popularity: 80 }),
+  makeMeta({
+    id: 'blaster',
+    title: 'Blaster',
+    categories: ['action'],
+    tags: ['shoot', 'space'],
+    popularity: 80,
+  }),
   makeMeta({
     id: 'reflex',
     title: 'Reflex',
@@ -37,5 +55,12 @@ export const FIXTURE_GAMES: GameMeta[] = [
     medals: { bronze: 350, silver: 280, gold: 230 },
     popularity: 40,
   }),
-  makeMeta({ id: 'thinker', title: 'Thinker', categories: ['strategy', 'versus'], tags: ['ai'], dailyEligible: false, popularity: 30 }),
+  makeMeta({
+    id: 'thinker',
+    title: 'Thinker',
+    categories: ['strategy', 'versus'],
+    tags: ['ai'],
+    dailyEligible: false,
+    popularity: 30,
+  }),
 ];

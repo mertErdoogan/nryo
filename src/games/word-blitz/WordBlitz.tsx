@@ -1,5 +1,14 @@
 import { useMemo, useRef, useState } from 'react';
-import { DomStage, GameButton, Stat, StatBar, TimerBar, useCountdown, useKeyDown, useSeededRng } from '../../engine';
+import {
+  DomStage,
+  GameButton,
+  Stat,
+  StatBar,
+  TimerBar,
+  useCountdown,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import { Icon } from '../../ui/Icon';
 import type { GameProps } from '../../platform/types';
 import { makePuzzle, wordScore } from './logic';
@@ -86,12 +95,21 @@ export function WordBlitz({ api, paused }: GameProps) {
   return (
     <DomStage>
       <StatBar>
-        <Stat label="Time" value={`${Math.ceil(clock.remaining)}s`} tone={clock.remaining < 10 ? 'warn' : undefined} />
+        <Stat
+          label="Time"
+          value={`${Math.ceil(clock.remaining)}s`}
+          tone={clock.remaining < 10 ? 'warn' : undefined}
+        />
         <Stat label="Words" value={`${found.length}/${puzzle.answers.size}`} />
       </StatBar>
       <TimerBar ratio={clock.remaining / ROUND} label="Time remaining" />
       <div className={styles.layout}>
-        <div className={styles.current} data-feedback={feedback?.tone} key={feedback?.key ?? 0} aria-live="polite">
+        <div
+          className={styles.current}
+          data-feedback={feedback?.tone}
+          key={feedback?.key ?? 0}
+          aria-live="polite"
+        >
           {word ? (
             word.split('').map((c, i) => (
               <span key={i} className={styles.slot}>

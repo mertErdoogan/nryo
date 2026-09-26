@@ -17,7 +17,11 @@ const saveStateSchema = obj({
   summary: summarySchema,
   data: any(),
 });
-const progressStateSchema = obj({ version: num({ int: true, min: 0 }), updatedAt: num({ min: 0 }), data: any() });
+const progressStateSchema = obj({
+  version: num({ int: true, min: 0 }),
+  updatedAt: num({ min: 0 }),
+  data: any(),
+});
 
 export interface SaveIndexEntry {
   gameId: string;

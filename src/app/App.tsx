@@ -62,7 +62,12 @@ function useGlobalEffects() {
           });
         } else {
           sound.play('levelup');
-          showToast({ kind: 'level', icon: '⬆️', kicker: 'Level up', title: `You reached level ${event.level}!` });
+          showToast({
+            kind: 'level',
+            icon: '⬆️',
+            kicker: 'Level up',
+            title: `You reached level ${event.level}!`,
+          });
         }
       }),
     [],

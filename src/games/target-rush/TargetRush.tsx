@@ -12,7 +12,11 @@ const LIVES = 5;
 export function TargetRush({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
-  const fx = useRef({ particles: new Particles(500, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(500, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
   const s = useRef({
     targets: [] as Target[],
     rings: [] as { x: number; y: number; r: number; a: number; color: string }[],
@@ -88,7 +92,14 @@ export function TargetRush({ api, paused }: GameProps) {
     api.setScore(s.score);
     const bull = nd < 0.25 && best.kind === 'normal';
     if (bull) s.bullseyes += 1;
-    floaters.add(bull ? `Bullseye +${pts}` : `+${pts}`, best.x, best.y - 10, best.kind === 'gold' ? '#fde047' : bull ? '#86efac' : '#fff', bull ? 18 : 16, 0.7);
+    floaters.add(
+      bull ? `Bullseye +${pts}` : `+${pts}`,
+      best.x,
+      best.y - 10,
+      best.kind === 'gold' ? '#fde047' : bull ? '#86efac' : '#fff',
+      bull ? 18 : 16,
+      0.7,
+    );
     particles.burst(best.x, best.y, {
       count: best.kind === 'gold' ? 26 : 14,
       colors: best.kind === 'gold' ? ['#fde047', '#fff'] : ['#f87171', '#fff', '#fecaca'],
@@ -191,7 +202,10 @@ export function TargetRush({ api, paused }: GameProps) {
         ctx.stroke();
         continue;
       }
-      const colors = t.kind === 'gold' ? ['#a16207', '#fde047', '#a16207', '#fef9c3'] : ['#f8fafc', '#ef4444', '#f8fafc', '#ef4444'];
+      const colors =
+        t.kind === 'gold'
+          ? ['#a16207', '#fde047', '#a16207', '#fef9c3']
+          : ['#f8fafc', '#ef4444', '#f8fafc', '#ef4444'];
       colors.forEach((c, i) => circle(ctx, t.x, t.y, r * (1 - i * 0.24), c));
       // lifetime arc
       ctx.strokeStyle = 'rgba(255,255,255,0.35)';
@@ -213,9 +227,17 @@ export function TargetRush({ api, paused }: GameProps) {
     floaters.draw(ctx);
     ctx.restore();
 
-    text(ctx, '♥'.repeat(Math.max(0, s.lives)) + '♡'.repeat(LIVES - Math.max(0, s.lives)), 16, 26, { size: 18, align: 'left', color: '#fb7185' });
+    text(ctx, '♥'.repeat(Math.max(0, s.lives)) + '♡'.repeat(LIVES - Math.max(0, s.lives)), 16, 26, {
+      size: 18,
+      align: 'left',
+      color: '#fb7185',
+    });
     text(ctx, String(s.score), W - 16, 26, { size: 20, align: 'right', weight: 800 });
-    if (s.combo >= 5) text(ctx, `Combo ×${Math.min(4, 1 + Math.floor(s.combo / 5))}`, W / 2, 26, { size: 15, color: '#fde047' });
+    if (s.combo >= 5)
+      text(ctx, `Combo ×${Math.min(4, 1 + Math.floor(s.combo / 5))}`, W / 2, 26, {
+        size: 15,
+        color: '#fde047',
+      });
     if (!s.started) {
       text(ctx, 'TARGET RUSH', W / 2, H * 0.4, { size: 30, weight: 850 });
       prompt(ctx, 'Tap to start', W / 2, H * 0.5, s.time, 20);

@@ -8,7 +8,9 @@ describe('daily challenge', () => {
     const a = getDailyChallenge('2026-09-26', FIXTURE_GAMES)!;
     const b = getDailyChallenge('2026-09-26', FIXTURE_GAMES)!;
     expect(a).toEqual(b);
-    const week = Array.from({ length: 30 }, (_, i) => getDailyChallenge(addDays('2026-09-01', i), FIXTURE_GAMES)!);
+    const week = Array.from({ length: 30 }, (_, i) =>
+      getDailyChallenge(addDays('2026-09-01', i), FIXTURE_GAMES)!,
+    );
     expect(new Set(week.map((c) => c.seed)).size).toBe(30);
   });
 
@@ -26,7 +28,10 @@ describe('daily challenge', () => {
     const eligible = FIXTURE_GAMES.filter((g) => g.dailyEligible !== false).length;
     // Find a cycle boundary, then check one full cycle.
     const start = '2026-01-01';
-    const ids = Array.from({ length: eligible * 3 }, (_, i) => getDailyChallenge(addDays(start, i), FIXTURE_GAMES)!.gameId);
+    const ids = Array.from(
+      { length: eligible * 3 },
+      (_, i) => getDailyChallenge(addDays(start, i), FIXTURE_GAMES)!.gameId,
+    );
     const counts = new Map<string, number>();
     ids.forEach((id) => counts.set(id, (counts.get(id) ?? 0) + 1));
     for (const c of counts.values()) expect(c).toBeGreaterThanOrEqual(2);

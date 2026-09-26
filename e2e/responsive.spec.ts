@@ -1,6 +1,16 @@
 import { expect, test } from '@playwright/test';
 
-const ROUTES = ['/', '/games', '/categories', '/favorites', '/profile', '/games/neon-snake', '/games/sudoku', '/games/five-letters', '/nope'];
+const ROUTES = [
+  '/',
+  '/games',
+  '/categories',
+  '/favorites',
+  '/profile',
+  '/games/neon-snake',
+  '/games/sudoku',
+  '/games/five-letters',
+  '/nope',
+];
 const WIDTHS = [360, 414, 768, 1024, 1440];
 
 test.describe('layout', () => {

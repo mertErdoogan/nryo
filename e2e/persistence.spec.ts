@@ -16,7 +16,9 @@ test('a finished round saves the best score and survives a refresh', async ({ pa
 
   // It also shows up under "Continue playing" as a recently played game.
   await page.goto('/');
-  const continueSection = page.locator('section', { has: page.getByRole('heading', { name: 'Continue playing' }) });
+  const continueSection = page.locator('section', {
+    has: page.getByRole('heading', { name: 'Continue playing' }),
+  });
   await expect(continueSection.getByRole('article', { name: 'Reflex Test' })).toBeVisible();
   expect(errors).toEqual([]);
 });
@@ -32,7 +34,10 @@ test('favorites persist across reloads', async ({ page }) => {
   await page.goto('/games/sudoku');
   const add = page.getByRole('button', { name: 'Add Sudoku to favorites' }).first();
   await add.click();
-  await expect(page.getByRole('button', { name: 'Remove Sudoku from favorites' }).first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Remove Sudoku from favorites' }).first()).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
 
   await page.reload();
   await expect(page.getByRole('button', { name: 'Remove Sudoku from favorites' }).first()).toBeVisible();
@@ -48,11 +53,25 @@ test('favorites persist across reloads', async ({ page }) => {
 test('an unfinished 2048 game can be continued after a refresh', async ({ page }) => {
   await startGame(page, 'merge-2048');
   const board = page.getByTestId('game-stage');
-  for (const key of ['ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'ArrowLeft', 'ArrowDown']) {
+  for (const key of [
+    'ArrowLeft',
+    'ArrowUp',
+    'ArrowRight',
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowUp',
+    'ArrowLeft',
+    'ArrowDown',
+  ]) {
     await page.keyboard.press(key);
     await page.waitForTimeout(140);
   }
-  const tilesBefore = await board.locator('[data-tile]').evaluateAll((els) => els.map((e) => e.getAttribute('data-tile')).sort().join(','));
+  const tilesBefore = await board.locator('[data-tile]').evaluateAll((els) =>
+    els
+      .map((e) => e.getAttribute('data-tile'))
+      .sort()
+      .join(','),
+  );
   const scoreBefore = digits(await page.getByTestId('hud-score').textContent());
 
   await page.reload();
@@ -64,7 +83,12 @@ test('an unfinished 2048 game can be continued after a refresh', async ({ page }
 
   await expect(page.getByTestId('game-stage')).toHaveAttribute('data-phase', 'playing');
   await expect(page.getByTestId('hud-score')).toHaveText(new RegExp(scoreBefore || '0'));
-  const tilesAfter = await board.locator('[data-tile]').evaluateAll((els) => els.map((e) => e.getAttribute('data-tile')).sort().join(','));
+  const tilesAfter = await board.locator('[data-tile]').evaluateAll((els) =>
+    els
+      .map((e) => e.getAttribute('data-tile'))
+      .sort()
+      .join(','),
+  );
   expect(tilesAfter).toBe(tilesBefore);
 });
 
@@ -78,7 +102,9 @@ test('settings persist across reloads', async ({ page }) => {
   await expect(sound).toHaveAttribute('aria-checked', 'false');
   await page.reload();
   await page.getByRole('button', { name: 'Settings' }).first().click();
-  await expect(page.getByRole('dialog', { name: 'Settings' }).getByRole('switch', { name: /sound effects/i })).toHaveAttribute('aria-checked', 'false');
+  await expect(
+    page.getByRole('dialog', { name: 'Settings' }).getByRole('switch', { name: /sound effects/i }),
+  ).toHaveAttribute('aria-checked', 'false');
 });
 
 test('corrupted saved data is repaired instead of crashing the app', async ({ page }) => {

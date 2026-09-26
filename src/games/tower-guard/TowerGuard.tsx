@@ -32,7 +32,12 @@ const START_COINS = 160;
 const START_LIVES = 20;
 const BREAK = 12;
 
-const towerSchema = obj({ c: num({ int: true, min: 0, max: COLS - 1 }), r: num({ int: true, min: 0, max: ROWS - 1 }), type: oneOf(['blaster', 'frost', 'cannon'] as const), level: num({ int: true, min: 1, max: 3 }) });
+const towerSchema = obj({
+  c: num({ int: true, min: 0, max: COLS - 1 }),
+  r: num({ int: true, min: 0, max: ROWS - 1 }),
+  type: oneOf(['blaster', 'frost', 'cannon'] as const),
+  level: num({ int: true, min: 1, max: 3 }),
+});
 const saveSchema = obj({
   towers: arr(towerSchema, { max: 120 }),
   coins: num({ int: true, min: 0 }),
@@ -100,7 +105,14 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
 
   const persist = () =>
     api.save(
-      { towers: s.towers.map(({ c, r: row, type, level }) => ({ c, r: row, type, level })), coins: s.coins, lives: s.lives, wave: s.wave, score: s.score, kills: s.kills },
+      {
+        towers: s.towers.map(({ c, r: row, type, level }) => ({ c, r: row, type, level })),
+        coins: s.coins,
+        lives: s.lives,
+        wave: s.wave,
+        score: s.score,
+        kills: s.kills,
+      },
       { label: `Wave ${s.wave}/${WAVES} · ${s.lives} lives`, progress: s.wave / WAVES },
     );
 
@@ -169,7 +181,12 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
     }
     s.coins -= cost;
     s.towers.push({ c, r: row, type: selectedType, level: 1, cd: 0, angle: 0 });
-    fx.current.particles.burst(c * CELL + CELL / 2, MAP_Y + row * CELL + CELL / 2, { count: 12, color: TOWERS[selectedType].color, speed: 100, life: 0.4 });
+    fx.current.particles.burst(c * CELL + CELL / 2, MAP_Y + row * CELL + CELL / 2, {
+      count: 12,
+      color: TOWERS[selectedType].color,
+      speed: 100,
+      life: 0.4,
+    });
     api.sfx('tap');
     if (!s.inWave) persist();
     refresh();
@@ -276,8 +293,14 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
         if (d < 8 || tg.hp <= 0) {
           if (tg.hp > 0 || shot.type === 'cannon') {
             if (shot.type === 'cannon') {
-              particles.burst(tg.x, tg.y, { count: 14, colors: ['#fb923c', '#fde047'], speed: 140, life: 0.4 });
-              for (const c of s.creeps) if (c.hp > 0 && (c.x - tg.x) ** 2 + (c.y - tg.y) ** 2 < 46 * 46) c.hp -= shot.damage;
+              particles.burst(tg.x, tg.y, {
+                count: 14,
+                colors: ['#fb923c', '#fde047'],
+                speed: 140,
+                life: 0.4,
+              });
+              for (const c of s.creeps)
+                if (c.hp > 0 && (c.x - tg.x) ** 2 + (c.y - tg.y) ** 2 < 46 * 46) c.hp -= shot.damage;
             } else {
               tg.hp -= shot.damage;
               if (shot.type === 'frost') tg.slow = 1.3;
@@ -296,7 +319,12 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
           s.coins += def.reward;
           s.kills += 1;
           s.score += c.kind === 'boss' ? 200 : 10;
-          particles.burst(c.x, c.y, { count: c.kind === 'boss' ? 40 : 8, color: def.color, speed: 120, life: 0.4 });
+          particles.burst(c.x, c.y, {
+            count: c.kind === 'boss' ? 40 : 8,
+            color: def.color,
+            speed: 120,
+            life: 0.4,
+          });
           floaters.add(`+${def.reward}🪙`, c.x, c.y - 12, '#fde047', 12, 0.6);
           if (c.kind === 'boss') api.sfx('explode');
           else if (rng.chance(0.4)) api.sfx('hit');
@@ -344,10 +372,23 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
     }
     // entry / exit markers
     text(ctx, '▼', PATH_POINTS[1]!.x - CELL * 0, MAP_Y + 10, { size: 12, color: '#fde047' });
-    fillRoundRect(ctx, PATH_POINTS[PATH_POINTS.length - 1]!.x - 18, MAP_Y + ROWS * CELL - 12, 36, 12, 4, '#e11d48');
+    fillRoundRect(
+      ctx,
+      PATH_POINTS[PATH_POINTS.length - 1]!.x - 18,
+      MAP_Y + ROWS * CELL - 12,
+      36,
+      12,
+      4,
+      '#e11d48',
+    );
 
     const selected = selectedType;
-    if (s.hover && selected && !PATH.has(`${s.hover.c},${s.hover.r}`) && !s.towers.some((t) => t.c === s.hover!.c && t.r === s.hover!.r)) {
+    if (
+      s.hover &&
+      selected &&
+      !PATH.has(`${s.hover.c},${s.hover.r}`) &&
+      !s.towers.some((t) => t.c === s.hover!.c && t.r === s.hover!.r)
+    ) {
       const hx = s.hover.c * CELL + CELL / 2;
       const hy = MAP_Y + s.hover.r * CELL + CELL / 2;
       ctx.fillStyle = 'rgba(255,255,255,0.1)';
@@ -382,7 +423,15 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
       circle(ctx, c.x, c.y, def.r, c.slow > 0 ? '#67e8f9' : def.color);
       circle(ctx, c.x + 3, c.y - 2, def.r * 0.28, '#111');
       fillRoundRect(ctx, c.x - def.r, c.y - def.r - 7, def.r * 2, 3, 1.5, 'rgba(0,0,0,0.5)');
-      fillRoundRect(ctx, c.x - def.r, c.y - def.r - 7, def.r * 2 * Math.max(0, c.hp / c.maxHp), 3, 1.5, '#4ade80');
+      fillRoundRect(
+        ctx,
+        c.x - def.r,
+        c.y - def.r - 7,
+        def.r * 2 * Math.max(0, c.hp / c.maxHp),
+        3,
+        1.5,
+        '#4ade80',
+      );
     }
     for (const sh of s.shots) circle(ctx, sh.x, sh.y, sh.type === 'cannon' ? 5 : 3, TOWERS[sh.type].color);
     particles.draw(ctx);
@@ -392,7 +441,12 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
     ctx.fillRect(0, 0, W, MAP_Y);
     text(ctx, `Wave ${s.wave}/${WAVES}`, 12, 22, { size: 14, weight: 800, align: 'left' });
     text(ctx, `🪙 ${s.coins}`, W / 2, 22, { size: 15, weight: 800, color: '#fde047' });
-    text(ctx, `♥ ${Math.max(0, s.lives)}`, W - 12, 22, { size: 15, weight: 800, align: 'right', color: '#fb7185' });
+    text(ctx, `♥ ${Math.max(0, s.lives)}`, W - 12, 22, {
+      size: 15,
+      weight: 800,
+      align: 'right',
+      color: '#fb7185',
+    });
   }, !paused);
 
   const menuStyle = (t: Tower): CSSProperties => {
@@ -402,7 +456,14 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
   };
 
   return (
-    <CanvasStage ref={view} width={W} height={H} label="Tower Guard map" onPointerDown={onDown} onPointerMove={onMove}>
+    <CanvasStage
+      ref={view}
+      width={W}
+      height={H}
+      label="Tower Guard map"
+      onPointerDown={onDown}
+      onPointerMove={onMove}
+    >
       <div className={styles.panel}>
         {(Object.keys(TOWERS) as TowerType[]).map((type) => (
           <button
@@ -421,14 +482,24 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
             <strong>🪙{TOWERS[type].cost}</strong>
           </button>
         ))}
-        <button type="button" className={`${styles.btn} ${styles.wave}`} disabled={s.inWave || s.over || s.wave >= WAVES} onClick={startWave}>
+        <button
+          type="button"
+          className={`${styles.btn} ${styles.wave}`}
+          disabled={s.inWave || s.over || s.wave >= WAVES}
+          onClick={startWave}
+        >
           {s.inWave ? `Wave ${s.wave}` : s.wave === 0 ? 'Start' : `Next wave`}
           <strong>{s.inWave ? '⚔️' : s.wave === 0 ? '▶' : `${Math.ceil(Math.max(0, s.breakTimer))}s`}</strong>
         </button>
       </div>
       {menu && s.towers.includes(menu) && (
         <div className={styles.menu} style={menuStyle(menu)}>
-          <button type="button" className={styles.btn} disabled={menu.level >= 3 || s.coins < upgradeCost(menu.type, menu.level)} onClick={() => upgrade(menu)}>
+          <button
+            type="button"
+            className={styles.btn}
+            disabled={menu.level >= 3 || s.coins < upgradeCost(menu.type, menu.level)}
+            onClick={() => upgrade(menu)}
+          >
             {menu.level >= 3 ? 'Max level' : `Upgrade 🪙${upgradeCost(menu.type, menu.level)}`}
           </button>
           <button type="button" className={styles.btn} onClick={() => sell(menu)}>

@@ -35,7 +35,8 @@ describe('game catalog', () => {
   });
 
   it('covers every category with at least two games', () => {
-    for (const c of CATEGORIES) expect(GAMES.filter((g) => g.categories.includes(c.id)).length).toBeGreaterThanOrEqual(2);
+    for (const c of CATEGORIES)
+      expect(GAMES.filter((g) => g.categories.includes(c.id)).length).toBeGreaterThanOrEqual(2);
   });
 
   it.each(GAMES.map((g) => [g.id, g] as const))('%s lazily loads a playable module', async (_id, g) => {

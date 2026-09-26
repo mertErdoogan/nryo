@@ -28,7 +28,12 @@ import * as reflex from './reflex-test/logic';
 import * as pin from './pin-spin/logic';
 import { isWord } from './_shared/words';
 
-const tile = (value: number, r: number, c: number): g2048.Tile => ({ id: r * 4 + c + 1000 * value, value, r, c });
+const tile = (value: number, r: number, c: number): g2048.Tile => ({
+  id: r * 4 + c + 1000 * value,
+  value,
+  r,
+  c,
+});
 
 describe('2048', () => {
   it('merges pairs once per move and slides tiles', () => {
@@ -47,7 +52,8 @@ describe('2048', () => {
     expect(res.tiles.map((t) => t.value)).toEqual([4, 4]);
     const full: g2048.Tile[] = [];
     let v = 2;
-    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) full.push(tile((v = v === 2 ? 4 : 2) * (r % 2 ? 1 : 8), r, c));
+    for (let r = 0; r < 4; r++)
+      for (let c = 0; c < 4; c++) full.push(tile((v = v === 2 ? 4 : 2) * (r % 2 ? 1 : 8), r, c));
     expect(g2048.canMove(full)).toBe(false);
     expect(g2048.move([tile(2, 0, 0)], 'left').moved).toBe(false);
   });
@@ -201,9 +207,15 @@ describe('word games', () => {
     const p = hunt.generate(createRng(8));
     expect(p.placements.length).toBeGreaterThanOrEqual(6);
     for (const pl of p.placements) {
-      const letters = Array.from({ length: pl.word.length }, (_, i) => p.grid[pl.r + pl.dr * i]![pl.c + pl.dc * i]);
+      const letters = Array.from(
+        { length: pl.word.length },
+        (_, i) => p.grid[pl.r + pl.dr * i]![pl.c + pl.dc * i],
+      );
       expect(letters.join('')).toBe(pl.word);
-      const cells = Array.from({ length: pl.word.length }, (_, i) => ({ r: pl.r + pl.dr * i, c: pl.c + pl.dc * i }));
+      const cells = Array.from({ length: pl.word.length }, (_, i) => ({
+        r: pl.r + pl.dr * i,
+        c: pl.c + pl.dc * i,
+      }));
       expect(hunt.matchSelection(cells, p.placements)).toBe(pl);
       expect(hunt.matchSelection([...cells].reverse(), p.placements)).toBe(pl);
     }
@@ -231,7 +243,18 @@ describe('puzzles and physics', () => {
     expect(snake.queueTurn([], 'up', 'down')).toEqual([]);
     expect(snake.queueTurn([], 'up', 'left')).toEqual(['left']);
     expect(snake.collides({ x: -1, y: 0 }, [], 10, 10, false)).toBe(true);
-    expect(snake.collides({ x: 1, y: 1 }, [{ x: 1, y: 1 }, { x: 2, y: 1 }], 10, 10, false)).toBe(true);
+    expect(
+      snake.collides(
+        { x: 1, y: 1 },
+        [
+          { x: 1, y: 1 },
+          { x: 2, y: 1 },
+        ],
+        10,
+        10,
+        false,
+      ),
+    ).toBe(true);
   });
 
   it('golf balls bounce off walls and drop only when slow', () => {

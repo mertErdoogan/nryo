@@ -1,5 +1,13 @@
 import { useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, Shake, useGameLoop, useHeldKeys, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  Shake,
+  useGameLoop,
+  useHeldKeys,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import { clamp, rectsOverlap } from '../../lib/math';
@@ -31,7 +39,15 @@ interface Car {
 
 const laneX = (lane: number) => ROAD_L + LANE_W * lane + LANE_W / 2;
 
-function drawCar(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, color: string, player: boolean) {
+function drawCar(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  color: string,
+  player: boolean,
+) {
   ctx.fillStyle = 'rgba(0,0,0,0.3)';
   ctx.fillRect(x - w / 2 + 3, y - h / 2 + 5, w, h);
   fillRoundRect(ctx, x - w / 2, y - h / 2, w, h, 9, color);
@@ -50,7 +66,11 @@ export function RoadRush({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
-  const fx = useRef({ particles: new Particles(400, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(400, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
   const s = useRef({
     x: laneX(1.5),
     vx: 0,
@@ -94,7 +114,11 @@ export function RoadRush({ api, paused }: GameProps) {
     const truck = rng.chance(0.15);
     const lane = rng.int(0, LANES - 1);
     // Keep at least one lane free at the spawn row.
-    const blocked = new Set(s.cars.filter((c) => c.y < 0 && c.y > -CAR_H * 2.5).map((c) => Math.round((c.x - ROAD_L - LANE_W / 2) / LANE_W)));
+    const blocked = new Set(
+      s.cars
+        .filter((c) => c.y < 0 && c.y > -CAR_H * 2.5)
+        .map((c) => Math.round((c.x - ROAD_L - LANE_W / 2) / LANE_W)),
+    );
     if (blocked.size >= LANES - 1 && !blocked.has(lane)) return;
     s.cars.push({
       x: laneX(lane),
@@ -115,7 +139,8 @@ export function RoadRush({ api, paused }: GameProps) {
     }
     if (rng.chance(0.35)) {
       const coinLane = rng.int(0, LANES - 1);
-      if (coinLane !== lane) for (let i = 0; i < 3; i++) s.coins.push({ x: laneX(coinLane), y: -CAR_H - i * 40 });
+      if (coinLane !== lane)
+        for (let i = 0; i < 3; i++) s.coins.push({ x: laneX(coinLane), y: -CAR_H - i * 40 });
     }
   };
 
@@ -125,7 +150,8 @@ export function RoadRush({ api, paused }: GameProps) {
     const { particles, floaters, shake } = fx.current;
     s.time += dt;
     const k = keys.current;
-    const steer = (k.has('ArrowRight') || k.has('KeyD') ? 1 : 0) - (k.has('ArrowLeft') || k.has('KeyA') ? 1 : 0);
+    const steer =
+      (k.has('ArrowRight') || k.has('KeyD') ? 1 : 0) - (k.has('ArrowLeft') || k.has('KeyA') ? 1 : 0);
     if (steer) s.started = true;
 
     if (s.started && !s.crashed) {
@@ -154,20 +180,37 @@ export function RoadRush({ api, paused }: GameProps) {
           s.crashed = true;
           s.crashTimer = 1.1;
           shake.add(18);
-          particles.burst(s.x, PLAYER_Y - 20, { count: 50, colors: ['#fb923c', '#fde047', '#fff', '#64748b'], speed: 320, life: 0.9 });
+          particles.burst(s.x, PLAYER_Y - 20, {
+            count: 50,
+            colors: ['#fb923c', '#fde047', '#fff', '#64748b'],
+            speed: 320,
+            life: 0.9,
+          });
           api.sfx('explode');
           api.haptic([80, 40, 120]);
           break;
         }
         const gap = Math.abs(c.x - s.x) - (c.w + CAR_W) / 2;
-        if (!c.near && gap < 14 && c.y - c.h / 2 > PLAYER_Y + CAR_H / 2 - 10 && c.y - c.h / 2 < PLAYER_Y + CAR_H / 2 + 20) {
+        if (
+          !c.near &&
+          gap < 14 &&
+          c.y - c.h / 2 > PLAYER_Y + CAR_H / 2 - 10 &&
+          c.y - c.h / 2 < PLAYER_Y + CAR_H / 2 + 20
+        ) {
           c.near = true;
           s.nearMisses += 1;
           s.combo += 1;
           s.comboTimer = 2.5;
           const pts = 20 * Math.min(5, s.combo);
           s.bonus += pts;
-          floaters.add(s.combo > 1 ? `Near miss ×${s.combo} +${pts}` : `Near miss +${pts}`, s.x, PLAYER_Y - 50, '#fde047', 16, 0.8);
+          floaters.add(
+            s.combo > 1 ? `Near miss ×${s.combo} +${pts}` : `Near miss +${pts}`,
+            s.x,
+            PLAYER_Y - 50,
+            '#fde047',
+            16,
+            0.8,
+          );
           api.sfx('swap');
         }
       }
@@ -189,7 +232,16 @@ export function RoadRush({ api, paused }: GameProps) {
         s.score = next;
         api.setScore(s.score);
       }
-      if (rng.chance(0.5)) particles.burst(s.x + rng.range(-10, 10), PLAYER_Y + CAR_H / 2, { count: 1, color: 'rgba(148,163,184,0.6)', speed: 60, life: 0.4, size: 5, angle: Math.PI / 2, spread: 0.5 });
+      if (rng.chance(0.5))
+        particles.burst(s.x + rng.range(-10, 10), PLAYER_Y + CAR_H / 2, {
+          count: 1,
+          color: 'rgba(148,163,184,0.6)',
+          speed: 60,
+          life: 0.4,
+          size: 5,
+          angle: Math.PI / 2,
+          spread: 0.5,
+        });
     } else if (s.crashed && !s.ended) {
       s.crashTimer -= dt;
       if (s.crashTimer <= 0) {
@@ -247,6 +299,14 @@ export function RoadRush({ api, paused }: GameProps) {
   }, !paused);
 
   return (
-    <CanvasStage ref={view} width={W} height={H} label="Road Rush game area" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} />
+    <CanvasStage
+      ref={view}
+      width={W}
+      height={H}
+      label="Road Rush game area"
+      onPointerDown={onDown}
+      onPointerMove={onMove}
+      onPointerUp={onUp}
+    />
   );
 }

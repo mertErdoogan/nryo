@@ -42,7 +42,11 @@ export function MeteorDodge({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
-  const fx = useRef({ particles: new Particles(500, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(500, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
   const s = useRef({
     x: W / 2,
     y: H - 120,
@@ -126,7 +130,12 @@ export function MeteorDodge({ api, paused }: GameProps) {
     }
     s.dead = true;
     s.deadTimer = 1;
-    particles.burst(s.x, s.y, { count: 50, colors: ['#fb923c', '#fde047', '#fff', '#f43f5e'], speed: 300, life: 0.9 });
+    particles.burst(s.x, s.y, {
+      count: 50,
+      colors: ['#fb923c', '#fde047', '#fff', '#f43f5e'],
+      speed: 300,
+      life: 0.9,
+    });
     shake.add(16);
     api.sfx('explode');
     api.haptic([60, 40, 80]);
@@ -162,7 +171,12 @@ export function MeteorDodge({ api, paused }: GameProps) {
       }
       s.pickupTimer -= dt;
       if (s.pickupTimer <= 0) {
-        s.pickups.push({ kind: !s.shield && rng.chance(0.3) ? 'shield' : 'crystal', x: rng.range(30, W - 30), y: -20, vy: 150 });
+        s.pickups.push({
+          kind: !s.shield && rng.chance(0.3) ? 'shield' : 'crystal',
+          x: rng.range(30, W - 30),
+          y: -20,
+          vy: 150,
+        });
         s.pickupTimer = rng.range(3, 6);
       }
       const newScore = Math.floor(s.t * 10) + s.bonus;
@@ -223,7 +237,15 @@ export function MeteorDodge({ api, paused }: GameProps) {
     }
     s.shieldFlash = Math.max(0, s.shieldFlash - dt * 2);
     if (!s.dead && s.started && rng.chance(0.6)) {
-      particles.burst(s.x, s.y + 14, { count: 1, colors: ['#fb923c', '#fde047'], speed: 80, life: 0.3, size: 4, angle: Math.PI / 2, spread: 0.6 });
+      particles.burst(s.x, s.y + 14, {
+        count: 1,
+        colors: ['#fb923c', '#fde047'],
+        speed: 80,
+        life: 0.3,
+        size: 4,
+        angle: Math.PI / 2,
+        spread: 0.6,
+      });
     }
     particles.update(dt);
     floaters.update(dt);
@@ -339,7 +361,12 @@ export function MeteorDodge({ api, paused }: GameProps) {
     floaters.draw(ctx);
     ctx.restore();
 
-    text(ctx, String(s.score), W / 2, 50, { size: 38, weight: 800, stroke: 'rgba(0,0,0,0.4)', strokeWidth: 5 });
+    text(ctx, String(s.score), W / 2, 50, {
+      size: 38,
+      weight: 800,
+      stroke: 'rgba(0,0,0,0.4)',
+      strokeWidth: 5,
+    });
     if (!s.started) prompt(ctx, 'Drag to steer — dodge the meteors', W / 2, H * 0.55, s.time, 18);
   }, !paused);
 

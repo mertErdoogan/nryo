@@ -1,6 +1,13 @@
 import { GAME_FONT } from './effects';
 
-export function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+export function roundRectPath(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+): void {
   const radius = Math.max(0, Math.min(r, w / 2, h / 2));
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
@@ -25,7 +32,13 @@ export function fillRoundRect(
   ctx.fill();
 }
 
-export function circle(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, fill: string | CanvasGradient): void {
+export function circle(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  r: number,
+  fill: string | CanvasGradient,
+): void {
   ctx.beginPath();
   ctx.arc(x, y, Math.max(0, r), 0, Math.PI * 2);
   ctx.fillStyle = fill;
@@ -43,7 +56,13 @@ export interface TextOptions {
   alpha?: number;
 }
 
-export function text(ctx: CanvasRenderingContext2D, value: string, x: number, y: number, opts: TextOptions = {}): void {
+export function text(
+  ctx: CanvasRenderingContext2D,
+  value: string,
+  x: number,
+  y: number,
+  opts: TextOptions = {},
+): void {
   ctx.save();
   ctx.globalAlpha = opts.alpha ?? 1;
   ctx.font = `${opts.weight ?? 700} ${opts.size ?? 18}px ${GAME_FONT}`;
@@ -76,7 +95,14 @@ export const hsl = (h: number, s: number, l: number, a = 1) =>
   a === 1 ? `hsl(${h % 360} ${s}% ${l}%)` : `hsl(${h % 360} ${s}% ${l}% / ${a})`;
 
 /** Pulsing "Tap to start" style prompt. */
-export function prompt(ctx: CanvasRenderingContext2D, value: string, x: number, y: number, time: number, size = 20): void {
+export function prompt(
+  ctx: CanvasRenderingContext2D,
+  value: string,
+  x: number,
+  y: number,
+  time: number,
+  size = 20,
+): void {
   const alpha = 0.55 + Math.sin(time * 4) * 0.35;
   text(ctx, value, x, y, { size, weight: 700, alpha, stroke: 'rgba(0,0,0,0.35)', strokeWidth: 5 });
 }

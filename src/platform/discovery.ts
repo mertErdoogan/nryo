@@ -20,14 +20,21 @@ export function popularityScore(meta: GameMeta, stats: GameStats | undefined, no
   return score;
 }
 
-export function rankPopular<T extends GameMeta>(games: readonly T[], stats: Record<string, GameStats>, now = Date.now()): T[] {
+export function rankPopular<T extends GameMeta>(
+  games: readonly T[],
+  stats: Record<string, GameStats>,
+  now = Date.now(),
+): T[] {
   return [...games].sort(
-    (a, b) => popularityScore(b, stats[b.id], now) - popularityScore(a, stats[a.id], now) || a.id.localeCompare(b.id),
+    (a, b) =>
+      popularityScore(b, stats[b.id], now) - popularityScore(a, stats[a.id], now) || a.id.localeCompare(b.id),
   );
 }
 
 export function newestGames<T extends GameMeta>(games: readonly T[], count = 8): T[] {
-  return [...games].sort((a, b) => b.addedAt.localeCompare(a.addedAt) || a.id.localeCompare(b.id)).slice(0, count);
+  return [...games]
+    .sort((a, b) => b.addedAt.localeCompare(a.addedAt) || a.id.localeCompare(b.id))
+    .slice(0, count);
 }
 
 export function isNewGame(meta: GameMeta, games: readonly GameMeta[]): boolean {
@@ -79,7 +86,8 @@ export function recommendForPlayer<T extends GameMeta>(
     .filter((g) => !seen.has(g.id))
     .map((g) => ({
       g,
-      score: played.slice(0, 5).reduce((sum, p, i) => sum + similarity(p, g) / (i + 1), 0) + g.popularity / 30,
+      score:
+        played.slice(0, 5).reduce((sum, p, i) => sum + similarity(p, g) / (i + 1), 0) + g.popularity / 30,
     }))
     .sort((a, b) => b.score - a.score || a.g.id.localeCompare(b.g.id))
     .slice(0, count)
@@ -88,7 +96,9 @@ export function recommendForPlayer<T extends GameMeta>(
 
 /** Rotates the "Play Now" shelf daily among the top of the catalog. */
 export function featuredForDay<T extends GameMeta>(games: readonly T[], dateKey: string, count = 6): T[] {
-  const pool = [...games].sort((a, b) => b.popularity - a.popularity || a.id.localeCompare(b.id)).slice(0, 24);
+  const pool = [...games]
+    .sort((a, b) => b.popularity - a.popularity || a.id.localeCompare(b.id))
+    .slice(0, 24);
   return pool
     .map((g) => ({ g, k: hashString(`${dateKey}:${g.id}`) }))
     .sort((a, b) => a.k - b.k)
@@ -104,7 +114,11 @@ function tokenMatches(token: string, word: string): number {
   return 0;
 }
 
-const words = (text: string) => text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+const words = (text: string) =>
+  text
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
 
 /** Fast in-memory search over title, categories, tags and description. */
 export function searchGames<T extends GameMeta>(rawQuery: string, games: readonly T[]): T[] {

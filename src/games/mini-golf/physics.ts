@@ -74,7 +74,8 @@ export function bounceCircle(b: BallState, cx: number, cy: number, cr: number, r
   return true;
 }
 
-export const inRect = (x: number, y: number, r: Rect) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+export const inRect = (x: number, y: number, r: Rect) =>
+  x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 
 /** Rolling friction: exponential drag plus a constant stop force. */
 export function applyFriction(b: BallState, dt: number, sand: boolean): void {

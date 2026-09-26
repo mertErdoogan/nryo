@@ -70,7 +70,11 @@
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--game-accent, #8b5cf6), color-mix(in srgb, var(--game-accent, #8b5cf6) 50%, white));
+  background: linear-gradient(
+    90deg,
+    var(--game-accent, #8b5cf6),
+    color-mix(in srgb, var(--game-accent, #8b5cf6) 50%, white)
+  );
   transition: width 120ms linear;
 }
 

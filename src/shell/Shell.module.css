@@ -4,7 +4,11 @@
   height: 100dvh;
   min-height: 420px;
   background:
-    radial-gradient(90% 70% at 50% 0%, color-mix(in srgb, var(--game-from) 22%, transparent), transparent 70%),
+    radial-gradient(
+      90% 70% at 50% 0%,
+      color-mix(in srgb, var(--game-from) 22%, transparent),
+      transparent 70%
+    ),
     #07070f;
 }
 

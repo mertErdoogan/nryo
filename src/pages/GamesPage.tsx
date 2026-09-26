@@ -60,7 +60,9 @@ export function GamesPage() {
 
   const cat = category ? getCategory(category) : null;
   const meta = gamesMeta();
-  useDocumentMeta(cat ? { ...meta, title: `${cat.label} Games — Nryo Arcade`, path: `/games?category=${cat.id}` } : meta);
+  useDocumentMeta(
+    cat ? { ...meta, title: `${cat.label} Games — Nryo Arcade`, path: `/games?category=${cat.id}` } : meta,
+  );
 
   // Keep the URL in sync with the search box (replace, so Back isn't spammed).
   useEffect(() => {
@@ -84,7 +86,11 @@ export function GamesPage() {
       const ids = new Set(favorites.map((f) => f.id));
       list = list.filter((g) => ids.has(g.id));
     } else if (filter === 'popular') {
-      const ids = new Set(rankPopular(GAMES, stats).slice(0, 12).map((g) => g.id));
+      const ids = new Set(
+        rankPopular(GAMES, stats)
+          .slice(0, 12)
+          .map((g) => g.id),
+      );
       list = list.filter((g) => ids.has(g.id));
     }
     if (query.trim() && sort === 'popular') return list; // keep relevance order for searches
@@ -95,7 +101,9 @@ export function GamesPage() {
         return list.sort((a, b) => b.addedAt.localeCompare(a.addedAt) || a.title.localeCompare(b.title));
       case 'recent': {
         const order = new Map(recent.map((r, i) => [r.id, i]));
-        return list.sort((a, b) => (order.get(a.id) ?? 999) - (order.get(b.id) ?? 999) || b.popularity - a.popularity);
+        return list.sort(
+          (a, b) => (order.get(a.id) ?? 999) - (order.get(b.id) ?? 999) || b.popularity - a.popularity,
+        );
       }
       default:
         return rankPopular(list, stats);
@@ -103,12 +111,19 @@ export function GamesPage() {
   }, [query, category, filter, sort, stats, favorites, recent]);
 
   const setFilter = (next: { category?: string | null; filter?: Filter }) =>
-    navigate(buildUrl({ q: query.trim(), category: next.category ?? null, filter: next.filter ?? 'all', sort }), {
-      replace: true,
-      keepScroll: true,
-    });
+    navigate(
+      buildUrl({ q: query.trim(), category: next.category ?? null, filter: next.filter ?? 'all', sort }),
+      {
+        replace: true,
+        keepScroll: true,
+      },
+    );
 
-  const heading = cat ? `${cat.emoji} ${cat.label} games` : filter === 'favorites' ? 'Your favorites' : 'All games';
+  const heading = cat
+    ? `${cat.emoji} ${cat.label} games`
+    : filter === 'favorites'
+      ? 'Your favorites'
+      : 'All games';
 
   return (
     <div className="container">
@@ -134,7 +149,12 @@ export function GamesPage() {
               onChange={(e) => setQuery(e.target.value)}
             />
             {query && (
-              <button type="button" className={styles.clear} aria-label="Clear search" onClick={() => setQuery('')}>
+              <button
+                type="button"
+                className={styles.clear}
+                aria-label="Clear search"
+                onClick={() => setQuery('')}
+              >
                 <Icon name="x" size={16} />
               </button>
             )}
@@ -169,7 +189,11 @@ export function GamesPage() {
           <Chip active={filter === 'popular'} onClick={() => setFilter({ filter: 'popular' })}>
             🔥 Popular
           </Chip>
-          <Chip active={filter === 'favorites'} onClick={() => setFilter({ filter: 'favorites' })} count={favorites.length}>
+          <Chip
+            active={filter === 'favorites'}
+            onClick={() => setFilter({ filter: 'favorites' })}
+            count={favorites.length}
+          >
             ❤️ Favorites
           </Chip>
           {CATEGORIES.map((c) => (

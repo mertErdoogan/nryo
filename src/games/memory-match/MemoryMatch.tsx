@@ -76,7 +76,11 @@ export function MemoryMatch({ api, paused }: GameProps) {
         api.setScore(s.score);
         clock.add(bonusTime);
         setTransition(true);
-        setBanner({ key: Date.now(), text: `Board ${level} clear!`, sub: `+${200 * level + timeBonus} pts · +${bonusTime}s` });
+        setBanner({
+          key: Date.now(),
+          text: `Board ${level} clear!`,
+          sub: `+${200 * level + timeBonus} pts · +${bonusTime}s`,
+        });
         api.sfx('win');
         later(() => {
           const nextLevel = level + 1;
@@ -104,8 +108,16 @@ export function MemoryMatch({ api, paused }: GameProps) {
     <DomStage>
       <StatBar>
         <Stat label="Board" value={level} />
-        <Stat label="Time" value={`${Math.ceil(clock.remaining)}s`} tone={clock.remaining < 10 ? 'warn' : undefined} />
-        <Stat label="Streak" value={stats.current.combo} tone={stats.current.combo >= 2 ? 'good' : undefined} />
+        <Stat
+          label="Time"
+          value={`${Math.ceil(clock.remaining)}s`}
+          tone={clock.remaining < 10 ? 'warn' : undefined}
+        />
+        <Stat
+          label="Streak"
+          value={stats.current.combo}
+          tone={stats.current.combo >= 2 ? 'good' : undefined}
+        />
       </StatBar>
       <TimerBar ratio={clock.remaining / START_SECONDS} label="Time remaining" />
       <div className={styles.board} style={style} role="group" aria-label={`Memory board ${level}`}>

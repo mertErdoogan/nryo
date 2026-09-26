@@ -1,5 +1,13 @@
 import { useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, Shake, useGameLoop, useHeldKeys, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  Shake,
+  useGameLoop,
+  useHeldKeys,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import { clamp } from '../../lib/math';
@@ -17,7 +25,11 @@ export function AirHockey({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
-  const fx = useRef({ particles: new Particles(300, rng.next), floaters: new FloatingText(), shake: new Shake(rng.next) });
+  const fx = useRef({
+    particles: new Particles(300, rng.next),
+    floaters: new FloatingText(),
+    shake: new Shake(rng.next),
+  });
   const s = useRef({
     puck: { x: W / 2, y: H / 2 + 60, vx: 0, vy: 0, r: 17 } as Disc,
     me: { x: W / 2, y: H - 90, vx: 0, vy: 0, r: 26 } as Disc,
@@ -52,7 +64,12 @@ export function AirHockey({ api, paused }: GameProps) {
   const goal = (playerScored: boolean) => {
     const { particles, floaters, shake } = fx.current;
     shake.add(10);
-    particles.burst(s.puck.x, playerScored ? T.y : T.y + T.h, { count: 40, colors: playerScored ? ['#22d3ee', '#fff'] : ['#fb7185', '#fff'], speed: 260, life: 0.8 });
+    particles.burst(s.puck.x, playerScored ? T.y : T.y + T.h, {
+      count: 40,
+      colors: playerScored ? ['#22d3ee', '#fff'] : ['#fb7185', '#fff'],
+      speed: 260,
+      life: 0.8,
+    });
     if (playerScored) {
       s.my += 1;
       s.goals += 1;
@@ -218,7 +235,8 @@ export function AirHockey({ api, paused }: GameProps) {
     fillRoundRect(ctx, T.x - 8, T.y - 8, T.w + 16, T.h + 16, 30, '#1e293b');
     fillRoundRect(ctx, T.x, T.y, T.w, T.h, 24, '#e0f2fe');
     ctx.fillStyle = 'rgba(14,165,233,0.12)';
-    for (let y = T.y + 20; y < T.y + T.h; y += 22) for (let x = T.x + 20; x < T.x + T.w; x += 22) ctx.fillRect(x, y, 2, 2);
+    for (let y = T.y + 20; y < T.y + T.h; y += 22)
+      for (let x = T.x + 20; x < T.x + T.w; x += 22) ctx.fillRect(x, y, 2, 2);
     ctx.strokeStyle = 'rgba(225,29,72,0.5)';
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -261,9 +279,24 @@ export function AirHockey({ api, paused }: GameProps) {
     text(ctx, String(s.my), W - 37, H / 2 + 24, { size: 24, weight: 850, color: '#67e8f9' });
     text(ctx, `AI Lv ${s.level}`, 28, H / 2 - 14, { size: 11, weight: 700, align: 'left', color: '#be123c' });
     text(ctx, `Wins ${s.wins}`, 28, H / 2 + 16, { size: 11, weight: 700, align: 'left', color: '#0e7490' });
-    if (s.bannerT > 0) text(ctx, s.banner, W / 2, H / 2 - 90, { size: 18, weight: 800, color: '#0f172a', alpha: Math.min(1, s.bannerT) });
+    if (s.bannerT > 0)
+      text(ctx, s.banner, W / 2, H / 2 - 90, {
+        size: 18,
+        weight: 800,
+        color: '#0f172a',
+        alpha: Math.min(1, s.bannerT),
+      });
     if (!s.started) prompt(ctx, 'Drag your mallet to play', W / 2, H - 150, s.time, 17);
   }, !paused);
 
-  return <CanvasStage ref={view} width={W} height={H} label="Air Hockey table" onPointerDown={onPointer} onPointerMove={onPointer} />;
+  return (
+    <CanvasStage
+      ref={view}
+      width={W}
+      height={H}
+      label="Air Hockey table"
+      onPointerDown={onPointer}
+      onPointerMove={onPointer}
+    />
+  );
 }

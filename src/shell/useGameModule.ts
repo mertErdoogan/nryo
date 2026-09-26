@@ -2,9 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { GameEntry, GameModule } from '../platform/types';
 
 export type ModuleState =
-  | { status: 'loading' }
-  | { status: 'ready'; module: GameModule }
-  | { status: 'error'; error: unknown };
+  { status: 'loading' } | { status: 'ready'; module: GameModule } | { status: 'error'; error: unknown };
 
 const cache = new Map<string, GameModule>();
 

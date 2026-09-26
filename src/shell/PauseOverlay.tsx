@@ -27,7 +27,9 @@ export function PauseOverlay({ game, onResume, onRestart, onExit, resumable }: P
         </p>
         <h2 className={styles.overlayTitle}>Paused</h2>
         <p className={styles.muted}>
-          {resumable ? 'Your progress is saved — you can leave and continue later.' : 'Take a breath. Ready when you are.'}
+          {resumable
+            ? 'Your progress is saved — you can leave and continue later.'
+            : 'Take a breath. Ready when you are.'}
         </p>
         <div className={styles.actions}>
           <Button ref={resumeRef} variant="primary" size="lg" icon="play" onClick={onResume}>

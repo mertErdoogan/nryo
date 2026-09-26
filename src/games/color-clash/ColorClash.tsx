@@ -11,7 +11,15 @@ export function ColorClash({ api, paused }: GameProps) {
   const [question, setQuestion] = useState(() => makeQuestion(rng, 0));
   const [qid, setQid] = useState(0);
   const [feedback, setFeedback] = useState<'good' | 'bad' | null>(null);
-  const g = useRef({ score: 0, streak: 0, best: 0, correct: 0, wrong: 0, over: false, started: performance.now() });
+  const g = useRef({
+    score: 0,
+    streak: 0,
+    best: 0,
+    correct: 0,
+    wrong: 0,
+    over: false,
+    started: performance.now(),
+  });
 
   const clock = useCountdown(ROUND, !paused, () => {
     g.current.over = true;
@@ -62,22 +70,51 @@ export function ColorClash({ api, paused }: GameProps) {
   return (
     <DomStage>
       <StatBar>
-        <Stat label="Time" value={`${Math.ceil(clock.remaining)}s`} tone={clock.remaining < 8 ? 'warn' : undefined} />
+        <Stat
+          label="Time"
+          value={`${Math.ceil(clock.remaining)}s`}
+          tone={clock.remaining < 8 ? 'warn' : undefined}
+        />
         <Stat label="Streak" value={g.current.streak} />
         <Stat label="Multiplier" value={`×${mult}`} tone={mult > 1 ? 'good' : undefined} />
       </StatBar>
       <TimerBar ratio={clock.remaining / ROUND} label="Time remaining" />
-      <div className={styles.card} data-feedback={feedback ?? undefined} key={`card-${qid}`} style={{ background: tint ? `linear-gradient(${tint}, ${tint}), #f8fafc` : undefined }}>
+      <div
+        className={styles.card}
+        data-feedback={feedback ?? undefined}
+        key={`card-${qid}`}
+        style={{ background: tint ? `linear-gradient(${tint}, ${tint}), #f8fafc` : undefined }}
+      >
         <p className={styles.question}>Does the meaning match the ink?</p>
-        <span className={styles.word} style={{ color: COLORS[question.ink].hex }} aria-label={`Word ${COLORS[question.word].name} in ${COLORS[question.ink].name.toLowerCase()} ink`}>
+        <span
+          className={styles.word}
+          style={{ color: COLORS[question.ink].hex }}
+          aria-label={`Word ${COLORS[question.word].name} in ${COLORS[question.ink].name.toLowerCase()} ink`}
+        >
           {COLORS[question.word].name}
         </span>
       </div>
       <div className={styles.buttons}>
-        <button type="button" className={`${styles.answer} ${styles.no}`} onPointerDown={(e) => { e.preventDefault(); answer(false); }} aria-label="No, they do not match">
+        <button
+          type="button"
+          className={`${styles.answer} ${styles.no}`}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            answer(false);
+          }}
+          aria-label="No, they do not match"
+        >
           ✗<small>No · ←</small>
         </button>
-        <button type="button" className={`${styles.answer} ${styles.yes}`} onPointerDown={(e) => { e.preventDefault(); answer(true); }} aria-label="Yes, they match">
+        <button
+          type="button"
+          className={`${styles.answer} ${styles.yes}`}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            answer(true);
+          }}
+          aria-label="Yes, they match"
+        >
           ✓<small>Yes · →</small>
         </button>
       </div>

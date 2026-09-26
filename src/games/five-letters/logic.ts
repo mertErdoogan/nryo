@@ -54,4 +54,5 @@ export function keyStates(guesses: readonly string[], answer: string): Record<st
 }
 
 /** Points for solving in `guesses` tries, with a growing streak bonus. */
-export const solvePoints = (guesses: number, streak: number) => (MAX_GUESSES + 1 - guesses) * 100 + streak * 50;
+export const solvePoints = (guesses: number, streak: number) =>
+  (MAX_GUESSES + 1 - guesses) * 100 + streak * 50;

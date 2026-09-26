@@ -5,7 +5,7 @@ import { KEY_PREFIX } from '../storage/driver';
 /**
  * Internal analytics abstraction. Everything funnels through `track()`, which
  * fans out to pluggable sinks. Out of the box we only keep a small local ring
- * buffer (visible to the player, never sent anywhere); a real provider can be
+ * buffer (it stays on this device and is never sent anywhere); a real provider can be
  * added later by registering another sink — no call sites need to change.
  */
 export interface AnalyticsSink {
@@ -47,7 +47,9 @@ const BUFFER_KEY = `${KEY_PREFIX}events`;
 const BUFFER_SIZE = 200;
 
 /** Keeps the latest events in local storage (debounced writes). */
-export function createLocalBufferSink(driver: StorageDriver): AnalyticsSink & { events(): AnalyticsEvent[] } {
+export function createLocalBufferSink(
+  driver: StorageDriver,
+): AnalyticsSink & { events(): AnalyticsEvent[]; clear(): void } {
   let buffer: AnalyticsEvent[] = [];
   try {
     const raw = driver.get(BUFFER_KEY);
@@ -80,6 +82,12 @@ export function createLocalBufferSink(driver: StorageDriver): AnalyticsSink & { 
       }
     },
     events: () => buffer.slice(),
+    clear() {
+      if (timer !== null) clearTimeout(timer);
+      timer = null;
+      buffer = [];
+      driver.remove(BUFFER_KEY);
+    },
   };
 }
 

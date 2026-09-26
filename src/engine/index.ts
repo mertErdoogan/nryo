@@ -2,7 +2,14 @@ export { CanvasStage } from './CanvasStage';
 export type { CanvasView, StagePointer } from './CanvasStage';
 export { useGameLoop, useInterval, useTimeout } from './loop';
 export { useCountdown, useStopwatch } from './timer';
-export { useKeyDown, useHeldKeys, axisFromKeys, swipeDirection, isCoarsePointer, isGameKeyEvent } from './input';
+export {
+  useKeyDown,
+  useHeldKeys,
+  axisFromKeys,
+  swipeDirection,
+  isCoarsePointer,
+  isGameKeyEvent,
+} from './input';
 export type { SwipeDirection } from './input';
 export { Particles, FloatingText, Shake, GAME_FONT, makeStars } from './effects';
 export { roundRectPath, fillRoundRect, circle, text, verticalGradient, hsl, prompt } from './draw';

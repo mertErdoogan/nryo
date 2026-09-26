@@ -25,7 +25,9 @@ export function FavoritesPage() {
         headingLevel="h1"
         title="Favorites"
         emoji="❤️"
-        subtitle={games.length > 0 ? `${games.length} saved on this device` : 'Your go-to games, one tap away.'}
+        subtitle={
+          games.length > 0 ? `${games.length} saved on this device` : 'Your go-to games, one tap away.'
+        }
       >
         {games.length > 0 ? (
           <GameGrid games={games} dense />

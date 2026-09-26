@@ -13,7 +13,8 @@ function tone(
   const g = ctx.createGain();
   osc.type = opts.type ?? 'sine';
   osc.frequency.setValueAtTime(opts.from, start);
-  if (opts.to !== undefined) osc.frequency.exponentialRampToValueAtTime(Math.max(20, opts.to), start + opts.dur);
+  if (opts.to !== undefined)
+    osc.frequency.exponentialRampToValueAtTime(Math.max(20, opts.to), start + opts.dur);
   const peak = opts.gain ?? 0.3;
   g.gain.setValueAtTime(0.0001, start);
   g.gain.exponentialRampToValueAtTime(peak, start + 0.008);
@@ -24,7 +25,14 @@ function tone(
 }
 
 let noiseBuffer: AudioBuffer | null = null;
-function noise(ctx: AudioContext, out: AudioNode, t: number, dur: number, gain: number, cutoff: number): void {
+function noise(
+  ctx: AudioContext,
+  out: AudioNode,
+  t: number,
+  dur: number,
+  gain: number,
+  cutoff: number,
+): void {
   if (!noiseBuffer || noiseBuffer.sampleRate !== ctx.sampleRate) {
     noiseBuffer = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const data = noiseBuffer.getChannelData(0);
@@ -44,13 +52,17 @@ function noise(ctx: AudioContext, out: AudioNode, t: number, dur: number, gain: 
   src.stop(t + dur + 0.02);
 }
 
-const arp = (notes: number[], step: number, type: OscillatorType, gain: number, dur = step * 1.6): Voice =>
-  (ctx, out, t) => notes.forEach((f, i) => tone(ctx, out, t, { type, from: f, dur, gain, delay: i * step }));
+const arp =
+  (notes: number[], step: number, type: OscillatorType, gain: number, dur = step * 1.6): Voice =>
+  (ctx, out, t) =>
+    notes.forEach((f, i) => tone(ctx, out, t, { type, from: f, dur, gain, delay: i * step }));
 
-const note = (freq: number): Voice => (ctx, out, t) => {
-  tone(ctx, out, t, { type: 'triangle', from: freq, dur: 0.42, gain: 0.26 });
-  tone(ctx, out, t, { type: 'sine', from: freq * 2, dur: 0.25, gain: 0.07 });
-};
+const note =
+  (freq: number): Voice =>
+  (ctx, out, t) => {
+    tone(ctx, out, t, { type: 'triangle', from: freq, dur: 0.42, gain: 0.26 });
+    tone(ctx, out, t, { type: 'sine', from: freq * 2, dur: 0.25, gain: 0.07 });
+  };
 
 const VOICES: Record<SoundName, Voice> = {
   click: (c, o, t) => tone(c, o, t, { from: 820, dur: 0.05, gain: 0.18 }),
@@ -112,7 +124,8 @@ class SoundEngine {
     try {
       if (!this.ctx) {
         const Ctor =
-          window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+          window.AudioContext ??
+          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
         if (!Ctor) return;
         this.ctx = new Ctor();
         this.master = this.ctx.createGain();

@@ -8,13 +8,48 @@ export type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'J' | 'L';
 export const TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
 
 const SHAPES: Record<PieceType, [number, number][]> = {
-  I: [[0, 1], [1, 1], [2, 1], [3, 1]],
-  O: [[1, 0], [2, 0], [1, 1], [2, 1]],
-  T: [[1, 0], [0, 1], [1, 1], [2, 1]],
-  S: [[1, 0], [2, 0], [0, 1], [1, 1]],
-  Z: [[0, 0], [1, 0], [1, 1], [2, 1]],
-  J: [[0, 0], [0, 1], [1, 1], [2, 1]],
-  L: [[2, 0], [0, 1], [1, 1], [2, 1]],
+  I: [
+    [0, 1],
+    [1, 1],
+    [2, 1],
+    [3, 1],
+  ],
+  O: [
+    [1, 0],
+    [2, 0],
+    [1, 1],
+    [2, 1],
+  ],
+  T: [
+    [1, 0],
+    [0, 1],
+    [1, 1],
+    [2, 1],
+  ],
+  S: [
+    [1, 0],
+    [2, 0],
+    [0, 1],
+    [1, 1],
+  ],
+  Z: [
+    [0, 0],
+    [1, 0],
+    [1, 1],
+    [2, 1],
+  ],
+  J: [
+    [0, 0],
+    [0, 1],
+    [1, 1],
+    [2, 1],
+  ],
+  L: [
+    [2, 0],
+    [0, 1],
+    [1, 1],
+    [2, 1],
+  ],
 };
 const BOX: Record<PieceType, number> = { I: 4, O: 4, T: 3, S: 3, Z: 3, J: 3, L: 3 };
 
@@ -37,7 +72,8 @@ export interface Piece {
 
 export type Board = (PieceType | null)[][];
 
-export const emptyBoard = (): Board => Array.from({ length: ROWS }, () => Array<PieceType | null>(COLS).fill(null));
+export const emptyBoard = (): Board =>
+  Array.from({ length: ROWS }, () => Array<PieceType | null>(COLS).fill(null));
 
 export function cells(p: Piece): [number, number][] {
   const n = BOX[p.type];

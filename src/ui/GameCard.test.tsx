@@ -25,7 +25,10 @@ describe('GameCard', () => {
     expect(fav).toHaveAttribute('aria-pressed', 'false');
     await userEvent.click(fav);
     expect(platform.favorites.has('stack-tower')).toBe(true);
-    expect(screen.getByRole('button', { name: /remove stack tower from favorites/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: /remove stack tower from favorites/i })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     expect(window.location.pathname).toBe('/');
   });
 
@@ -33,7 +36,17 @@ describe('GameCard', () => {
     render(
       <GameCard
         game={game}
-        stats={{ plays: 3, best: 40, last: 12, totalScore: 60, wins: 0, medal: 2, firstPlayedAt: 0, lastPlayedAt: 0, timePlayedMs: 0 }}
+        stats={{
+          plays: 3,
+          best: 40,
+          last: 12,
+          totalScore: 60,
+          wins: 0,
+          medal: 2,
+          firstPlayedAt: 0,
+          lastPlayedAt: 0,
+          timePlayedMs: 0,
+        }}
       />,
     );
     const best = screen.getByTitle('Your best');

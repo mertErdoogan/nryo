@@ -30,7 +30,11 @@ function Shape({ mask, isSource, isLeaf }: { mask: number; isSource: boolean; is
   ];
   return (
     <>
-      {arms.map(([bit, d]) => (mask & bit ? <path key={bit} d={d} className={styles.pipe} strokeWidth={16} strokeLinecap="round" /> : null))}
+      {arms.map(([bit, d]) =>
+        mask & bit ? (
+          <path key={bit} d={d} className={styles.pipe} strokeWidth={16} strokeLinecap="round" />
+        ) : null,
+      )}
       {isSource ? (
         <>
           <circle cx={50} cy={50} r={22} className={styles.core} />
@@ -42,7 +46,15 @@ function Shape({ mask, isSource, isLeaf }: { mask: number; isSource: boolean; is
           <circle cx={50} cy={50} r={13} className={styles.lamp} />
         </>
       ) : (
-        <circle cx={50} cy={50} r={9} className={styles.pipe} fill="currentColor" strokeWidth={0} style={{ fill: 'currentColor' }} />
+        <circle
+          cx={50}
+          cy={50}
+          r={9}
+          className={styles.pipe}
+          fill="currentColor"
+          strokeWidth={0}
+          style={{ fill: 'currentColor' }}
+        />
       )}
     </>
   );
@@ -60,7 +72,14 @@ export function PipeLink({ api, paused }: GameProps<Save, Progress>) {
     if (api.resume) return api.resume.turns;
     let t = scramble(puzzle.size, rng);
     // Never start already solved.
-    while (connected(puzzle.base.map((m, i) => rotateMask(m, t[i]!)), puzzle.size, puzzle.source).size === puzzle.size ** 2) {
+    while (
+      connected(
+        puzzle.base.map((m, i) => rotateMask(m, t[i]!)),
+        puzzle.size,
+        puzzle.source,
+      ).size ===
+      puzzle.size ** 2
+    ) {
       t = scramble(puzzle.size, rng);
     }
     return t;
@@ -105,10 +124,17 @@ export function PipeLink({ api, paused }: GameProps<Save, Progress>) {
     setTurns(next);
     setMoves((m) => m + 1);
     api.sfx('tick');
-    const litNow = connected(puzzle.base.map((m, k) => rotateMask(m, next[k]!)), puzzle.size, puzzle.source).size;
+    const litNow = connected(
+      puzzle.base.map((m, k) => rotateMask(m, next[k]!)),
+      puzzle.size,
+      puzzle.source,
+    ).size;
     api.save(
       { ...puzzle, turns: next.map((t) => t % 4), moves: moves + 1, elapsed: readElapsed() },
-      { label: `Level ${level} · ${puzzle.size}×${puzzle.size} · ${Math.round((litNow / total) * 100)}% lit`, progress: litNow / total },
+      {
+        label: `Level ${level} · ${puzzle.size}×${puzzle.size} · ${Math.round((litNow / total) * 100)}% lit`,
+        progress: litNow / total,
+      },
     );
   };
 
@@ -122,7 +148,13 @@ export function PipeLink({ api, paused }: GameProps<Save, Progress>) {
         <Stat label="Lit" value={`${lit.size}/${total}`} tone={solved ? 'good' : undefined} />
         <Stat label="Time" value={formatClock(elapsed)} />
       </StatBar>
-      <div className={styles.grid} style={style} data-solved={solved} role="group" aria-label={`Pipe puzzle ${puzzle.size} by ${puzzle.size}`}>
+      <div
+        className={styles.grid}
+        style={style}
+        data-solved={solved}
+        role="group"
+        aria-label={`Pipe puzzle ${puzzle.size} by ${puzzle.size}`}
+      >
         {puzzle.base.map((base, i) => (
           <button
             key={i}
@@ -132,7 +164,12 @@ export function PipeLink({ api, paused }: GameProps<Save, Progress>) {
             aria-label={`Tile ${i + 1}${lit.has(i) ? ', powered' : ''}`}
             onClick={() => rotate(i)}
           >
-            <svg className={styles.shape} viewBox="0 0 100 100" style={{ transform: `rotate(${turns[i]! * 90}deg)`, color: lit.has(i) ? '#67e8f9' : '#475569' }} aria-hidden="true">
+            <svg
+              className={styles.shape}
+              viewBox="0 0 100 100"
+              style={{ transform: `rotate(${turns[i]! * 90}deg)`, color: lit.has(i) ? '#67e8f9' : '#475569' }}
+              aria-hidden="true"
+            >
               <Shape mask={base} isSource={i === puzzle.source} isLeaf={leaf(base)} />
             </svg>
           </button>

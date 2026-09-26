@@ -56,8 +56,10 @@ const escapeHtml = (s: string) =>
 const safeJson = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003c');
 
 function renderPage(template: string, meta: PageMeta, siteUrl: string, base: string): string {
-  const url = siteUrl ? new URL(base + meta.path.replace(/^\//, ''), siteUrl).href : base + meta.path.replace(/^\//, '');
-  const image = siteUrl ? new URL(`${base}og-image.png`, siteUrl).href : `${base}og-image.png`;
+  const url = siteUrl
+    ? new URL(base + meta.path.replace(/^\//, ''), siteUrl).href
+    : base + meta.path.replace(/^\//, '');
+  const image = siteUrl ? new URL(`${base}og-image.jpg`, siteUrl).href : `${base}og-image.jpg`;
   const title = escapeHtml(meta.title);
   const description = escapeHtml(meta.description);
   let html = template
@@ -73,7 +75,10 @@ function renderPage(template: string, meta: PageMeta, siteUrl: string, base: str
       `    <link rel="canonical" href="${escapeHtml(url)}" />\n    <meta property="og:url" content="${escapeHtml(url)}" />\n  </head>`,
     );
   if (meta.jsonLd) {
-    html = html.replace('</head>', `    <script type="application/ld+json">${safeJson(meta.jsonLd)}</script>\n  </head>`);
+    html = html.replace(
+      '</head>',
+      `    <script type="application/ld+json">${safeJson(meta.jsonLd)}</script>\n  </head>`,
+    );
   }
   // Lightweight, real content for crawlers and the first paint; React replaces it on boot.
   const splash = `<div class="prerender" style="min-height:100dvh;display:grid;place-content:center;gap:12px;padding:24px;text-align:center;font-family:system-ui,sans-serif;color:#f5f5ff;background:#090916"><h1 style="margin:0;font-size:1.6rem">${title.split(' — ')[0]!.split(' | ')[0]}</h1><p style="margin:0;max-width:520px;color:#a9a9c9">${description}</p></div>`;
@@ -192,7 +197,8 @@ export function sitePlugin(): Plugin {
       let games: GameLike[];
       try {
         seo = (await server.ssrLoadModule('/src/seo.ts')) as unknown as SeoModule;
-        games = ((await server.ssrLoadModule('/src/games/metas.ts')) as { GAME_METAS: GameLike[] }).GAME_METAS;
+        games = ((await server.ssrLoadModule('/src/games/metas.ts')) as { GAME_METAS: GameLike[] })
+          .GAME_METAS;
       } finally {
         await server.close();
       }
@@ -217,12 +223,18 @@ export function sitePlugin(): Plugin {
       if (siteUrl) {
         const urls = pages
           .filter((p) => p.path !== '/favorites' && p.path !== '/profile')
-          .map((p) => `  <url><loc>${escapeHtml(new URL(base + p.path.replace(/^\//, ''), siteUrl).href)}</loc></url>`);
+          .map(
+            (p) =>
+              `  <url><loc>${escapeHtml(new URL(base + p.path.replace(/^\//, ''), siteUrl).href)}</loc></url>`,
+          );
         await writeFile(
           path.join(outDir, 'sitemap.xml'),
           `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`,
         );
-        await writeFile(path.join(outDir, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${new URL(`${base}sitemap.xml`, siteUrl).href}\n`);
+        await writeFile(
+          path.join(outDir, 'robots.txt'),
+          `User-agent: *\nAllow: /\nSitemap: ${new URL(`${base}sitemap.xml`, siteUrl).href}\n`,
+        );
       }
 
       // Precache the app shell and every asset (all games) for offline play.
@@ -234,7 +246,7 @@ export function sitePlugin(): Plugin {
           f !== 'robots.txt' &&
           f !== '404.html' &&
           (!f.endsWith('.html') || f === 'index.html') &&
-          !f.endsWith('og-image.png') &&
+          !f.endsWith('og-image.jpg') &&
           // Non-Latin font subsets are fetched on demand by unicode-range only.
           !(f.endsWith('.woff2') && !/latin/.test(f)),
       );

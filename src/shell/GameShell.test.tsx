@@ -17,7 +17,10 @@ function FinishGame({ api, paused }: GameProps<{ n: number }>) {
       <button type="button" onClick={() => api.save({ n: 7 }, { label: 'Level 7', progress: 0.5 })}>
         save
       </button>
-      <button type="button" onClick={() => api.gameOver({ score: 42, won: true, stats: [{ label: 'Combo', value: 'x3' }] })}>
+      <button
+        type="button"
+        onClick={() => api.gameOver({ score: 42, won: true, stats: [{ label: 'Combo', value: 'x3' }] })}
+      >
         finish
       </button>
     </div>
@@ -28,12 +31,23 @@ function CrashGame(): never {
   throw new Error('boom');
 }
 
-const entry = (id: string, Component: GameEntry['load'] extends () => Promise<infer M> ? M extends { Component: infer C } ? C : never : never, resumable = false): GameEntry => ({
+const entry = (
+  id: string,
+  Component: GameEntry['load'] extends () => Promise<infer M>
+    ? M extends { Component: infer C }
+      ? C
+      : never
+    : never,
+  resumable = false,
+): GameEntry => ({
   ...makeMeta({ id, title: `Game ${id}`, resumable, medals: { bronze: 10, silver: 30, gold: 50 } }),
   thumbnail: '',
   load: async () => ({
     Component,
-    save: { version: 1, is: (d: unknown): d is { n: number } => typeof (d as { n?: unknown })?.n === 'number' },
+    save: {
+      version: 1,
+      is: (d: unknown): d is { n: number } => typeof (d as { n?: unknown })?.n === 'number',
+    },
   }),
 });
 
@@ -52,7 +66,9 @@ describe('GameShell', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Pause' }));
     expect(screen.getByTestId('pause-overlay')).toBeInTheDocument();
     expect(screen.getByTestId('paused')).toHaveTextContent('true');
-    await userEvent.click(within(screen.getByTestId('pause-overlay')).getByRole('button', { name: 'Resume' }));
+    await userEvent.click(
+      within(screen.getByTestId('pause-overlay')).getByRole('button', { name: 'Resume' }),
+    );
     expect(screen.getByTestId('paused')).toHaveTextContent('false');
 
     await userEvent.click(screen.getByRole('button', { name: 'finish' }));

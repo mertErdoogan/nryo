@@ -7,7 +7,14 @@ import { canMove, maxTile, move, nextId, SIZE, spawn, type Dir, type Tile } from
 import styles from './Merge2048.module.css';
 
 export const saveSchema = obj({
-  tiles: arr(obj({ value: num({ int: true, min: 2 }), r: num({ int: true, min: 0, max: SIZE - 1 }), c: num({ int: true, min: 0, max: SIZE - 1 }) }), { max: SIZE * SIZE }),
+  tiles: arr(
+    obj({
+      value: num({ int: true, min: 2 }),
+      r: num({ int: true, min: 0, max: SIZE - 1 }),
+      c: num({ int: true, min: 0, max: SIZE - 1 }),
+    }),
+    { max: SIZE * SIZE },
+  ),
   score: num({ min: 0 }),
   moves: num({ int: true, min: 0 }),
   won: bool(),
@@ -95,7 +102,10 @@ export function Merge2048({ api, paused }: GameProps<Save2048>) {
     }
     api.save(
       { tiles: tiles.map(({ value, r, c }) => ({ value, r, c })), score, moves: next.moves, won: next.won },
-      { label: `Score ${score.toLocaleString('en')} · best tile ${top}`, progress: Math.min(1, Math.log2(top) / 11) },
+      {
+        label: `Score ${score.toLocaleString('en')} · best tile ${top}`,
+        progress: Math.min(1, Math.log2(top) / 11),
+      },
     );
   };
 
@@ -114,7 +124,13 @@ export function Merge2048({ api, paused }: GameProps<Save2048>) {
 
   const renderTile = (t: Tile, ghost = false) => {
     const [bg, fg, glow] = PALETTE[t.value] ?? ['#f472b6', '#fff', 34];
-    const style = { '--r': t.r, '--c': t.c, '--bg': bg, '--fg': fg, '--glow': glow ? `${glow}px` : '0' } as CSSProperties;
+    const style = {
+      '--r': t.r,
+      '--c': t.c,
+      '--bg': bg,
+      '--fg': fg,
+      '--glow': glow ? `${glow}px` : '0',
+    } as CSSProperties;
     const digits = String(t.value).length;
     const cls = [
       styles.tile,
@@ -127,7 +143,12 @@ export function Merge2048({ api, paused }: GameProps<Save2048>) {
       .filter(Boolean)
       .join(' ');
     return (
-      <div key={`t${t.id}`} className={cls} style={style} data-tile={ghost ? undefined : `${t.value}@${t.r},${t.c}`}>
+      <div
+        key={`t${t.id}`}
+        className={cls}
+        style={style}
+        data-tile={ghost ? undefined : `${t.value}@${t.r},${t.c}`}
+      >
         <div className={styles.inner}>{t.value}</div>
       </div>
     );
@@ -157,7 +178,11 @@ export function Merge2048({ api, paused }: GameProps<Save2048>) {
         onPointerCancel={() => (swipe.current = null)}
       >
         {Array.from({ length: SIZE * SIZE }, (_, i) => (
-          <div key={i} className={styles.cell} style={{ '--r': Math.floor(i / SIZE), '--c': i % SIZE } as CSSProperties} />
+          <div
+            key={i}
+            className={styles.cell}
+            style={{ '--r': Math.floor(i / SIZE), '--c': i % SIZE } as CSSProperties}
+          />
         ))}
         {state.ghosts.map((t) => renderTile(t, true))}
         {state.tiles.map((t) => renderTile(t))}

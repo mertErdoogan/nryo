@@ -57,12 +57,17 @@ export function GemMiner({ api, paused }: GameProps<Save, Progress>) {
   });
   const [tab, setTab] = useState<Tab>('build');
   const [amount, setAmount] = useState<1 | 10 | 'max'>(1);
-  const [floaters, setFloaters] = useState<{ id: number; x: number; y: number; text: string; lucky: boolean }[]>([]);
+  const [floaters, setFloaters] = useState<
+    { id: number; x: number; y: number; text: string; lucky: boolean }[]
+  >([]);
   const [welcome, setWelcome] = useState<number | null>(null);
   const floaterId = useRef(0);
   const ended = useRef(false);
 
-  const perSecond = useMemo(() => goldPerSecond(state.owned, state.upgrades, gems), [state.owned, state.upgrades, gems]);
+  const perSecond = useMemo(
+    () => goldPerSecond(state.owned, state.upgrades, gems),
+    [state.owned, state.upgrades, gems],
+  );
   const power = tapPower(state.upgrades, gems, perSecond);
 
   const stateRef = useRef(state);
@@ -75,7 +80,10 @@ export function GemMiner({ api, paused }: GameProps<Save, Progress>) {
     const s = stateRef.current;
     api.save(
       { ...s, savedAt: Date.now() },
-      { label: `${formatCompact(s.gold)} gold · ${formatCompact(goldPerSecond(s.owned, s.upgrades, gems))}/s`, progress: Math.min(1, s.runEarned / DESCEND_AT) },
+      {
+        label: `${formatCompact(s.gold)} gold · ${formatCompact(goldPerSecond(s.owned, s.upgrades, gems))}/s`,
+        progress: Math.min(1, s.runEarned / DESCEND_AT),
+      },
     );
   }, [api, gems]);
 
@@ -121,7 +129,10 @@ export function GemMiner({ api, paused }: GameProps<Save, Progress>) {
     const gain = power * (lucky ? 15 : 1);
     setState((s) => ({ ...s, gold: s.gold + gain, runEarned: s.runEarned + gain, clicks: s.clicks + 1 }));
     const id = ++floaterId.current;
-    setFloaters((f) => [...f.slice(-8), { id, x, y, text: `${lucky ? 'Lucky! ' : ''}+${formatCompact(gain)}`, lucky }]);
+    setFloaters((f) => [
+      ...f.slice(-8),
+      { id, x, y, text: `${lucky ? 'Lucky! ' : ''}+${formatCompact(gain)}`, lucky },
+    ]);
     setTimeout(() => setFloaters((f) => f.filter((fl) => fl.id !== id)), 800);
     api.sfx(lucky ? 'coin' : 'tap');
   };
@@ -143,7 +154,12 @@ export function GemMiner({ api, paused }: GameProps<Save, Progress>) {
   };
 
   const claimGoal = (id: string, reward: number) => {
-    setState((s) => ({ ...s, gold: s.gold + reward, runEarned: s.runEarned + reward, goals: [...s.goals, id] }));
+    setState((s) => ({
+      ...s,
+      gold: s.gold + reward,
+      runEarned: s.runEarned + reward,
+      goals: [...s.goals, id],
+    }));
     api.sfx('win');
   };
 
@@ -167,8 +183,17 @@ export function GemMiner({ api, paused }: GameProps<Save, Progress>) {
     else return false;
   }, !paused);
 
-  const visibleUpgrades = UPGRADES.filter((u) => !state.upgrades.includes(u.id) && u.visible(state)).sort((a, b) => a.cost - b.cost);
-  const claimable = GOALS.filter((g) => !state.goals.includes(g.id) && (() => { const [c, t] = g.progress(state, perSecond); return c >= t; })());
+  const visibleUpgrades = UPGRADES.filter((u) => !state.upgrades.includes(u.id) && u.visible(state)).sort(
+    (a, b) => a.cost - b.cost,
+  );
+  const claimable = GOALS.filter(
+    (g) =>
+      !state.goals.includes(g.id) &&
+      (() => {
+        const [c, t] = g.progress(state, perSecond);
+        return c >= t;
+      })(),
+  );
   const gemsNow = gemsForRun(state.runEarned);
 
   return (
@@ -198,7 +223,12 @@ export function GemMiner({ api, paused }: GameProps<Save, Progress>) {
           }}
         />
         {floaters.map((f) => (
-          <span key={f.id} className={styles.floater} data-lucky={f.lucky} style={{ left: `${f.x}%`, top: `${f.y}%` }}>
+          <span
+            key={f.id}
+            className={styles.floater}
+            data-lucky={f.lucky}
+            style={{ left: `${f.x}%`, top: `${f.y}%` }}
+          >
             {f.text}
           </span>
         ))}
@@ -216,7 +246,14 @@ export function GemMiner({ api, paused }: GameProps<Save, Progress>) {
             ['goals', `Goals${claimable.length ? ` (${claimable.length})` : ''}`],
           ] as const
         ).map(([id, label]) => (
-          <button key={id} type="button" role="tab" className={styles.tab} aria-selected={tab === id} onClick={() => setTab(id)}>
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            className={styles.tab}
+            aria-selected={tab === id}
+            onClick={() => setTab(id)}
+          >
             {label}
           </button>
         ))}
@@ -226,7 +263,13 @@ export function GemMiner({ api, paused }: GameProps<Save, Progress>) {
           <>
             <div className={styles.amounts}>
               {([1, 10, 'max'] as const).map((a) => (
-                <button key={a} type="button" className={styles.amount} aria-pressed={amount === a} onClick={() => setAmount(a)}>
+                <button
+                  key={a}
+                  type="button"
+                  className={styles.amount}
+                  aria-pressed={amount === a}
+                  onClick={() => setAmount(a)}
+                >
                   {a === 'max' ? 'Max' : `×${a}`}
                 </button>
               ))}
@@ -248,7 +291,12 @@ export function GemMiner({ api, paused }: GameProps<Save, Progress>) {
                     <span className={styles.sub}>+{formatCompact(rate)}/s each</span>
                   </span>
                   <span className={styles.owned}>{owned}</span>
-                  <button type="button" className={styles.buy} disabled={cost > state.gold} onClick={() => buy(i)}>
+                  <button
+                    type="button"
+                    className={styles.buy}
+                    disabled={cost > state.gold}
+                    onClick={() => buy(i)}
+                  >
                     {n > 1 ? `×${n} ` : ''}🪙{formatCompact(cost)}
                   </button>
                 </div>
@@ -271,7 +319,12 @@ export function GemMiner({ api, paused }: GameProps<Save, Progress>) {
                   <span className={styles.name}>{u.name}</span>
                   <span className={styles.sub}>{u.description}</span>
                 </span>
-                <button type="button" className={styles.buy} disabled={u.cost > state.gold} onClick={() => buyUpgrade(u.id, u.cost)}>
+                <button
+                  type="button"
+                  className={styles.buy}
+                  disabled={u.cost > state.gold}
+                  onClick={() => buyUpgrade(u.id, u.cost)}
+                >
                   🪙{formatCompact(u.cost)}
                 </button>
               </div>
@@ -289,13 +342,19 @@ export function GemMiner({ api, paused }: GameProps<Save, Progress>) {
                 <span className={styles.info}>
                   <span className={styles.name}>{g.label}</span>
                   <span className={styles.sub}>
-                    {formatCompact(Math.min(cur, target))} / {formatCompact(target)} · reward 🪙{formatCompact(g.reward)}
+                    {formatCompact(Math.min(cur, target))} / {formatCompact(target)} · reward 🪙
+                    {formatCompact(g.reward)}
                   </span>
                 </span>
                 {claimed ? (
                   <span className={styles.done}>Done</span>
                 ) : (
-                  <button type="button" className={styles.buy} disabled={cur < target} onClick={() => claimGoal(g.id, g.reward)}>
+                  <button
+                    type="button"
+                    className={styles.buy}
+                    disabled={cur < target}
+                    onClick={() => claimGoal(g.id, g.reward)}
+                  >
                     Claim
                   </button>
                 )}
