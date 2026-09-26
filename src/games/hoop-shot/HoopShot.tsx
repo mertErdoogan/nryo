@@ -1,5 +1,13 @@
 import { useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, Shake, useGameLoop, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  Shake,
+  createContinueGate,
+  useGameLoop,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import type { GameProps } from '../../platform/types';
@@ -22,6 +30,11 @@ const LIVES = 3;
 export function HoopShot({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
+  const lo = api.loadout;
+  const [ballColor, seamColor] = lo.skin.colors;
+  const lives = LIVES + lo.level('lives');
+  const previewDots = 26 + 8 * lo.level('sight');
+  const continueGate = useRef(createContinueGate(api)).current;
   const fx = useRef({
     particles: new Particles(300, rng.next),
     floaters: new FloatingText(),
@@ -47,6 +60,7 @@ export function HoopShot({ api, paused }: GameProps) {
     over: false,
     overTimer: 0,
     ended: false,
+    waiting: false,
     time: 0,
   }).current;
 
@@ -73,13 +87,13 @@ export function HoopShot({ api, paused }: GameProps) {
       api.sfx('miss');
       api.haptic(40);
       fx.current.floaters.add(
-        s.misses >= LIVES ? 'Game over' : `Miss! ${LIVES - s.misses} left`,
+        s.misses >= lives ? 'Game over' : `Miss! ${lives - s.misses} left`,
         W / 2,
         H / 2,
         '#fca5a5',
         22,
       );
-      if (s.misses >= LIVES) {
+      if (s.misses >= lives) {
         s.over = true;
         s.overTimer = 1;
         return;
@@ -174,6 +188,7 @@ export function HoopShot({ api, paused }: GameProps) {
           s.bestStreak = Math.max(s.bestStreak, s.streak);
           const swish = !s.touched;
           const pts = basketPoints(swish, s.streak);
+          if (swish) api.addCoins(1);
           s.score += pts;
           api.setScore(s.score);
           s.netWave = 1;
@@ -205,17 +220,29 @@ export function HoopShot({ api, paused }: GameProps) {
       const settled = b.y >= FLOOR - BALL_R - 2 && Math.abs(b.vy) < 80;
       if (s.flightTime > 4 || settled || (s.scored && b.y > h.y + 140) || b.y < -400) endAttempt();
     }
-    if (s.over && !s.ended) {
+    if (s.over && !s.ended && !s.waiting) {
       s.overTimer -= dt;
       if (s.overTimer <= 0) {
-        s.ended = true;
-        api.gameOver({
-          score: s.score,
-          stats: [
-            { label: 'Baskets', value: `${s.makes}/${s.shots}` },
-            { label: 'Best streak', value: String(s.bestStreak) },
-          ],
-        });
+        s.waiting = true;
+        continueGate(
+          () => {
+            s.misses = lives - 2;
+            s.over = false;
+            s.waiting = false;
+            resetBall();
+            floaters.add('+2 balls', W / 2, H / 2, '#86efac', 26, 1.2);
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({
+              score: s.score,
+              stats: [
+                { label: 'Baskets', value: `${s.makes}/${s.shots}` },
+                { label: 'Best streak', value: String(s.bestStreak) },
+              ],
+            });
+          },
+        );
       }
     }
     s.netWave = Math.max(0, s.netWave - dt * 2);
@@ -268,11 +295,12 @@ export function HoopShot({ api, paused }: GameProps) {
       let y = s.ball.y;
       const vx = v.vx;
       let vy = v.vy;
-      for (let i = 0; i < 26; i++) {
+      for (let i = 0; i < previewDots; i++) {
         vy += GRAVITY * 0.03;
         x += vx * 0.03;
         y += vy * 0.03;
-        circle(ctx, x, y, 3.2 - i * 0.08, `rgba(255,255,255,${0.8 - i * 0.028})`);
+        const k = i / previewDots;
+        circle(ctx, x, y, 3.2 - k * 2, `rgba(255,255,255,${0.8 - k * 0.72})`);
       }
     }
     // ball
@@ -280,8 +308,8 @@ export function HoopShot({ api, paused }: GameProps) {
     ctx.save();
     ctx.translate(b.x, b.y);
     ctx.rotate(s.spin);
-    circle(ctx, 0, 0, BALL_R, '#f97316');
-    ctx.strokeStyle = '#7c2d12';
+    circle(ctx, 0, 0, BALL_R, ballColor);
+    ctx.strokeStyle = seamColor;
     ctx.lineWidth = 1.8;
     ctx.beginPath();
     ctx.arc(0, 0, BALL_R, 0, Math.PI * 2);
@@ -312,7 +340,7 @@ export function HoopShot({ api, paused }: GameProps) {
       stroke: 'rgba(0,0,0,0.35)',
       strokeWidth: 6,
     });
-    text(ctx, '🏀'.repeat(Math.max(0, LIVES - s.misses)), 14, 24, { size: 16, align: 'left' });
+    text(ctx, '🏀'.repeat(Math.max(0, lives - s.misses)), 14, 24, { size: 16, align: 'left' });
     if (s.streak >= 3)
       text(ctx, `🔥 ×${s.streak >= 6 ? 3 : 2}`, W - 14, 24, {
         size: 16,

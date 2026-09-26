@@ -4,6 +4,7 @@ import {
   FloatingText,
   Particles,
   Shake,
+  createContinueGate,
   useGameLoop,
   useKeyDown,
   useSeededRng,
@@ -48,7 +49,7 @@ const cellSchema = obj({
 });
 const saveSchema = obj({
   board: grid(cellSchema, SIZE, SIZE),
-  moves: num({ int: true, min: 0, max: MOVES }),
+  moves: num({ int: true, min: 0, max: MOVES + 40 }),
   score: num({ min: 0 }),
 });
 type Save = Infer<typeof saveSchema>;
@@ -173,9 +174,12 @@ export function GemSwap({ api, paused }: GameProps<Save>) {
     floaters: new FloatingText(),
     shake: new Shake(rng.next),
   });
+  const lo = api.loadout;
+  const startMoves = MOVES + 2 * lo.level('moves');
+  const continueGate = useRef(createContinueGate(api)).current;
   const s = useRef({
     board: api.resume ? api.resume.board.map((row) => row.map((c) => newGem(c.t, c.s))) : createBoard(rng),
-    moves: api.resume?.moves ?? MOVES,
+    moves: api.resume?.moves ?? startMoves,
     score: api.resume?.score ?? 0,
     phase: { kind: 'idle' } as Phase,
     cascade: 1,
@@ -203,7 +207,7 @@ export function GemSwap({ api, paused }: GameProps<Save>) {
   const persist = () => {
     api.save(toSave(s.board, s.moves, s.score), {
       label: `${s.score.toLocaleString('en')} pts · ${s.moves} moves left`,
-      progress: (MOVES - s.moves) / MOVES,
+      progress: Math.max(0, (startMoves - s.moves) / startMoves),
     });
   };
 
@@ -217,6 +221,7 @@ export function GemSwap({ api, paused }: GameProps<Save>) {
     const gained = (cells.size * 10 + bonus) * s.cascade;
     s.score += gained;
     s.specials += created.length;
+    if (created.length) api.addCoins(created.length);
     api.setScore(s.score);
     let sx = 0;
     let sy = 0;
@@ -398,7 +403,14 @@ export function GemSwap({ api, paused }: GameProps<Save>) {
           s.phase = { kind: 'over' };
           if (!s.ended) {
             s.ended = true;
-            setTimeout(
+            continueGate(
+              () => {
+                s.moves = 5;
+                s.ended = false;
+                s.phase = { kind: 'idle' };
+                floaters.add('+5 moves', W / 2, BY + CELL * 4, '#86efac', 26, 1.2);
+                persist();
+              },
               () =>
                 api.gameOver({
                   score: s.score,
@@ -407,7 +419,6 @@ export function GemSwap({ api, paused }: GameProps<Save>) {
                     { label: 'Specials made', value: String(s.specials) },
                   ],
                 }),
-              400,
             );
           }
         } else {

@@ -192,3 +192,60 @@
   border-color: transparent;
   color: #fff;
 }
+
+.chip {
+  position: absolute;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgb(15 23 42 / 0.78);
+  border: 1px solid rgb(255 255 255 / 0.22);
+  color: #f8fafc;
+  font-size: 0.8rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.chip[data-corner='bottom-left'] {
+  left: 12px;
+  bottom: calc(12px + var(--safe-bottom, 0px));
+}
+
+.chip[data-corner='bottom-right'] {
+  right: 12px;
+  bottom: calc(12px + var(--safe-bottom, 0px));
+}
+
+.chip[data-corner='top-left'] {
+  left: 12px;
+  top: 12px;
+}
+
+.chip[data-corner='top-right'] {
+  right: 12px;
+  top: 12px;
+}
+
+.chip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.chipBadge {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgb(250 204 21 / 0.22);
+  color: #fde047;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chip[data-corner='inline'] {
+  position: static;
+  align-self: center;
+}

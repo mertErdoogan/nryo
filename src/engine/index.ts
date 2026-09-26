@@ -26,5 +26,5 @@ export {
 } from './draw';
 export { TouchButton, ControlBar, FloatingStick } from './controls';
 export { useSeededRng } from './rng';
-export { DomStage, StatBar, Stat, TimerBar, Banner, Hint, ActionRow, GameButton } from './ui';
+export { DomStage, StatBar, Stat, TimerBar, Banner, Hint, ActionRow, GameButton, PowerChip } from './ui';
 export { createContinueGate } from './revive';

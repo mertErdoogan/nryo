@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'merge-2048',
@@ -10,6 +10,7 @@ export default defineMeta({
     'Swipe or use arrow keys to slide all tiles.',
     'Two equal tiles merge into one with their sum.',
     'Reach 2048 to win. The game ends when no moves remain.',
+    'Undo a move with a free undo or a short ad. Stuck? Continue and the four smallest tiles vanish.',
   ],
   categories: ['puzzle', 'brain'],
   tags: ['numbers', 'merge', 'sliding', 'math', 'classic'],
@@ -24,4 +25,17 @@ export default defineMeta({
   realtime: false,
   popularity: 90,
   addedAt: '2026-06-01',
+  shop: {
+    title: 'Theme Shop',
+    icon: '🎨',
+    skinLabel: 'Board themes',
+    upgrades: [upgrade('undo', 'Extra undos', '↩️', 'One more free undo per level each game', 4, 90)],
+    skins: [
+      skin('classic', 'Classic', 0, ['#fb923c', '#fef3c7', '#a78bfa']),
+      skin('ocean', 'Ocean', 150, ['#22d3ee', '#cffafe', '#6366f1'], { icon: '🌊' }),
+      skin('berry', 'Berry', 150, ['#c084fc', '#fae8ff', '#f472b6'], { icon: '🫐' }),
+      skin('lime', 'Lime', 200, ['#a3e635', '#f7fee7', '#22c55e'], { icon: '🍋' }),
+      skin('mono', 'Mono', 0, ['#94a3b8', '#f1f5f9', '#0f172a'], { icon: '⚫', adUnlock: 2 }),
+    ],
+  },
 });

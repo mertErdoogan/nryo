@@ -1,5 +1,13 @@
 import { useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, Shake, useGameLoop, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  Shake,
+  createContinueGate,
+  useGameLoop,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { circle, prompt, text } from '../../engine/draw';
 import { dist, TAU } from '../../lib/math';
@@ -11,6 +19,12 @@ const LIVES = 5;
 
 export function TargetRush({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
+  const lo = api.loadout;
+  const [ringA, ringB] = lo.skin.colors;
+  const maxLives = LIVES + lo.level('lives');
+  const lifeScale = 1 + 0.08 * lo.level('slow');
+  const sizeScale = 1 + 0.06 * lo.level('size');
+  const continueGate = useRef(createContinueGate(api)).current;
   const view = useRef<CanvasView | null>(null);
   const fx = useRef({
     particles: new Particles(500, rng.next),
@@ -23,7 +37,8 @@ export function TargetRush({ api, paused }: GameProps) {
     elapsed: 0,
     spawn: 0.4,
     started: false,
-    lives: LIVES,
+    lives: maxLives,
+    waiting: false,
     score: 0,
     combo: 0,
     bestCombo: 0,
@@ -107,6 +122,7 @@ export function TargetRush({ api, paused }: GameProps) {
       life: 0.45,
     });
     s.rings.push({ x: best.x, y: best.y, r, a: 1, color: best.kind === 'gold' ? '#fde047' : '#fff' });
+    if (best.kind === 'gold') api.addCoins(1);
     api.sfx(best.kind === 'gold' ? 'coin' : bull ? 'perfect' : 'hit');
   };
 
@@ -122,14 +138,14 @@ export function TargetRush({ api, paused }: GameProps) {
       s.spawn -= dt;
       if (s.spawn <= 0) {
         s.spawn = spawnInterval(s.elapsed) * rng.range(0.7, 1.2);
-        const maxR = sizeFor(s.elapsed);
+        const maxR = sizeFor(s.elapsed) * sizeScale;
         const roll = rng.next();
         const kind = s.elapsed > 8 && roll < 0.12 ? 'decoy' : roll > 0.94 ? 'gold' : 'normal';
         s.targets.push({
           x: rng.range(maxR + 10, W - maxR - 10),
           y: rng.range(maxR + 60, H - maxR - 20),
           age: 0,
-          life: lifeFor(s.elapsed) * (kind === 'gold' ? 0.7 : kind === 'decoy' ? 1.2 : 1),
+          life: lifeFor(s.elapsed) * lifeScale * (kind === 'gold' ? 0.7 : kind === 'decoy' ? 1.2 : 1),
           maxR: kind === 'gold' ? maxR * 0.7 : maxR,
           kind,
         });
@@ -139,18 +155,31 @@ export function TargetRush({ api, paused }: GameProps) {
       s.targets = s.targets.filter((t) => t.age < t.life);
       for (const t of expired) if (t.kind !== 'decoy') loseLife(t.x, t.y);
     }
-    if (s.over && !s.ended) {
+    if (s.over && !s.ended && !s.waiting) {
       s.overTimer -= dt;
       if (s.overTimer <= 0) {
-        s.ended = true;
-        api.gameOver({
-          score: s.score,
-          stats: [
-            { label: 'Accuracy', value: s.shots ? `${Math.round((s.hits / s.shots) * 100)}%` : '—' },
-            { label: 'Bullseyes', value: String(s.bullseyes) },
-            { label: 'Best combo', value: String(s.bestCombo) },
-          ],
-        });
+        s.waiting = true;
+        continueGate(
+          () => {
+            s.lives = 3;
+            s.targets = [];
+            s.spawn = 1;
+            s.over = false;
+            s.waiting = false;
+            floaters.add('+3 ♥', W / 2, H / 2, '#86efac', 28, 1.2);
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({
+              score: s.score,
+              stats: [
+                { label: 'Accuracy', value: s.shots ? `${Math.round((s.hits / s.shots) * 100)}%` : '—' },
+                { label: 'Bullseyes', value: String(s.bullseyes) },
+                { label: 'Best combo', value: String(s.bestCombo) },
+              ],
+            });
+          },
+        );
       }
     }
     for (const r of s.rings) {
@@ -205,7 +234,7 @@ export function TargetRush({ api, paused }: GameProps) {
       const colors =
         t.kind === 'gold'
           ? ['#a16207', '#fde047', '#a16207', '#fef9c3']
-          : ['#f8fafc', '#ef4444', '#f8fafc', '#ef4444'];
+          : [ringA, ringB, ringA, ringB];
       colors.forEach((c, i) => circle(ctx, t.x, t.y, r * (1 - i * 0.24), c));
       // lifetime arc
       ctx.strokeStyle = 'rgba(255,255,255,0.35)';
@@ -227,7 +256,7 @@ export function TargetRush({ api, paused }: GameProps) {
     floaters.draw(ctx);
     ctx.restore();
 
-    text(ctx, '♥'.repeat(Math.max(0, s.lives)) + '♡'.repeat(LIVES - Math.max(0, s.lives)), 16, 26, {
+    text(ctx, '♥'.repeat(Math.max(0, s.lives)) + '♡'.repeat(Math.max(0, maxLives - s.lives)), 16, 26, {
       size: 18,
       align: 'left',
       color: '#fb7185',

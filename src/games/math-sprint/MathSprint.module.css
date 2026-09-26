@@ -84,3 +84,31 @@
     transform: translateY(10px);
   }
 }
+
+.fifty {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  background: rgb(255 255 255 / 0.08);
+  color: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fifty small {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgb(250 204 21 / 0.2);
+  color: #fde047;
+  font-size: 0.75rem;
+}
+
+.fifty:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

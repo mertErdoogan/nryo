@@ -1,5 +1,15 @@
 import { useRef, useState } from 'react';
-import { DomStage, Stat, StatBar, TimerBar, useGameLoop, useKeyDown, useSeededRng } from '../../engine';
+import {
+  Banner,
+  DomStage,
+  Stat,
+  StatBar,
+  TimerBar,
+  createContinueGate,
+  useGameLoop,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import type { GameProps } from '../../platform/types';
 import { comboMultiplier, pointsFor, ROUND_SECONDS, spawnInterval, visibleFor, type Hole } from './logic';
 import styles from './WhackAttack.module.css';
@@ -16,10 +26,17 @@ interface Pop {
 
 export function WhackAttack({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
+  const lo = api.loadout;
+  const roundTime = ROUND_SECONDS + 3 * lo.level('time');
+  const goldenChance = 0.07 + 0.03 * lo.level('golden');
+  const bombPenalty = lo.level('armor') > 0 ? 1 : 2;
+  const continueGate = useRef(createContinueGate(api)).current;
+  const [banner, setBanner] = useState<{ key: number; text: string } | null>(null);
   const g = useRef({
     holes: Array.from({ length: 9 }, (): Hole => ({ kind: null, ttl: 0, hitAge: -1 })),
     elapsed: 0,
-    remaining: ROUND_SECONDS,
+    remaining: roundTime,
+    waiting: false,
     spawnTimer: 0.6,
     score: 0,
     combo: 0,
@@ -41,7 +58,7 @@ export function WhackAttack({ api, paused }: GameProps) {
   };
 
   const whack = (index: number) => {
-    if (paused || g.over) return;
+    if (paused || g.over || g.waiting) return;
     const hole = g.holes[index]!;
     if (!hole.kind || hole.hitAge >= 0) {
       g.combo = 0;
@@ -52,9 +69,9 @@ export function WhackAttack({ api, paused }: GameProps) {
     }
     if (hole.kind === 'bomb') {
       g.score = Math.max(0, g.score + pointsFor('bomb', 0));
-      g.remaining = Math.max(0, g.remaining - 2);
+      g.remaining = Math.max(0, g.remaining - bombPenalty);
       g.combo = 0;
-      addPop(index, '−25 −2s', true);
+      addPop(index, `−25 −${bombPenalty}s`, true);
       setShake((s) => s + 1);
       api.sfx('explode');
       api.haptic([50, 30, 50]);
@@ -65,6 +82,7 @@ export function WhackAttack({ api, paused }: GameProps) {
       const pts = pointsFor(hole.kind, g.combo);
       g.score += pts;
       addPop(index, `+${pts}`);
+      if (hole.kind === 'golden') api.addCoins(1);
       api.sfx(hole.kind === 'golden' ? 'coin' : 'hit');
       api.haptic(15);
     }
@@ -81,7 +99,7 @@ export function WhackAttack({ api, paused }: GameProps) {
   }, !paused);
 
   useGameLoop((dt) => {
-    if (g.over) return;
+    if (g.over || g.waiting) return;
     g.elapsed += dt;
     g.remaining -= dt;
     let changed = false;
@@ -106,7 +124,7 @@ export function WhackAttack({ api, paused }: GameProps) {
         const roll = rng.next();
         const bombChance = Math.min(0.24, 0.1 + g.elapsed * 0.004);
         g.holes[idx] = {
-          kind: roll < bombChance ? 'bomb' : roll < bombChance + 0.07 ? 'golden' : 'mole',
+          kind: roll < bombChance ? 'bomb' : roll < bombChance + goldenChance ? 'golden' : 'mole',
           ttl: visibleFor(g.elapsed) * (roll < bombChance ? 1.3 : 1),
           hitAge: -1,
         };
@@ -114,18 +132,29 @@ export function WhackAttack({ api, paused }: GameProps) {
       }
     }
     if (g.remaining <= 0) {
-      g.over = true;
+      g.waiting = true;
       g.remaining = 0;
       for (const hole of g.holes) hole.kind = null;
-      const accuracy = g.hits + g.misses > 0 ? Math.round((g.hits / (g.hits + g.misses)) * 100) : 0;
-      api.gameOver({
-        score: g.score,
-        stats: [
-          { label: 'Whacks', value: String(g.hits) },
-          { label: 'Best combo', value: String(g.bestCombo) },
-          { label: 'Accuracy', value: `${accuracy}%` },
-        ],
-      });
+      continueGate(
+        () => {
+          g.remaining = 10;
+          g.waiting = false;
+          setBanner({ key: Date.now(), text: '+10 seconds' });
+          rerender();
+        },
+        () => {
+          g.over = true;
+          const accuracy = g.hits + g.misses > 0 ? Math.round((g.hits / (g.hits + g.misses)) * 100) : 0;
+          api.gameOver({
+            score: g.score,
+            stats: [
+              { label: 'Whacks', value: String(g.hits) },
+              { label: 'Best combo', value: String(g.bestCombo) },
+              { label: 'Accuracy', value: `${accuracy}%` },
+            ],
+          });
+        },
+      );
       changed = true;
     }
     // Throttle re-renders for the timer bar to ~10 fps unless holes changed.
@@ -141,7 +170,7 @@ export function WhackAttack({ api, paused }: GameProps) {
         <Stat label="Combo" value={g.combo} />
         <Stat label="Multiplier" value={`×${mult}`} tone={mult > 1 ? 'good' : undefined} />
       </StatBar>
-      <TimerBar ratio={g.remaining / ROUND_SECONDS} label="Time remaining" />
+      <TimerBar ratio={Math.min(1, g.remaining / roundTime)} label="Time remaining" />
       <div className={styles.grid} data-shake={shake > 0} key={`grid-${shake}`}>
         {g.holes.map((hole, i) => {
           const cls = [
@@ -190,6 +219,7 @@ export function WhackAttack({ api, paused }: GameProps) {
           );
         })}
       </div>
+      {banner && <Banner key={banner.key} text={banner.text} />}
     </DomStage>
   );
 }

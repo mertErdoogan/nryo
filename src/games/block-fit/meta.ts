@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'block-fit',
@@ -10,6 +10,7 @@ export default defineMeta({
     'Drag a piece from the tray onto the board.',
     'Fill a full row or column to clear it.',
     'Multi-line clears and streaks score big. Plan for awkward pieces!',
+    'Bad pieces? Swap them. No room left? Continue and the centre of the board is cleared.',
   ],
   categories: ['puzzle', 'hyper-casual', 'strategy'],
   tags: ['blocks', '1010', 'grid', 'lines', 'relaxing'],
@@ -24,4 +25,10 @@ export default defineMeta({
   realtime: false,
   popularity: 92,
   addedAt: '2026-06-13',
+  shop: {
+    title: 'Toolbox',
+    icon: '🧩',
+    upgrades: [upgrade('reroll', 'Free swaps', '🔄', 'One free piece swap per level each game', 4, 80)],
+    skins: [skin('classic', 'Classic', 0, ['#f472b6', '#22d3ee', '#facc15'])],
+  },
 });

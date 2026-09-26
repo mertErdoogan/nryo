@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, useGameLoop, useSeededRng } from '../../engine';
+import { useEffect, useRef, useState } from 'react';
+import { CanvasStage, FloatingText, Particles, PowerChip, useGameLoop, useSeededRng } from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import { arr, num, obj, type Infer } from '../../lib/schema';
@@ -35,6 +35,12 @@ export function MiniGolf({ api, paused }: GameProps<Save>) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
   const fx = useRef({ particles: new Particles(300, rng.next), floaters: new FloatingText() });
+  const lo = api.loadout;
+  const [ballColor, shineColor] = lo.skin.colors;
+  const aimScale = 1 + 0.25 * lo.level('guide');
+  const [mulligans, setMulligans] = useState(lo.level('mulligan'));
+  const [canUndo, setCanUndo] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const loadHole = (index: number) => {
     const def = HOLES[index]!;
@@ -44,6 +50,7 @@ export function MiniGolf({ api, paused }: GameProps<Save>) {
       last: { x: def.tee[0], y: def.tee[1] },
       movers: (def.movers ?? []).map((m) => ({ ...m, dir: 1 })),
       strokes: 0,
+      before: 0,
     };
   };
 
@@ -78,6 +85,9 @@ export function MiniGolf({ api, paused }: GameProps<Save>) {
   const finishHole = (strokes: number) => {
     const def = s.def;
     s.cards = [...s.cards, strokes];
+    setCanUndo(false);
+    const coins = strokes === 1 ? 5 : strokes < def.par ? 2 : strokes === def.par ? 1 : 0;
+    if (coins) api.addCoins(coins);
     api.setScore(total());
     fx.current.floaters.add(
       scoreName(strokes, def.par),
@@ -115,6 +125,8 @@ export function MiniGolf({ api, paused }: GameProps<Save>) {
     s.drag = null;
     if (power < 0.05) return;
     s.last = { x: s.ball.x, y: s.ball.y };
+    s.before = s.strokes;
+    setCanUndo(false);
     s.ball.vx = ux * power * MAX_SPEED;
     s.ball.vy = uy * power * MAX_SPEED;
     s.moving = true;
@@ -184,6 +196,7 @@ export function MiniGolf({ api, paused }: GameProps<Save>) {
           s.strokes += 1;
           s.ball = { x: s.last.x, y: s.last.y, vx: 0, vy: 0 };
           s.moving = false;
+          setCanUndo(true);
           break;
         }
         const cup = checkCup(b, def.cup[0], def.cup[1]);
@@ -207,6 +220,7 @@ export function MiniGolf({ api, paused }: GameProps<Save>) {
           b.vx = 0;
           b.vy = 0;
           s.moving = false;
+          setCanUndo(s.strokes < MAX_STROKES);
           if (s.strokes >= MAX_STROKES) {
             floaters.add('Max strokes — picked up', W / 2, H / 2, '#fff', 18, 1.2);
             finishHole(MAX_STROKES);
@@ -296,7 +310,7 @@ export function MiniGolf({ api, paused }: GameProps<Save>) {
     // aim
     if (s.drag) {
       const { ux, uy, power } = shotVector();
-      const len = 30 + power * 110;
+      const len = 30 + power * 110 * aimScale;
       ctx.strokeStyle = `hsl(${120 - power * 120} 90% 60%)`;
       ctx.lineWidth = 4;
       ctx.setLineDash([8, 8]);
@@ -320,8 +334,8 @@ export function MiniGolf({ api, paused }: GameProps<Save>) {
     const scale = s.sinking > 0 ? Math.max(0.2, s.sinking / 0.45) : 1;
     if (s.transition <= 0 || s.sinking > 0) {
       circle(ctx, s.ball.x + 2, s.ball.y + 3, BALL_R * scale, 'rgba(0,0,0,0.3)');
-      circle(ctx, s.ball.x, s.ball.y, BALL_R * scale, '#f8fafc');
-      circle(ctx, s.ball.x - 2, s.ball.y - 2, 2.5 * scale, '#fff');
+      circle(ctx, s.ball.x, s.ball.y, BALL_R * scale, ballColor);
+      circle(ctx, s.ball.x - 2, s.ball.y - 2, 2.5 * scale, shineColor);
     }
     particles.draw(ctx);
     floaters.draw(ctx);
@@ -344,15 +358,43 @@ export function MiniGolf({ api, paused }: GameProps<Save>) {
       prompt(ctx, 'Drag back, then release to putt', W / 2, H - 8 - 12, s.time, 15);
   }, !paused);
 
+  /** Mulligan: take the last putt back (and any water penalty). */
+  const mulligan = async () => {
+    if (!canUndo || busy || s.moving || s.sinking > 0 || s.transition > 0) return;
+    if (mulligans > 0) setMulligans((n) => n - 1);
+    else {
+      setBusy(true);
+      const ok = await api.watchAd('A mulligan');
+      setBusy(false);
+      if (!ok) return;
+    }
+    s.ball = { x: s.last.x, y: s.last.y, vx: 0, vy: 0 };
+    s.strokes = s.before;
+    setCanUndo(false);
+    fx.current.floaters.add('Mulligan!', s.last.x, s.last.y - 24, '#86efac', 18);
+    api.sfx('powerup');
+  };
+
   return (
-    <CanvasStage
-      ref={view}
-      width={W}
-      height={H}
-      label="Mini Golf course"
-      onPointerDown={onDown}
-      onPointerMove={onMove}
-      onPointerUp={onUp}
-    />
+    <div style={{ position: 'absolute', inset: 0 }}>
+      <CanvasStage
+        ref={view}
+        width={W}
+        height={H}
+        label="Mini Golf course"
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+      />
+      {canUndo && (
+        <PowerChip
+          icon="↩️"
+          label="Mulligan"
+          badge={mulligans > 0 ? mulligans : 'ad'}
+          onClick={() => void mulligan()}
+          disabled={busy || paused}
+        />
+      )}
+    </div>
   );
 }

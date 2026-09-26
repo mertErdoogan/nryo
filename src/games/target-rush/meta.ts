@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'target-rush',
@@ -10,6 +10,7 @@ export default defineMeta({
     'Tap targets before they shrink away.',
     'Center hits score more. Gold targets are worth +50.',
     'Letting a target escape or hitting a red decoy costs a life.',
+    'Gold targets drop coins. Out of hearts? Continue with three fresh ones.',
   ],
   categories: ['reflex', 'action'],
   tags: ['aim', 'shooting', 'targets', 'accuracy', 'clicker'],
@@ -23,4 +24,20 @@ export default defineMeta({
   realtime: true,
   popularity: 76,
   addedAt: '2026-06-09',
+  shop: {
+    title: 'Range Shop',
+    icon: '🎯',
+    skinLabel: 'Targets',
+    upgrades: [
+      upgrade('lives', 'Extra heart', '❤️', 'One more heart per level', 2, 150),
+      upgrade('slow', 'Patient targets', '⏳', 'Targets stay up 8% longer per level', 3, 90),
+      upgrade('size', 'Big targets', '🔍', 'Targets are 6% bigger per level', 3, 80),
+    ],
+    skins: [
+      skin('classic', 'Classic', 0, ['#f8fafc', '#ef4444', '#fde047']),
+      skin('ocean', 'Ocean', 120, ['#e0f2fe', '#0284c7', '#fde047'], { icon: '🔵' }),
+      skin('toxic', 'Toxic', 200, ['#ecfccb', '#65a30d', '#fde047'], { icon: '🟢' }),
+      skin('royal', 'Royal', 300, ['#f3e8ff', '#7e22ce', '#fde047'], { icon: '🟣' }),
+    ],
+  },
 });

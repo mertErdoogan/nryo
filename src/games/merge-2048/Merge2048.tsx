@@ -1,6 +1,16 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { Banner, DomStage, Stat, StatBar, swipeDirection, useKeyDown, useSeededRng } from '../../engine';
+import {
+  Banner,
+  DomStage,
+  PowerChip,
+  Stat,
+  StatBar,
+  createContinueGate,
+  swipeDirection,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import { arr, bool, num, obj, type Infer } from '../../lib/schema';
 import type { GameProps, VersionedSpec } from '../../platform/types';
 import { canMove, maxTile, move, nextId, SIZE, spawn, type Dir, type Tile } from './logic';
@@ -47,8 +57,18 @@ const KEY_DIRS: Record<string, Dir> = {
   KeyD: 'right',
 };
 
+/** Board themes from the shop, applied as a hue rotation of the classic palette. */
+const THEME_HUE: Record<string, number> = { classic: 0, ocean: 170, berry: 270, lime: 70, mono: 0 };
+
 export function Merge2048({ api, paused }: GameProps<Save2048>) {
   const rng = useSeededRng(api.seed);
+  const lo = api.loadout;
+  const themeFilter =
+    lo.skin.id === 'mono' ? 'grayscale(1) contrast(1.1)' : `hue-rotate(${THEME_HUE[lo.skin.id] ?? 0}deg)`;
+  const [undos, setUndos] = useState(1 + lo.level('undo'));
+  const [busy, setBusy] = useState(false);
+  const history = useRef<{ tiles: Tile[]; score: number; moves: number; won: boolean } | null>(null);
+  const continueGate = useRef(createContinueGate(api)).current;
   const [state, setState] = useState(() => {
     if (api.resume) {
       return {
@@ -71,13 +91,16 @@ export function Merge2048({ api, paused }: GameProps<Save2048>) {
   }, []);
 
   const doMove = (dir: Dir) => {
-    if (paused || over.current) return;
+    if (paused || over.current || busy) return;
     const result = move(state.tiles, dir);
     if (!result.moved) return;
+    history.current = { tiles: state.tiles, score: state.score, moves: state.moves, won: state.won };
     const tiles = spawn(result.tiles, rng);
     const score = state.score + result.gained;
     const top = maxTile(tiles);
     const justWon = !state.won && top >= 2048;
+    // New personal tile records from 256 up pay coins: 256 → 1, 512 → 2, 1024 → 3…
+    if (top >= 256 && top > maxTile(state.tiles)) api.addCoins(Math.log2(top) - 7);
     const next = { tiles, ghosts: result.ghosts, score, moves: state.moves + 1, won: state.won || justWon };
     setState(next);
     api.setScore(score);
@@ -90,14 +113,24 @@ export function Merge2048({ api, paused }: GameProps<Save2048>) {
     }
     if (!canMove(tiles)) {
       over.current = true;
-      api.gameOver({
-        score,
-        won: next.won,
-        stats: [
-          { label: 'Biggest tile', value: String(top) },
-          { label: 'Moves', value: String(next.moves) },
-        ],
-      });
+      continueGate(
+        () => {
+          // Clear the four smallest tiles to open the board back up.
+          const keep = [...tiles].sort((a, b) => a.value - b.value).slice(4);
+          setState((st) => ({ ...st, tiles: keep, ghosts: [] }));
+          setBanner({ key: Date.now(), text: 'Board opened up!' });
+          over.current = false;
+        },
+        () =>
+          api.gameOver({
+            score,
+            won: next.won,
+            stats: [
+              { label: 'Biggest tile', value: String(top) },
+              { label: 'Moves', value: String(next.moves) },
+            ],
+          }),
+      );
       return;
     }
     api.save(
@@ -121,6 +154,22 @@ export function Merge2048({ api, paused }: GameProps<Save2048>) {
     if (!dir) return false;
     doMove(dir);
   }, !paused);
+
+  const undo = async () => {
+    const prev = history.current;
+    if (!prev || busy || over.current) return;
+    if (undos > 0) setUndos((n) => n - 1);
+    else {
+      setBusy(true);
+      const ok = await api.watchAd('An undo');
+      setBusy(false);
+      if (!ok) return;
+    }
+    history.current = null;
+    setState({ ...prev, ghosts: [] });
+    api.setScore(prev.score);
+    api.sfx('swap');
+  };
 
   const renderTile = (t: Tile, ghost = false) => {
     const [bg, fg, glow] = PALETTE[t.value] ?? ['#f472b6', '#fff', 34];
@@ -162,6 +211,7 @@ export function Merge2048({ api, paused }: GameProps<Save2048>) {
       </StatBar>
       <div
         className={styles.board}
+        style={{ filter: themeFilter }}
         role="group"
         aria-label={`2048 board. ${state.tiles.length} tiles. Largest ${maxTile(state.tiles)}.`}
         onPointerDown={(e) => {
@@ -187,6 +237,14 @@ export function Merge2048({ api, paused }: GameProps<Save2048>) {
         {state.ghosts.map((t) => renderTile(t, true))}
         {state.tiles.map((t) => renderTile(t))}
       </div>
+      <PowerChip
+        corner="inline"
+        icon="↩️"
+        label="Undo move"
+        badge={undos > 0 ? undos : 'ad'}
+        onClick={() => void undo()}
+        disabled={busy || !history.current}
+      />
       {banner && <Banner key={banner.key} text={banner.text} sub={banner.sub} />}
     </DomStage>
   );

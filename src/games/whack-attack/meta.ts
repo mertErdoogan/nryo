@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'whack-attack',
@@ -10,6 +10,7 @@ export default defineMeta({
     'Tap moles as they pop up. Golden moles give +50.',
     'Never hit a bomb — it costs points and 2 seconds.',
     'Consecutive hits raise your combo multiplier.',
+    'Golden moles drop coins. Time up? Continue for +10 seconds.',
   ],
   categories: ['reflex', 'arcade', 'hyper-casual'],
   tags: ['whack a mole', 'tap', 'speed', 'combo', 'timed'],
@@ -23,4 +24,14 @@ export default defineMeta({
   realtime: true,
   popularity: 79,
   addedAt: '2026-06-05',
+  shop: {
+    title: 'Tool Shed',
+    icon: '🔨',
+    upgrades: [
+      upgrade('time', 'Longer round', '⏱️', '+3 seconds per level', 5, 70),
+      upgrade('golden', 'Gold rush', '⭐', 'Golden moles (1 coin) appear more often', 3, 100),
+      upgrade('armor', 'Bomb gloves', '🧤', 'Bombs cost only 1 second', 1, 150),
+    ],
+    skins: [skin('classic', 'Classic', 0, ['#a16207', '#fde047', '#ef4444'])],
+  },
 });
