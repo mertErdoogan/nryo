@@ -4,6 +4,7 @@ import { GAMES, getGame } from '../games/catalog';
 import { navigate, Link } from '../app/router';
 import { ContinueCard } from '../components/ContinueCard';
 import { DailyChallengeCard } from '../components/DailyChallengeCard';
+import { DailyRewardCard } from '../components/DailyRewardCard';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
 import {
   useAchievements,
@@ -197,6 +198,8 @@ export function HomePage() {
         </div>
         <DailyChallengeCard />
       </div>
+
+      <DailyRewardCard />
 
       <ContinuePlaying />
 

@@ -1,9 +1,18 @@
+import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 import { GAMES, getGame } from '../games/catalog';
 import { Link } from '../app/router';
 import { setUi } from '../app/ui-state';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
-import { useAchievements, useDaily, useLevel, usePlayer, useStats, useTodayKey } from '../hooks/usePlatform';
+import {
+  useAchievements,
+  useDaily,
+  useLevel,
+  usePlayer,
+  useStats,
+  useTodayKey,
+  useWallet,
+} from '../hooks/usePlatform';
 import { formatNumber, formatRelativeTime, formatScore } from '../lib/format';
 import { sanitizeName } from '../lib/sanitize';
 import { platform } from '../platform';
@@ -17,6 +26,28 @@ import { Icon } from '../ui/Icon';
 import { Medal } from '../ui/Medal';
 import { ProgressBar } from '../ui/ProgressBar';
 import { EmptyState, Section } from '../ui/Section';
+import { CoinAmount } from '../ui/Coins';
+
+function WalletStats() {
+  const wallet = useWallet();
+  const tiles: [string, ReactNode][] = [
+    ['Balance', <CoinAmount key="b" value={wallet.coins} size={20} />],
+    ['Coins earned', <CoinAmount key="e" value={wallet.earned} size={20} />],
+    ['Items bought', formatNumber(wallet.purchases)],
+    ['Continues used', formatNumber(wallet.revives)],
+    ['Daily reward streak', `${wallet.claimStreak} day${wallet.claimStreak === 1 ? '' : 's'}`],
+  ];
+  return (
+    <div className={styles.stats}>
+      {tiles.map(([label, value]) => (
+        <div key={label} className={styles.stat}>
+          <span className={styles.statValue}>{value}</span>
+          <span className={styles.statLabel}>{label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 import styles from './ProfilePage.module.css';
 
 const ACHIEVEMENTS_PREVIEW = 9;
@@ -203,6 +234,15 @@ export default function ProfilePage() {
             <span className={styles.statLabel}>Achievements</span>
           </div>
         </div>
+      </Section>
+
+      <Section
+        id="wallet"
+        title="Coins & shop"
+        emoji="🪙"
+        subtitle="Earn coins in every game, spend them on upgrades and skins."
+      >
+        <WalletStats />
       </Section>
 
       <Section id="records" title="Personal records" emoji="📈">

@@ -1,0 +1,79 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgb(251 191 36 / 0.14), rgb(236 72 153 / 0.1));
+  border: 1px solid rgb(251 191 36 / 0.28);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-lg);
+}
+
+.sub {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.track {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 2px;
+  border-radius: var(--radius-sm);
+  background: rgb(255 255 255 / 0.05);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  min-width: 0;
+}
+
+.day[data-state='done'] {
+  opacity: 0.5;
+}
+
+.day[data-state='today'] {
+  border-color: #fbbf24;
+  background: rgb(251 191 36 / 0.16);
+  box-shadow: 0 0 18px rgb(251 191 36 / 0.25);
+}
+
+.dayLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 420px) {
+  .day :global(svg) {
+    display: none;
+  }
+}

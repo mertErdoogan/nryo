@@ -27,6 +27,27 @@ function FinishGame({ api, paused }: GameProps<{ n: number }>) {
   );
 }
 
+function DieGame({ api, paused }: GameProps) {
+  return (
+    <div>
+      <span data-testid="paused">{String(paused)}</span>
+      <span data-testid="coins-level">{api.loadout.skin.id}</span>
+      <button
+        type="button"
+        onClick={() => {
+          api.addCoins(5);
+          void api.requestRevive().then((ok) => {
+            if (!ok) api.gameOver({ score: 3 });
+            else api.setScore(99);
+          });
+        }}
+      >
+        die
+      </button>
+    </div>
+  );
+}
+
 function CrashGame(): never {
   throw new Error('boom');
 }
@@ -117,5 +138,30 @@ describe('GameShell', () => {
     expect(screen.getByRole('button', { name: 'Return Home' })).toBeInTheDocument();
     // The rest of the shell (HUD) is still alive.
     expect(screen.getByRole('button', { name: 'Exit game' })).toBeInTheDocument();
+  });
+
+  it('offers a continue after a loss and pays out collected coins', async () => {
+    platform.wallet.earn(500);
+    const game = entry('shell-die', DieGame as never);
+    render(<GameShell game={game} />);
+    const play = await screen.findByTestId('play-button');
+    await waitFor(() => expect(play).toBeEnabled());
+    await userEvent.click(play);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'die' }));
+    const revive = await screen.findByTestId('revive-overlay');
+    expect(screen.getByTestId('paused')).toHaveTextContent('true');
+    await userEvent.click(within(revive).getByTestId('revive-coins'));
+    await waitFor(() => expect(screen.queryByTestId('revive-overlay')).toBeNull());
+    expect(screen.getByTestId('paused')).toHaveTextContent('false');
+    expect(screen.getByTestId('hud-score')).toHaveTextContent('99');
+    expect(platform.wallet.get().coins).toBe(500 - 120);
+
+    // Second loss: decline → results with coins (including the 10 picked up).
+    await userEvent.click(screen.getByRole('button', { name: 'die' }));
+    await userEvent.click(within(await screen.findByTestId('revive-overlay')).getByTestId('revive-decline'));
+    const results = await screen.findByTestId('results-overlay', {}, { timeout: 3000 });
+    expect(results).toHaveTextContent('Coins collected +10');
+    expect(platform.wallet.get().revives).toBe(1);
   });
 });

@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { GAMES } from '../games/catalog';
 import { Link } from '../app/router';
-import { usePlayer, useStats } from '../hooks/usePlatform';
+import { useLoadouts, usePlayer, useStats, useWallet } from '../hooks/usePlatform';
+import { rewardedAvailable, showRewarded } from '../platform/ads';
+import { resolveLoadout } from '../platform/services/loadouts';
+import { affordableCount, cheapestItem } from '../platform/shop';
+import { CoinAmount } from '../ui/Coins';
 import { formatScore } from '../lib/format';
 import { platform } from '../platform';
 import { recommend } from '../platform/discovery';
@@ -45,9 +49,63 @@ interface ResultsOverlayProps {
   outcome: RoundOutcome;
   onPlayAgain: () => void;
   onExit: () => void;
+  onShop?: () => void;
 }
 
-export function ResultsOverlay({ game, outcome, onPlayAgain, onExit }: ResultsOverlayProps) {
+/** Coins earned this round, with the optional "watch an ad to double" offer. */
+function CoinReward({ outcome, gameId }: { outcome: RoundOutcome; gameId: string }) {
+  const [doubled, setDoubled] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const total = outcome.coins.total;
+  const canDouble = total > 0 && !doubled && rewardedAvailable();
+  const double = async () => {
+    setBusy(true);
+    const result = await showRewarded('double-coins', `+${total} coins`);
+    setBusy(false);
+    if (result === 'rewarded') {
+      platform.wallet.earn(total);
+      platform.analytics.track('coins_doubled', { gameId, coins: total });
+      setDoubled(true);
+    }
+  };
+  return (
+    <div className={`${styles.card} ${styles.cardWide} ${styles.coinCard}`}>
+      <span className={styles.cardLabel}>Coins earned</span>
+      <span className={styles.cardValue}>
+        <CoinAmount value={doubled ? total * 2 : total} sign size={22} className={styles.coinTotal} />
+        {doubled && <span className={styles.cardNote}>· doubled!</span>}
+      </span>
+      <span className={styles.coinLines}>
+        {outcome.coins.lines.map((l) => (
+          <span key={l.label}>
+            {l.label} +{l.coins}
+          </span>
+        ))}
+      </span>
+      {canDouble && (
+        <div className={styles.coinActions}>
+          <Button
+            size="sm"
+            variant="primary"
+            icon="play"
+            disabled={busy}
+            onClick={() => void double()}
+            data-testid="double-coins"
+          >
+            Watch ad · double to {total * 2}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function ResultsOverlay({ game, outcome, onPlayAgain, onExit, onShop }: ResultsOverlayProps) {
+  const wallet = useWallet();
+  const loadouts = useLoadouts();
+  const loadout = resolveLoadout(loadouts[game.id], game.shop);
+  const affordable = affordableCount(game.shop, loadout, wallet.coins);
+  const nextPrice = cheapestItem(game.shop, loadout);
   const again = useRef<HTMLButtonElement>(null);
   const player = usePlayer();
   const stats = useStats();
@@ -123,6 +181,7 @@ export function ResultsOverlay({ game, outcome, onPlayAgain, onExit }: ResultsOv
         )}
 
         <div className={styles.cards}>
+          <CoinReward outcome={outcome} gameId={game.id} />
           <div className={styles.card}>
             <span className={styles.cardLabel}>Your score</span>
             <span className={styles.cardValue}>{fmt(outcome.score)}</span>
@@ -218,10 +277,25 @@ export function ResultsOverlay({ game, outcome, onPlayAgain, onExit }: ResultsOv
           >
             Play Again
           </Button>
+          {onShop && game.shop && (
+            <Button size="lg" onClick={onShop} data-testid="results-shop">
+              <span aria-hidden="true">{game.shop.icon}</span> {game.shop.title}
+              {affordable > 0 && <span className={styles.shopBadge}>{affordable}</span>}
+            </Button>
+          )}
           <Button size="lg" icon="home" onClick={onExit}>
             Exit
           </Button>
         </div>
+        {onShop && game.shop && (
+          <p className={styles.hint}>
+            {affordable > 0
+              ? `You can afford ${affordable} upgrade${affordable > 1 ? 's' : ''} — get stronger before the next run!`
+              : nextPrice !== null
+                ? `Next upgrade at ${nextPrice} coins · you have ${wallet.coins}`
+                : 'Everything unlocked — you own it all!'}
+          </p>
+        )}
 
         <p className={styles.sectionLabel}>Try another game</p>
         <div className={styles.recs}>

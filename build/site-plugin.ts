@@ -34,20 +34,40 @@ interface SeoModule {
   gameMeta(game: GameLike): PageMeta;
 }
 
-const CSP = [
-  "default-src 'self'",
-  "script-src 'self'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "font-src 'self' data:",
-  "connect-src 'self'",
-  "worker-src 'self'",
-  "manifest-src 'self'",
-  "media-src 'self'",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-].join('; ');
+/** Origins Google AdSense (display + H5 games ads) needs when ads are enabled. */
+const ADSENSE_ORIGINS = [
+  'https://pagead2.googlesyndication.com',
+  'https://*.googlesyndication.com',
+  'https://*.google.com',
+  'https://*.googleadservices.com',
+  'https://*.doubleclick.net',
+  'https://*.gstatic.com',
+  'https://*.adtrafficquality.google',
+  'https://fundingchoicesmessages.google.com',
+].join(' ');
+
+/**
+ * Strict by default (no third-party origins at all). A build with an AdSense
+ * client id allows exactly the Google ad origins, nothing else.
+ */
+export function buildCsp(ads: boolean): string {
+  const extra = ads ? ` ${ADSENSE_ORIGINS}` : '';
+  return [
+    "default-src 'self'",
+    `script-src 'self'${extra}`,
+    "style-src 'self' 'unsafe-inline'",
+    `img-src 'self' data: blob:${ads ? ' https:' : ''}`,
+    "font-src 'self' data:",
+    `connect-src 'self'${extra}`,
+    ...(ads ? [`frame-src${extra}`] : []),
+    "worker-src 'self'",
+    "manifest-src 'self'",
+    "media-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ');
+}
 
 const escapeHtml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -166,16 +186,24 @@ self.addEventListener('fetch', (event) => {
 
 export function sitePlugin(): Plugin {
   let config: ResolvedConfig;
+  let adClient = '';
   return {
     name: 'nryo-site',
     apply: 'build',
     configResolved(resolved) {
       config = resolved;
+      const env = resolved.env as Record<string, string | undefined>;
+      const client = (env.VITE_ADSENSE_CLIENT ?? process.env.VITE_ADSENSE_CLIENT ?? '').trim();
+      const provider = (env.VITE_ADS_PROVIDER ?? process.env.VITE_ADS_PROVIDER ?? '').trim();
+      adClient =
+        /^ca-pub-\d{10,20}$/.test(client) && provider !== 'house' && provider !== 'none' ? client : '';
+      if (client && !adClient && provider !== 'house' && provider !== 'none')
+        throw new Error(`VITE_ADSENSE_CLIENT must look like ca-pub-1234567890123456 (got "${client}")`);
     },
     transformIndexHtml(html) {
       return html.replace(
         '<meta charset="UTF-8" />',
-        `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`,
+        `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${buildCsp(!!adClient)}" />`,
       );
     },
     async closeBundle(error?: Error) {
@@ -237,6 +265,14 @@ export function sitePlugin(): Plugin {
         );
       }
 
+      // ads.txt authorises Google to sell ads on this domain (required by AdSense).
+      if (adClient) {
+        await writeFile(
+          path.join(outDir, 'ads.txt'),
+          `google.com, ${adClient.replace('ca-', '')}, DIRECT, f08c47fec0942fa0\n`,
+        );
+      }
+
       // Precache the app shell and every asset (all games) for offline play.
       const files = (await listFiles(outDir)).filter(
         (f) =>
@@ -244,6 +280,7 @@ export function sitePlugin(): Plugin {
           f !== 'sw.js' &&
           f !== 'sitemap.xml' &&
           f !== 'robots.txt' &&
+          f !== 'ads.txt' &&
           f !== '404.html' &&
           (!f.endsWith('.html') || f === 'index.html') &&
           !f.endsWith('og-image.jpg') &&
