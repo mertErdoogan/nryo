@@ -214,7 +214,12 @@ export function GameShell({ game }: { game: GameEntry }) {
         if (!ended() && Number.isFinite(amount) && amount > 0) pickupsRef.current += Math.floor(amount);
       },
       requestRevive: () => {
-        if (ended() || revivesUsedRef.current >= maxRevives || phaseRef.current === 'revive')
+        if (
+          ended() ||
+          runRef.current?.key !== runKey ||
+          revivesUsedRef.current >= maxRevives ||
+          phaseRef.current === 'revive'
+        )
           return Promise.resolve(false);
         const affordable = platform.wallet.get().coins >= reviveCost(revivesUsedRef.current);
         if (!rewardedAvailable() && !affordable) return Promise.resolve(false);
