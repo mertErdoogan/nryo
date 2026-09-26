@@ -1,0 +1,23 @@
+.track {
+  position: relative;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: rgb(255 255 255 / 0.08);
+  overflow: hidden;
+}
+
+.fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--bar-color, var(--accent-gradient));
+  transition: width var(--dur-slow) var(--ease-out);
+}
+
+.thin {
+  height: 5px;
+}
+
+.thick {
+  height: 12px;
+}

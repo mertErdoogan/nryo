@@ -1,0 +1,139 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-block: var(--space-6);
+}
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--text-xl);
+}
+
+.emoji {
+  font-size: 1.1em;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  font-size: var(--text-sm);
+  font-weight: 650;
+  color: var(--text-muted);
+  padding: 8px 4px 8px 10px;
+  border-radius: var(--radius-full);
+  transition: color var(--dur) var(--ease-out);
+}
+
+.action:hover {
+  color: var(--text);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1360px) {
+  .grid.dense {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+.shelf {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(200px, 44%);
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--gutter);
+  margin-inline: calc(var(--gutter) * -1);
+  padding: 4px var(--gutter) 12px;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.shelf::-webkit-scrollbar {
+  display: none;
+}
+
+.shelf > * {
+  scroll-snap-align: start;
+}
+
+@media (min-width: 640px) {
+  .shelf {
+    grid-auto-columns: minmax(220px, 30%);
+    gap: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shelf {
+    grid-auto-columns: calc((100% - 3 * 16px - 2 * var(--gutter)) / 4);
+  }
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 40px 20px;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--border-strong);
+  background: rgb(255 255 255 / 0.02);
+}
+
+.emptyIcon {
+  font-size: 40px;
+}
+
+.emptyTitle {
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.emptyBody {
+  color: var(--text-muted);
+  max-width: 420px;
+}

@@ -1,0 +1,104 @@
+.button {
+  --btn-bg: var(--surface-2);
+  --btn-fg: var(--text);
+  --btn-border: var(--border);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--btn-border);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-weight: 650;
+  font-size: var(--text-md);
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out),
+    filter var(--dur) var(--ease-out);
+}
+
+.button:hover:not(:disabled) {
+  --btn-bg: var(--surface-3);
+  border-color: var(--border-strong);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.button:disabled {
+  opacity: 0.45;
+}
+
+.primary {
+  --btn-bg: var(--accent-gradient);
+  --btn-fg: #fff;
+  --btn-border: transparent;
+  background: var(--accent-gradient);
+  box-shadow: 0 6px 24px color-mix(in srgb, var(--accent) 40%, transparent);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--accent-gradient);
+  filter: brightness(1.1) saturate(1.05);
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.ghost {
+  --btn-bg: transparent;
+  --btn-border: transparent;
+}
+
+.ghost:hover:not(:disabled) {
+  --btn-bg: rgb(255 255 255 / 0.06);
+  border-color: transparent;
+}
+
+.danger {
+  --btn-bg: color-mix(in srgb, var(--danger) 18%, var(--surface));
+  --btn-fg: #fecdd3;
+  --btn-border: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+.danger:hover:not(:disabled) {
+  --btn-bg: color-mix(in srgb, var(--danger) 30%, var(--surface));
+}
+
+.sm {
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: var(--text-sm);
+}
+
+.lg {
+  min-height: 54px;
+  padding: 0 28px;
+  font-size: var(--text-lg);
+}
+
+.iconOnly {
+  padding: 0;
+  width: 44px;
+}
+
+.iconOnly.sm {
+  width: 36px;
+}
+
+.iconOnly.lg {
+  width: 54px;
+}
+
+.block {
+  width: 100%;
+}

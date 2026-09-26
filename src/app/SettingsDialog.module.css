@@ -1,0 +1,45 @@
+.group {
+  margin-bottom: 20px;
+}
+
+.groupTitle {
+  margin-bottom: 4px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.note {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.message {
+  margin-top: 10px;
+  font-size: var(--text-sm);
+}
+
+.message[data-tone='error'] {
+  color: #fda4af;
+}
+
+.message[data-tone='ok'] {
+  color: #86efac;
+}
+
+.confirm {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
