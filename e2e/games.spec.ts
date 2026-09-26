@@ -7,6 +7,8 @@ const PICKERS: Record<string, RegExp> = {
   sudoku: /^Easy/,
   'four-in-a-row': /^Rookie/,
   reversi: /^Novice/,
+  checkers: /^Rookie/,
+  'sea-battle': /^Cadet/,
 };
 
 /** Throws a burst of plausible input at a game: keys, taps, drags. */

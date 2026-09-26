@@ -1,0 +1,169 @@
+.scene {
+  position: relative;
+  width: min(100%, 360px);
+  height: min(34cqh, 220px);
+  flex: none;
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(#38bdf8, #bae6fd 70%, #0369a1 71%);
+}
+
+.explorer {
+  position: absolute;
+  left: 50%;
+  bottom: 18%;
+  transform: translateX(-50%);
+  transition: bottom 600ms var(--ease-out);
+}
+
+.explorer[data-fallen='true'] {
+  bottom: -30%;
+  transition: bottom 700ms ease-in;
+}
+
+.balloons {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  width: 150px;
+  height: 90px;
+}
+
+.balloon {
+  position: absolute;
+  bottom: 0;
+  width: 26px;
+  height: 32px;
+  border-radius: 50% 50% 48% 48%;
+  box-shadow: inset -4px -4px 0 rgb(0 0 0 / 0.15);
+  transform-origin: 50% 180%;
+  transition:
+    transform 300ms,
+    opacity 300ms;
+  animation: sway 3s ease-in-out infinite;
+}
+
+.balloon[data-popped='true'] {
+  transform: scale(1.8);
+  opacity: 0;
+}
+
+@keyframes sway {
+  50% {
+    rotate: 6deg;
+  }
+}
+
+.string {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 1px;
+  height: 46px;
+  background: rgb(255 255 255 / 0.8);
+}
+
+.basket {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 36px;
+  border-radius: 6px 6px 12px 12px;
+  background: #92400e;
+  font-size: 22px;
+  position: relative;
+}
+
+.basket span {
+  position: absolute;
+  top: -22px;
+}
+
+.word {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.slot {
+  display: grid;
+  place-items: center;
+  width: min(42px, (100cqw - 40px) / 8);
+  height: min(50px, (100cqw - 40px) / 7);
+  border-bottom: 4px solid rgb(255 255 255 / 0.5);
+  font-size: 1.6rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.slot[data-revealed='true'] {
+  animation: pop-in 250ms var(--ease-spring);
+}
+
+.slot[data-missed='true'] {
+  color: #fca5a5;
+}
+
+.keys {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(100%, 460px);
+}
+
+.row {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.key {
+  flex: 1;
+  max-width: 42px;
+  height: 46px;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.14);
+  font-weight: 800;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.key[data-state='hit'] {
+  background: #16a34a;
+}
+
+.key[data-state='miss'] {
+  background: rgb(255 255 255 / 0.04);
+  color: var(--text-dim);
+}
+
+.tools {
+  display: flex;
+  gap: 8px;
+}
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.1);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  font-weight: 750;
+  font-size: 0.8rem;
+}
+
+.tool:disabled {
+  opacity: 0.45;
+}
+
+.tool small {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.18);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+}
