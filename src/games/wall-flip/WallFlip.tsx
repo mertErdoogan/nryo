@@ -204,7 +204,11 @@ export function WallFlip({ api, paused }: GameProps) {
         } else if (o.kind === 'saw') {
           const sx = o.x + Math.sin(s.time * 2 + o.phase) * o.swing;
           if (circleRect(sx, o.y, o.r - 3, runner)) die();
-        } else if (!o.taken && Math.abs(o.x - s.x) < magnet + 20 * lo.level('magnet') && Math.abs(o.y - RUNNER_Y) < magnet) {
+        } else if (
+          !o.taken &&
+          Math.abs(o.x - s.x) < magnet + 20 * lo.level('magnet') &&
+          Math.abs(o.y - RUNNER_Y) < magnet
+        ) {
           o.taken = true;
           s.coins += 1;
           api.addCoins(1);
@@ -222,7 +226,10 @@ export function WallFlip({ api, paused }: GameProps) {
         continueGate(
           () => {
             s.obstacles = s.obstacles.filter(
-              (o) => o.kind === 'coin' || o.y > RUNNER_Y + 60 || o.y + (o.kind === 'spike' ? o.h : 0) < RUNNER_Y - 260,
+              (o) =>
+                o.kind === 'coin' ||
+                o.y > RUNNER_Y + 60 ||
+                o.y + (o.kind === 'spike' ? o.h : 0) < RUNNER_Y - 260,
             );
             s.dead = false;
             s.waiting = false;

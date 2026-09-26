@@ -10,7 +10,6 @@ export default defineMeta({
     'Move with WASD / arrows, or drag anywhere to use the joystick.',
     'You shoot the nearest enemy automatically.',
     'Grab blue crystals to level up and choose an upgrade.',
-    'Bosses and kill streaks pay coins — buy permanent power in the Armory.',
   ],
   categories: ['action', 'endless', 'strategy'],
   tags: ['shooter', 'survivor', 'roguelite', 'upgrades', 'waves', 'shoot'],

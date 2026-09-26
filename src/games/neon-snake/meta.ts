@@ -10,7 +10,6 @@ export default defineMeta({
     'Swipe or use arrow keys to turn.',
     'Eat orbs to grow. Golden fruit is worth +50 but fades fast.',
     'Hitting a wall or your own tail ends the game.',
-    'Golden orbs drop coins — spend them on new skins and upgrades.',
   ],
   categories: ['arcade', 'endless'],
   tags: ['snake', 'classic', 'retro', 'grid', 'swipe'],

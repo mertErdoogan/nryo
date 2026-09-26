@@ -10,7 +10,6 @@ export default defineMeta({
     'Move the paddle with your finger or mouse.',
     'Tap to launch. Keep the ball from falling past you.',
     'Catch falling capsules: W = wide, M = multiball, S = slow, ♥ = life.',
-    'Every cleared wall pays coins for a bigger paddle, more lives and new styles.',
   ],
   categories: ['arcade', 'physics'],
   tags: ['breakout', 'bricks', 'ball', 'paddle', 'classic'],

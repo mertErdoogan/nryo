@@ -232,9 +232,7 @@ export function TargetRush({ api, paused }: GameProps) {
         continue;
       }
       const colors =
-        t.kind === 'gold'
-          ? ['#a16207', '#fde047', '#a16207', '#fef9c3']
-          : [ringA, ringB, ringA, ringB];
+        t.kind === 'gold' ? ['#a16207', '#fde047', '#a16207', '#fef9c3'] : [ringA, ringB, ringA, ringB];
       colors.forEach((c, i) => circle(ctx, t.x, t.y, r * (1 - i * 0.24), c));
       // lifetime arc
       ctx.strokeStyle = 'rgba(255,255,255,0.35)';

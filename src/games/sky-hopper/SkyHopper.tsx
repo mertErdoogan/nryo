@@ -94,7 +94,12 @@ export function SkyHopper({ api, paused }: GameProps) {
       s.shields -= 1;
       s.invuln = 1.2;
       fx.current.floaters.add('Shield!', BIRD_X, s.y - 34, '#67e8f9', 20, 0.9);
-      fx.current.particles.burst(BIRD_X, s.y, { count: 20, colors: ['#67e8f9', '#fff'], speed: 200, life: 0.5 });
+      fx.current.particles.burst(BIRD_X, s.y, {
+        count: 20,
+        colors: ['#67e8f9', '#fff'],
+        speed: 200,
+        life: 0.5,
+      });
       api.sfx('hit');
       return;
     }

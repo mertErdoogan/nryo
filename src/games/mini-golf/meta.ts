@@ -10,7 +10,6 @@ export default defineMeta({
     'Drag back from anywhere to aim — the further, the harder.',
     'Release to putt. Walls bounce, sand slows, water costs a stroke.',
     'Finish all 9 holes in as few strokes as possible (par 26).',
-    'Bad putt? Take a mulligan. Aces, birdies and pars pay coins.',
   ],
   categories: ['physics', 'puzzle', 'hyper-casual'],
   tags: ['golf', 'putt', 'sports', 'aim', 'holes'],

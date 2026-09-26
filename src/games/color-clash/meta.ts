@@ -10,7 +10,6 @@ export default defineMeta({
     'Look at the INK color of the word, and read what it SAYS.',
     'Tap ✓ if they match, ✗ if they don’t.',
     'Streaks multiply points. Mistakes cost 2 seconds.',
-    'Every 20 correct answers earns a coin; out of time? Continue for +10 seconds.',
   ],
   categories: ['brain', 'reflex'],
   tags: ['stroop', 'colors', 'focus', 'speed', 'trick'],

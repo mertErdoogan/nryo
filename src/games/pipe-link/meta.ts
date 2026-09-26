@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'pipe-link',
@@ -24,4 +24,16 @@ export default defineMeta({
   realtime: false,
   popularity: 71,
   addedAt: '2026-06-12',
+  shop: {
+    title: 'Workshop',
+    icon: '🔧',
+    skinLabel: 'Glow colours',
+    upgrades: [upgrade('hint', 'Free hints', '💡', 'One free tile fix per level each puzzle', 3, 90)],
+    skins: [
+      skin('cyan', 'Cyan', 0, ['#67e8f9', '#0891b2', '#22d3ee']),
+      skin('lime', 'Lime', 100, ['#bef264', '#4d7c0f', '#84cc16'], { icon: '💚' }),
+      skin('pink', 'Pink', 150, ['#f9a8d4', '#be185d', '#f472b6'], { icon: '🩷' }),
+      skin('gold', 'Gold', 0, ['#fde047', '#a16207', '#facc15'], { icon: '✨', adUnlock: 2 }),
+    ],
+  },
 });

@@ -10,7 +10,6 @@ export default defineMeta({
     'Tap each dark tile as it scrolls down.',
     'Tapping a white space or missing a tile ends the run.',
     'It speeds up the further you go.',
-    'Every 25 tiles earns a coin. Missed one? Continue and pick the song back up.',
   ],
   categories: ['reflex', 'hyper-casual', 'endless'],
   tags: ['piano', 'rhythm', 'music', 'tiles', 'tap'],

@@ -10,7 +10,6 @@ export default defineMeta({
     'Drag (or move the mouse) to steer your ship.',
     'Dodge meteors — one hit ends the run unless shielded.',
     'Collect crystals for +25 and blue shields for protection.',
-    'Crystals are coins: upgrade your ship in the Hangar.',
   ],
   categories: ['endless', 'action', 'reflex'],
   tags: ['dodge', 'space', 'survival', 'asteroids', 'avoid'],

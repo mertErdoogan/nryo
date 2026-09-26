@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Banner, DomStage, Hint, Stat, StatBar, useSeededRng, useStopwatch } from '../../engine';
+import { Banner, DomStage, Hint, PowerChip, Stat, StatBar, useSeededRng, useStopwatch } from '../../engine';
 import { formatClock } from '../../lib/format';
 import { arr, num, obj, type Infer } from '../../lib/schema';
 import type { GameProps, VersionedSpec } from '../../platform/types';
@@ -88,6 +88,10 @@ export function PipeLink({ api, paused }: GameProps<Save, Progress>) {
   const [solved, setSolved] = useState(false);
   const [elapsed, readElapsed] = useStopwatch(!paused && !solved, api.resume?.elapsed ?? 0);
   const done = useRef(false);
+  const lo = api.loadout;
+  const glow = lo.skin.colors[0];
+  const [hints, setHints] = useState(lo.level('hint'));
+  const [busy, setBusy] = useState(false);
 
   const masks = useMemo(() => puzzle.base.map((m, i) => rotateMask(m, turns[i]!)), [puzzle, turns]);
   const lit = useMemo(() => connected(masks, puzzle.size, puzzle.source), [masks, puzzle]);
@@ -101,6 +105,7 @@ export function PipeLink({ api, paused }: GameProps<Save, Progress>) {
     const score = puzzleScore(puzzle.size, seconds);
     api.setScore(score);
     api.sfx('win');
+    api.addCoins(1 + Math.floor(puzzle.size / 2));
     if (api.mode === 'normal') api.saveProgress({ level: level + 1 });
     setTimeout(
       () =>
@@ -117,10 +122,10 @@ export function PipeLink({ api, paused }: GameProps<Save, Progress>) {
     );
   }, [lit, total, api, level, moves, puzzle.size, readElapsed]);
 
-  const rotate = (i: number) => {
+  const rotate = (i: number, by = 1) => {
     if (paused || solved) return;
     const next = turns.slice();
-    next[i] = next[i]! + 1;
+    next[i] = next[i]! + by;
     setTurns(next);
     setMoves((m) => m + 1);
     api.sfx('tick');
@@ -138,7 +143,26 @@ export function PipeLink({ api, paused }: GameProps<Save, Progress>) {
     );
   };
 
-  const style = { '--n': puzzle.size } as CSSProperties;
+  /** Hint: snap one wrongly turned tile into place. */
+  const hint = async () => {
+    if (solved || busy) return;
+    const wrong = puzzle.base.map((b, i) => (rotateMask(b, turns[i]!) === b ? -1 : i)).filter((i) => i >= 0);
+    if (!wrong.length) return;
+    if (hints > 0) setHints((n) => n - 1);
+    else {
+      setBusy(true);
+      const ok = await api.watchAd('A pipe hint');
+      setBusy(false);
+      if (!ok) return;
+    }
+    const i = rng.pick(wrong);
+    let by = 1;
+    while (rotateMask(puzzle.base[i]!, turns[i]! + by) !== puzzle.base[i]) by += 1;
+    rotate(i, by);
+    api.sfx('powerup');
+  };
+
+  const style = { '--n': puzzle.size, '--glow': glow } as CSSProperties;
   const leaf = (m: number) => m === N || m === E || m === S || m === W;
 
   return (
@@ -167,7 +191,7 @@ export function PipeLink({ api, paused }: GameProps<Save, Progress>) {
             <svg
               className={styles.shape}
               viewBox="0 0 100 100"
-              style={{ transform: `rotate(${turns[i]! * 90}deg)`, color: lit.has(i) ? '#67e8f9' : '#475569' }}
+              style={{ transform: `rotate(${turns[i]! * 90}deg)`, color: lit.has(i) ? glow : '#475569' }}
               aria-hidden="true"
             >
               <Shape mask={base} isSource={i === puzzle.source} isLeaf={leaf(base)} />
@@ -176,6 +200,14 @@ export function PipeLink({ api, paused }: GameProps<Save, Progress>) {
         ))}
       </div>
       <Hint>{solved ? 'All connected!' : 'Tap tiles to rotate. Light up every lamp.'}</Hint>
+      <PowerChip
+        corner="inline"
+        icon="💡"
+        label="Fix a tile"
+        badge={hints > 0 ? hints : 'ad'}
+        onClick={() => void hint()}
+        disabled={busy || solved}
+      />
       {solved && <Banner text="Connected!" sub={`Level ${level} complete`} />}
     </DomStage>
   );

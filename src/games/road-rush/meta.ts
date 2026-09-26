@@ -10,7 +10,6 @@ export default defineMeta({
     'Hold and drag (or use ←/→) to steer between lanes.',
     'Skim close past cars for near-miss bonuses.',
     'Grab coins and spend them in the Garage on faster, grippier cars.',
-    'Crashed? Watch a short ad or pay coins to keep driving.',
   ],
   categories: ['racing', 'endless', 'arcade'],
   tags: ['cars', 'traffic', 'driving', 'race', 'highway'],
@@ -36,10 +35,22 @@ export default defineMeta({
     ],
     skins: [
       skin('hatch', 'City Hatch', 0, ['#fbbf24', '#b45309', '#fef9c3'], { icon: '🚗' }),
-      skin('sport', 'Sport Coupe', 300, ['#ef4444', '#f8fafc', '#fecaca'], { icon: '🏎️', perk: '+10% steering' }),
-      skin('muscle', 'Muscle Car', 500, ['#1d4ed8', '#f8fafc', '#bfdbfe'], { icon: '🚙', perk: '+5% steering' }),
-      skin('police', 'Interceptor', 800, ['#0f172a', '#f8fafc', '#fef9c3'], { icon: '🚓', perk: '+8% steering' }),
-      skin('super', 'Supercar', 1500, ['#a3e635', '#111827', '#ecfccb'], { icon: '🏁', perk: '+18% steering' }),
+      skin('sport', 'Sport Coupe', 300, ['#ef4444', '#f8fafc', '#fecaca'], {
+        icon: '🏎️',
+        perk: '+10% steering',
+      }),
+      skin('muscle', 'Muscle Car', 500, ['#1d4ed8', '#f8fafc', '#bfdbfe'], {
+        icon: '🚙',
+        perk: '+5% steering',
+      }),
+      skin('police', 'Interceptor', 800, ['#0f172a', '#f8fafc', '#fef9c3'], {
+        icon: '🚓',
+        perk: '+8% steering',
+      }),
+      skin('super', 'Supercar', 1500, ['#a3e635', '#111827', '#ecfccb'], {
+        icon: '🏁',
+        perk: '+18% steering',
+      }),
       skin('gold', 'Golden GT', 0, ['#f59e0b', '#78350f', '#fef3c7'], {
         icon: '👑',
         perk: '+12% steering',

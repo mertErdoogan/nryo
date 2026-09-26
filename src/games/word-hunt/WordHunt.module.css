@@ -68,3 +68,16 @@
   font-weight: 800;
   color: #5eead4;
 }
+
+.hint {
+  animation: hint-pulse 900ms ease-in-out infinite alternate;
+}
+
+@keyframes hint-pulse {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}

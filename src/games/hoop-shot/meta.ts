@@ -10,7 +10,6 @@ export default defineMeta({
     'Drag back from the ball, then release to shoot.',
     'The dotted arc previews your shot. Swishes score a bonus.',
     'Three misses and it’s game over. Streaks multiply points.',
-    'Every swish drops a coin. Out of balls? Continue with two more.',
   ],
   categories: ['physics', 'hyper-casual', 'arcade'],
   tags: ['basketball', 'sports', 'aim', 'flick', 'trajectory'],

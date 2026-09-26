@@ -402,7 +402,12 @@ export function ArenaSurvivor({ api, paused }: GameProps) {
             s.invuln = 2.5;
             s.dead = false;
             s.waiting = false;
-            fx.current.particles.burst(s.x, s.y, { count: 60, colors: ['#93c5fd', '#fff'], speed: 420, life: 0.7 });
+            fx.current.particles.burst(s.x, s.y, {
+              count: 60,
+              colors: ['#93c5fd', '#fff'],
+              speed: 420,
+              life: 0.7,
+            });
             fx.current.floaters.add('Second wind!', s.x, s.y - 40, '#86efac', 24, 1.2);
           },
           () => {

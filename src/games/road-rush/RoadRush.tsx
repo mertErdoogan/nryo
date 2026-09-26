@@ -227,7 +227,12 @@ export function RoadRush({ api, paused }: GameProps) {
             s.invuln = 1.2;
             c.y = H + 200;
             shake.add(8);
-            particles.burst(s.x, PLAYER_Y - 20, { count: 30, colors: ['#67e8f9', '#fff'], speed: 260, life: 0.6 });
+            particles.burst(s.x, PLAYER_Y - 20, {
+              count: 30,
+              colors: ['#67e8f9', '#fff'],
+              speed: 260,
+              life: 0.6,
+            });
             floaters.add('Shield!', s.x, PLAYER_Y - 60, '#67e8f9', 20, 0.9);
             api.sfx('hit');
             break;

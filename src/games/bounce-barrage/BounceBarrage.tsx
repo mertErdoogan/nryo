@@ -292,7 +292,10 @@ export function BounceBarrage({ api, paused }: GameProps<Save>) {
         if (x < 0) x = -x;
         if (x > W) x = 2 * W - x;
         if (y < 40) break;
-        ctx.globalAlpha = Math.max(0.08, s.aiming ? 0.9 - i * (0.8 / guideDots) : 0.35 - i * (0.3 / guideDots));
+        ctx.globalAlpha = Math.max(
+          0.08,
+          s.aiming ? 0.9 - i * (0.8 / guideDots) : 0.35 - i * (0.3 / guideDots),
+        );
         circle(ctx, x, y, 3, guideColor);
       }
       ctx.globalAlpha = 1;

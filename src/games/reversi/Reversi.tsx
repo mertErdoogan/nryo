@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { DomStage, Hint, Stat, StatBar, useSeededRng } from '../../engine';
+import { DomStage, Hint, Stat, StatBar, createContinueGate, useSeededRng } from '../../engine';
 import { num, obj, type Infer } from '../../lib/schema';
 import type { GameProps, VersionedSpec } from '../../platform/types';
 import { apply, bestMove, count, flipsFor, initialBoard, legalMoves, LEVELS, N, type Board } from './logic';
@@ -19,6 +19,9 @@ export function Reversi({ api, paused }: GameProps<unknown, Progress>) {
   const [last, setLast] = useState<number | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const done = useRef(false);
+  // Board at the start of each of the player's turns, for the "rewind" continue.
+  const history = useRef<Board[]>([]);
+  const continueGate = useRef(createContinueGate(api)).current;
 
   const playerMoves = useMemo(() => new Set(turn === 1 ? legalMoves(board, 1) : []), [board, turn]);
 
@@ -27,13 +30,39 @@ export function Reversi({ api, paused }: GameProps<unknown, Progress>) {
     done.current = true;
     const mine = count(b, 1);
     const theirs = count(b, 2);
-    const lv = LEVELS[level]!;
     const result = mine > theirs ? 'win' : mine === theirs ? 'draw' : 'loss';
+    if (result === 'loss' && history.current.length >= 3) {
+      api.sfx('miss');
+      continueGate(
+        () => {
+          // Rewind three of your moves and try a different line.
+          const back = history.current[history.current.length - 3]!;
+          history.current = history.current.slice(0, -3);
+          setBoard(back);
+          setFlipped(new Set());
+          setLast(null);
+          setNote('Rewound three moves — find a better line!');
+          setTurn(1);
+          done.current = false;
+        },
+        () => settle(b, result),
+      );
+      return;
+    }
+    settle(b, result);
+  };
+
+  const settle = (b: Board, result: 'win' | 'draw' | 'loss') => {
+    if (level === null) return;
+    const mine = count(b, 1);
+    const theirs = count(b, 2);
+    const lv = LEVELS[level]!;
+    if (result === 'win') api.addCoins(2 + 2 * level);
     const score = result === 'win' ? lv.points + (mine - theirs) * 10 : result === 'draw' ? 150 : mine * 3;
     api.setScore(score);
     if (result === 'win' && level >= unlocked && level < LEVELS.length - 1 && api.mode === 'normal')
       api.saveProgress({ unlocked: level + 1 });
-    api.sfx(result === 'win' ? 'win' : 'gameover');
+    api.sfx(result === 'win' ? 'win' : result === 'draw' ? 'score' : 'gameover');
     setTimeout(
       () =>
         api.gameOver({
@@ -51,6 +80,7 @@ export function Reversi({ api, paused }: GameProps<unknown, Progress>) {
   const place = (i: number, who: 1 | 2) => {
     const flips = flipsFor(board, i, who);
     if (!flips.length) return;
+    if (who === 1) history.current.push(board);
     const next = apply(board, i, who);
     setBoard(next);
     setFlipped(new Set(flips));

@@ -10,7 +10,6 @@ export default defineMeta({
     'Move with ←/→ (or drag), rotate with ↑ (or tap).',
     'Hard drop with Space (or swipe down). Hold with C.',
     'Clear several lines at once for big points. Speed rises every 10 lines.',
-    'Level-ups and Block Busters pay coins; topped out? Continue and the bottom rows vanish.',
   ],
   categories: ['arcade', 'puzzle'],
   tags: ['tetris', 'blocks', 'falling', 'lines', 'classic'],

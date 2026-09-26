@@ -10,7 +10,6 @@ export default defineMeta({
     'Tap moles as they pop up. Golden moles give +50.',
     'Never hit a bomb — it costs points and 2 seconds.',
     'Consecutive hits raise your combo multiplier.',
-    'Golden moles drop coins. Time up? Continue for +10 seconds.',
   ],
   categories: ['reflex', 'arcade', 'hyper-casual'],
   tags: ['whack a mole', 'tap', 'speed', 'combo', 'timed'],

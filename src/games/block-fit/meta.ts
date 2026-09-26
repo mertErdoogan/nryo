@@ -10,7 +10,6 @@ export default defineMeta({
     'Drag a piece from the tray onto the board.',
     'Fill a full row or column to clear it.',
     'Multi-line clears and streaks score big. Plan for awkward pieces!',
-    'Bad pieces? Swap them. No room left? Continue and the centre of the board is cleared.',
   ],
   categories: ['puzzle', 'hyper-casual', 'strategy'],
   tags: ['blocks', '1010', 'grid', 'lines', 'relaxing'],

@@ -10,7 +10,6 @@ export default defineMeta({
     'Tap to jump to the opposite wall.',
     'Avoid spikes on your wall and saws in the middle.',
     'Grab coins for bonus points. Speed keeps increasing.',
-    'Coins buy shields, faster flips and new cubes.',
   ],
   categories: ['hyper-casual', 'endless', 'reflex'],
   tags: ['one-tap', 'runner', 'wall jump', 'climb', 'dodge'],

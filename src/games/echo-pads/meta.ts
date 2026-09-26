@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'echo-pads',
@@ -23,4 +23,13 @@ export default defineMeta({
   realtime: false,
   popularity: 74,
   addedAt: '2026-06-08',
+  shop: {
+    title: 'Studio',
+    icon: '🎵',
+    upgrades: [
+      upgrade('tempo', 'Slow tempo', '🐢', 'Sequences play 12% slower per level', 3, 90),
+      upgrade('replay', 'Free replays', '🔁', 'One free replay per level each game', 3, 80),
+    ],
+    skins: [skin('classic', 'Classic', 0, ['#22c55e', '#ef4444', '#3b82f6'])],
+  },
 });

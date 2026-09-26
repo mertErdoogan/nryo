@@ -10,7 +10,6 @@ export default defineMeta({
     'Your car accelerates by itself — just steer.',
     'Hold ◀ ▶ (or ←/→) to turn, ↓ to brake for tight corners.',
     'Finish first and beat your ghost’s time. Lower time is better.',
-    'Podium finishes pay coins (10 / 5 / 2) for engine upgrades and new cars.',
   ],
   categories: ['racing', 'versus', 'arcade'],
   tags: ['race', 'cars', 'circuit', 'ghost', 'time trial', 'ai rivals'],

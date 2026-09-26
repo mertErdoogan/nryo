@@ -10,7 +10,6 @@ export default defineMeta({
     'Point (mouse or finger) where you want to slither.',
     'Hold to boost — it costs length but can trap rivals.',
     'Your head must never touch another snake’s body or the wall.',
-    'Trapping a rival pays 2 coins — spend them on skins and upgrades.',
   ],
   categories: ['action', 'versus', 'endless'],
   tags: ['snake', 'io', 'arena', 'multiplayer-style', 'bots', 'grow'],

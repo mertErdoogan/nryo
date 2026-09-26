@@ -10,7 +10,6 @@ export default defineMeta({
     'Pick the right answer out of four.',
     'Correct: +1.5 seconds. Wrong: −3 seconds.',
     'Problems get harder as your streak grows.',
-    'Stuck? Use a 50/50. Out of time? Continue for +15 seconds.',
   ],
   categories: ['brain', 'puzzle'],
   tags: ['math', 'numbers', 'arithmetic', 'mental', 'quick'],

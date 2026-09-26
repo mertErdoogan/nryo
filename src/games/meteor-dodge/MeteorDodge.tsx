@@ -203,8 +203,7 @@ export function MeteorDodge({ api, paused }: GameProps) {
         const d = dist(m.x, m.y, s.x, s.y);
         if (d < (m.r * 0.85 + SHIP_R * 0.8) * hitScale) {
           if (s.invuln <= 0) hit(m);
-        }
-        else if (d < m.r + SHIP_R + 14 && m.y > s.y && !m.near) {
+        } else if (d < m.r + SHIP_R + 14 && m.y > s.y && !m.near) {
           m.near = true;
           s.nearMisses += 1;
           s.bonus += 5;

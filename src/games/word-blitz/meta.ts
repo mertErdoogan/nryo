@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'word-blitz',
@@ -23,4 +23,10 @@ export default defineMeta({
   realtime: true,
   popularity: 85,
   addedAt: '2026-06-10',
+  shop: {
+    title: 'Word Shop',
+    icon: '🔤',
+    upgrades: [upgrade('time', 'Extra time', '⏱️', '+10 seconds per level', 4, 80)],
+    skins: [skin('classic', 'Classic', 0, ['#f59e0b', '#1e293b', '#22c55e'])],
+  },
 });

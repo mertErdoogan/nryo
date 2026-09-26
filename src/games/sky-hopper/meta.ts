@@ -10,7 +10,6 @@ export default defineMeta({
     'Tap to flap upward — gravity does the rest.',
     'Fly through the gaps between pillars.',
     'Touching a pillar or the ground ends the run — unless you continue.',
-    'Grab coins in the gaps to buy shields and new birds.',
   ],
   categories: ['hyper-casual', 'endless', 'arcade'],
   tags: ['flappy', 'one-tap', 'bird', 'flying', 'timing'],

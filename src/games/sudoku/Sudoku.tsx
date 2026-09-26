@@ -6,6 +6,7 @@ import {
   Hint,
   Stat,
   StatBar,
+  createContinueGate,
   useKeyDown,
   useSeededRng,
   useStopwatch,
@@ -89,14 +90,38 @@ export function Sudoku({ api, paused }: GameProps<Save>) {
     return () => clearInterval(t);
   }, [game, done, paused]);
 
-  const finish = (won: boolean, e: number[], m: number, h: number) => {
+  const continueGate = useRef(createContinueGate(api)).current;
+
+  const finish = (won: boolean, e: number[], m: number, h: number, wrongAt?: number) => {
     if (!game) return;
     setDone(true);
+    if (!won) {
+      api.sfx('gameover');
+      continueGate(
+        () => {
+          // One more chance: the wrong digit is wiped and a mistake is forgiven.
+          const fixed = e.slice();
+          if (wrongAt !== undefined) fixed[wrongAt] = 0;
+          setEntries(fixed);
+          setMistakes(MAX_MISTAKES - 1);
+          setDone(false);
+          persist(fixed, notes, MAX_MISTAKES - 1, h);
+        },
+        () => end(false, e, m, h),
+      );
+      return;
+    }
+    api.addCoins(game.level === 'hard' ? 12 : game.level === 'medium' ? 7 : 4);
+    end(true, e, m, h);
+  };
+
+  const end = (won: boolean, e: number[], m: number, h: number) => {
+    if (!game) return;
     const seconds = readElapsed();
     const correct = e.filter((v, i) => v && v === game.solution[i]).length;
     const score = won ? winScore(game.level, seconds, m, h) : correct * 5;
     api.setScore(score);
-    api.sfx(won ? 'win' : 'gameover');
+    if (won) api.sfx('win');
     setTimeout(
       () =>
         api.gameOver({
@@ -145,7 +170,7 @@ export function Sudoku({ api, paused }: GameProps<Save>) {
       setMistakes(m);
       api.sfx('error');
       api.haptic(60);
-      if (m >= MAX_MISTAKES) finish(false, e, m, hints);
+      if (m >= MAX_MISTAKES) finish(false, e, m, hints, i);
       else persist(e, n, m, hints);
     }
   };

@@ -10,7 +10,6 @@ export default defineMeta({
     'Tap targets before they shrink away.',
     'Center hits score more. Gold targets are worth +50.',
     'Letting a target escape or hitting a red decoy costs a life.',
-    'Gold targets drop coins. Out of hearts? Continue with three fresh ones.',
   ],
   categories: ['reflex', 'action'],
   tags: ['aim', 'shooting', 'targets', 'accuracy', 'clicker'],

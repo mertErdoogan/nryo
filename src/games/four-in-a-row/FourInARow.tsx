@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { DomStage, Hint, Stat, StatBar, useKeyDown, useSeededRng } from '../../engine';
+import { DomStage, Hint, Stat, StatBar, createContinueGate, useKeyDown, useSeededRng } from '../../engine';
 import { num, obj, type Infer } from '../../lib/schema';
 import type { GameProps, VersionedSpec } from '../../platform/types';
 import {
@@ -32,17 +32,43 @@ export function FourInARow({ api, paused }: GameProps<unknown, Progress>) {
   const [win, setWin] = useState<[number, number][] | null>(null);
   const [moves, setMoves] = useState(0);
   const done = useRef(false);
+  const history = useRef<{ board: Board; moves: number }[]>([]);
+  const continueGate = useRef(createContinueGate(api)).current;
 
   const finish = (result: 'win' | 'loss' | 'draw', totalMoves: number) => {
     if (done.current || level === null) return;
     done.current = true;
+    if (result === 'loss' && history.current.length >= 2) {
+      api.sfx('gameover');
+      continueGate(
+        () => {
+          // Take back your last move (and the AI's reply).
+          const back = history.current[history.current.length - 2]!;
+          history.current = history.current.slice(0, -2);
+          setBoard(back.board);
+          setMoves(back.moves);
+          setWin(null);
+          setLast(null);
+          setTurn(1);
+          done.current = false;
+        },
+        () => settle(result, totalMoves),
+      );
+      return;
+    }
+    settle(result, totalMoves);
+  };
+
+  const settle = (result: 'win' | 'loss' | 'draw', totalMoves: number) => {
+    if (level === null) return;
     const lv = LEVELS[level]!;
+    if (result === 'win') api.addCoins(2 + 2 * level);
     const score =
       result === 'win' ? lv.points + Math.max(0, 42 - totalMoves) * 10 : result === 'draw' ? 100 : 0;
     api.setScore(score);
     if (result === 'win' && level >= unlocked && level < LEVELS.length - 1 && api.mode === 'normal')
       api.saveProgress({ unlocked: level + 1 });
-    api.sfx(result === 'win' ? 'win' : result === 'draw' ? 'score' : 'gameover');
+    if (result !== 'loss') api.sfx(result === 'win' ? 'win' : 'score');
     setTimeout(
       () =>
         api.gameOver({
@@ -63,6 +89,7 @@ export function FourInARow({ api, paused }: GameProps<unknown, Progress>) {
 
   const drop = (c: number, who: 1 | 2) => {
     if (!canPlay(board, c)) return;
+    history.current.push({ board, moves });
     const next = board.map((col) => col.slice()) as Board;
     const r = play(next, c, who);
     const total = moves + 1;

@@ -10,7 +10,6 @@ export default defineMeta({
     'Drag to aim, release to fire your whole volley.',
     'Each hit removes 1 from a block. Rings give you an extra ball.',
     'Blocks move down every turn. If one reaches the bottom, it’s over.',
-    'Every 10 turns pays coins; if blocks reach the floor you can continue once or twice.',
   ],
   categories: ['physics', 'strategy', 'hyper-casual'],
   tags: ['ballz', 'bricks', 'aim', 'bounce', 'turns'],

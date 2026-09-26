@@ -92,7 +92,14 @@ function makeSnake(rng: Rng, at: Point, mass: number, player: boolean, name: str
 }
 
 /** Player hue per skin (the rainbow skin cycles). */
-const SKIN_HUE: Record<string, number> = { violet: 265, lime: 95, ocean: 200, ember: 15, rose: 330, rainbow: 0 };
+const SKIN_HUE: Record<string, number> = {
+  violet: 265,
+  lime: 95,
+  ocean: 200,
+  ember: 15,
+  rose: 330,
+  rainbow: 0,
+};
 
 export function SlitherArena({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);

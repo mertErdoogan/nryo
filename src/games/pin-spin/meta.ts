@@ -10,7 +10,6 @@ export default defineMeta({
     'Tap to throw a pin into the spinning target.',
     'Hitting a pin that is already stuck ends the game.',
     'Throw all pins to clear the level. Gems on the rim are worth +3.',
-    'Gems are coins; hit a pin and you can continue by retrying the throw.',
   ],
   categories: ['hyper-casual', 'reflex'],
   tags: ['timing', 'one-tap', 'knife', 'target', 'levels'],

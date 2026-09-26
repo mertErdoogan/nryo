@@ -260,8 +260,7 @@ export function NeonSnake({ api, paused }: GameProps) {
       const x = (prev.x + (cur.x - prev.x) * t) * CELL;
       const y = (prev.y + (cur.y - prev.y) * t) * CELL;
       const k = 1 - i / Math.max(1, n);
-      const hue =
-        lo.skin.id === 'rainbow' ? (i * 18 + s.time * 90) % 360 : hueA + (1 - k) * (hueB - hueA);
+      const hue = lo.skin.id === 'rainbow' ? (i * 18 + s.time * 90) % 360 : hueA + (1 - k) * (hueB - hueA);
       const color = s.dead ? 'rgba(148,163,184,0.5)' : `hsl(${hue} 80% ${45 + k * 20}%)`;
       fillRoundRect(ctx, x + 2, y + 2, CELL - 4, CELL - 4, i === 0 ? 7 : 5, color);
     }

@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'grid-recall',
@@ -23,4 +23,14 @@ export default defineMeta({
   realtime: false,
   popularity: 72,
   addedAt: '2026-06-08',
+  shop: {
+    title: 'Mind Gym',
+    icon: '🧠',
+    upgrades: [
+      upgrade('lives', 'Extra life', '❤️', 'One more life per level', 2, 120),
+      upgrade('focus', 'Focus', '🔍', 'Patterns stay up 15% longer per level', 3, 90),
+      upgrade('peek', 'Free peeks', '👀', 'One free peek per level each game', 3, 80),
+    ],
+    skins: [skin('classic', 'Classic', 0, ['#6366f1', '#22c55e', '#ef4444'])],
+  },
 });

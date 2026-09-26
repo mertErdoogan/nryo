@@ -10,7 +10,6 @@ export default defineMeta({
     'Drag (or use arrows / WASD) to fly. Your ship fires on its own.',
     'Catch P for more guns, S for a shield, + for an extra life.',
     'Every 5th wave brings a boss. You have 3 lives.',
-    'Cleared waves and bosses pay coins for permanent ship upgrades.',
   ],
   categories: ['action', 'arcade'],
   tags: ['shooter', 'space', 'shmup', 'aliens', 'boss', 'shoot'],

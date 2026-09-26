@@ -183,7 +183,9 @@ export function TileTapper({ api, paused }: GameProps) {
             s.ended = true;
             api.gameOver({
               score: s.score,
-              stats: [{ label: 'Top speed', value: `${(speedForScore(s.score) / ROW_H).toFixed(1)} tiles/s` }],
+              stats: [
+                { label: 'Top speed', value: `${(speedForScore(s.score) / ROW_H).toFixed(1)} tiles/s` },
+              ],
             });
           },
         );

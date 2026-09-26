@@ -1,6 +1,15 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Banner, DomStage, Stat, StatBar, useKeyDown, useSeededRng } from '../../engine';
+import {
+  Banner,
+  DomStage,
+  PowerChip,
+  Stat,
+  StatBar,
+  createContinueGate,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import { arr, num, obj, str, type Infer } from '../../lib/schema';
 import type { GameProps, VersionedSpec } from '../../platform/types';
 import {
@@ -17,7 +26,7 @@ import styles from './FiveLetters.module.css';
 const word5 = str({ pattern: /^[a-z]{5}$/ });
 const saveSchema = obj({
   answer: word5,
-  guesses: arr(word5, { max: MAX_GUESSES }),
+  guesses: arr(word5, { max: MAX_GUESSES + 2 }),
   streak: num({ int: true, min: 0 }),
   score: num({ min: 0 }),
   words: num({ int: true, min: 0 }),
@@ -43,6 +52,12 @@ export function FiveLetters({ api, paused }: GameProps<Save>) {
   const [toast, setToast] = useState<{ key: number; text: string } | null>(null);
   const [banner, setBanner] = useState<{ key: number; text: string; sub?: string } | null>(null);
   const [locked, setLocked] = useState(false);
+  const lo = api.loadout;
+  const [maxGuesses, setMaxGuesses] = useState(() => Math.max(MAX_GUESSES, api.resume?.guesses.length ?? 0));
+  const [hints, setHints] = useState(lo.level('hint'));
+  const [hinted, setHinted] = useState<number[]>([]);
+  const [busy, setBusy] = useState(false);
+  const continueGate = useRef(createContinueGate(api)).current;
   const progress = useRef({
     streak: api.resume?.streak ?? 0,
     score: api.resume?.score ?? 0,
@@ -62,7 +77,10 @@ export function FiveLetters({ api, paused }: GameProps<Save>) {
     const p = progress.current;
     api.save(
       { answer: ans, guesses: gs, streak: p.streak, score: p.score, words: p.words },
-      { label: `Streak ${p.streak} · guess ${gs.length + 1} of 6`, progress: Math.min(1, p.streak / 10) },
+      {
+        label: `Streak ${p.streak} · guess ${gs.length + 1} of ${Math.max(MAX_GUESSES, gs.length + 1)}`,
+        progress: Math.min(1, p.streak / 10),
+      },
     );
   };
 
@@ -99,6 +117,7 @@ export function FiveLetters({ api, paused }: GameProps<Save>) {
         const pts = solvePoints(next.length, p.streak - 1);
         p.score += pts;
         api.setScore(p.score);
+        api.addCoins(next.length <= 2 ? 3 : 1);
         api.sfx('win');
         setBanner({
           key: Date.now(),
@@ -110,24 +129,37 @@ export function FiveLetters({ api, paused }: GameProps<Save>) {
           const fresh = pickAnswer();
           setAnswer(fresh);
           setGuesses([]);
+          setHinted([]);
+          setMaxGuesses(MAX_GUESSES);
           setLocked(false);
           persist(fresh, []);
         }, 1700);
-      } else if (next.length >= MAX_GUESSES) {
+      } else if (next.length >= maxGuesses) {
         p.over = true;
-        say(answer.toUpperCase());
         api.sfx('gameover');
-        later(
-          () =>
-            api.gameOver({
-              score: p.score,
-              won: p.words > 0,
-              stats: [
-                { label: 'Words solved', value: String(p.words) },
-                { label: 'Missed word', value: answer.toUpperCase() },
-              ],
-            }),
-          1500,
+        continueGate(
+          () => {
+            // One more row to crack it.
+            p.over = false;
+            setMaxGuesses((m) => m + 1);
+            say('One more guess!');
+            persist(answer, next);
+          },
+          () => {
+            say(answer.toUpperCase());
+            later(
+              () =>
+                api.gameOver({
+                  score: p.score,
+                  won: p.words > 0,
+                  stats: [
+                    { label: 'Words solved', value: String(p.words) },
+                    { label: 'Missed word', value: answer.toUpperCase() },
+                  ],
+                }),
+              1500,
+            );
+          },
         );
       } else {
         persist(answer, next);
@@ -152,7 +184,26 @@ export function FiveLetters({ api, paused }: GameProps<Save>) {
     else return false;
   }, !paused);
 
-  const rows = Array.from({ length: MAX_GUESSES }, (_, r) => {
+  /** Hint: uncover the letter in one position you haven't nailed yet. */
+  const hint = async () => {
+    if (locked || busy || progress.current.over) return;
+    const known = new Set(hinted);
+    for (const g of guesses) evaluate(g, answer).forEach((m, i) => m === 'correct' && known.add(i));
+    const open = Array.from({ length: WORD_LENGTH }, (_, i) => i).filter((i) => !known.has(i));
+    if (!open.length) return;
+    if (hints > 0) setHints((n) => n - 1);
+    else {
+      setBusy(true);
+      const ok = await api.watchAd('A letter hint');
+      setBusy(false);
+      if (!ok) return;
+    }
+    const pos = rng.pick(open);
+    setHinted((h) => [...h, pos]);
+    say(`Letter ${pos + 1} is ${answer[pos]!.toUpperCase()}`);
+  };
+
+  const rows = Array.from({ length: maxGuesses }, (_, r) => {
     const g = guesses[r];
     if (g) return { letters: g, marks: evaluate(g, answer) };
     if (r === guesses.length) return { letters: current, marks: null };
@@ -167,9 +218,14 @@ export function FiveLetters({ api, paused }: GameProps<Save>) {
           value={progress.current.streak}
           tone={progress.current.streak > 0 ? 'good' : undefined}
         />
-        <Stat label="Guess" value={`${Math.min(MAX_GUESSES, guesses.length + 1)}/6`} />
+        <Stat label="Guess" value={`${Math.min(maxGuesses, guesses.length + 1)}/${maxGuesses}`} />
       </StatBar>
-      <div className={styles.board} role="group" aria-label="Guesses">
+      <div
+        className={styles.board}
+        style={{ '--rows': maxGuesses } as CSSProperties}
+        role="group"
+        aria-label="Guesses"
+      >
         {rows.map((row, r) => (
           <div
             key={r === guesses.length ? `${answer}-${r}-${shake}` : `${answer}-${r}`}
@@ -188,15 +244,24 @@ export function FiveLetters({ api, paused }: GameProps<Save>) {
                   data-filled={!!letter && !mark}
                   data-mark={mark}
                   style={mark ? ({ animationDelay: `${c * 120}ms` } as CSSProperties) : undefined}
+                  data-hint={!letter && r === guesses.length && hinted.includes(c) ? true : undefined}
                   aria-label={letter ? `${letter.toUpperCase()}${mark ? ` ${mark}` : ''}` : 'empty'}
                 >
-                  {letter}
+                  {letter || (r === guesses.length && hinted.includes(c) ? answer[c] : '')}
                 </div>
               );
             })}
           </div>
         ))}
       </div>
+      <PowerChip
+        corner="inline"
+        icon="💡"
+        label="Hint"
+        badge={hints > 0 ? hints : 'ad'}
+        onClick={() => void hint()}
+        disabled={busy || locked}
+      />
       <div className={styles.keyboard} aria-label="Keyboard">
         {ROWS.map((row, i) => (
           <div key={row} className={styles.keyRow}>

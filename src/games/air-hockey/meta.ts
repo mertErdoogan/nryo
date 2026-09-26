@@ -10,7 +10,6 @@ export default defineMeta({
     'Drag your mallet (bottom half) to hit the puck.',
     'Score in the top goal. First to 5 wins the match.',
     'Each match you win brings a tougher AI. One loss ends the run.',
-    'Match wins pay coins. Lost a match? Continue with a rematch at the same level.',
   ],
   categories: ['versus', 'physics', 'arcade'],
   tags: ['hockey', 'sports', 'ai', 'puck', 'versus'],

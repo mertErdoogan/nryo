@@ -10,7 +10,6 @@ export default defineMeta({
     'Swap two neighbouring gems to line up 3 or more.',
     '4 in a row = striped gem · L/T shape = bomb · 5 in a row = star.',
     'You have 30 moves. Chain reactions multiply points.',
-    'Every special gem you make is worth a coin. Out of moves? Continue for +5.',
   ],
   categories: ['puzzle', 'hyper-casual'],
   tags: ['match 3', 'gems', 'jewels', 'swap', 'cascade'],

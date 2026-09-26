@@ -10,7 +10,6 @@ export default defineMeta({
     'Swipe or use arrow keys to slide all tiles.',
     'Two equal tiles merge into one with their sum.',
     'Reach 2048 to win. The game ends when no moves remain.',
-    'Undo a move with a free undo or a short ad. Stuck? Continue and the four smallest tiles vanish.',
   ],
   categories: ['puzzle', 'brain'],
   tags: ['numbers', 'merge', 'sliding', 'math', 'classic'],

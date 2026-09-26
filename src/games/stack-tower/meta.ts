@@ -10,7 +10,6 @@ export default defineMeta({
     'Tap to drop the sliding block onto the tower.',
     'Anything hanging over the edge is sliced off.',
     'Perfect drops score double — three in a row widen the block.',
-    'Every 10 blocks earns a coin — buy palettes and upgrades in the Workshop.',
   ],
   categories: ['hyper-casual', 'reflex', 'endless'],
   tags: ['timing', 'one-tap', 'tower', 'blocks', 'stack'],

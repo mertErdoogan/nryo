@@ -1,10 +1,12 @@
 import { useMemo, useRef, useState } from 'react';
 import {
+  Banner,
   DomStage,
   GameButton,
   Stat,
   StatBar,
   TimerBar,
+  createContinueGate,
   useCountdown,
   useKeyDown,
   useSeededRng,
@@ -26,18 +28,31 @@ export function WordBlitz({ api, paused }: GameProps) {
   const [feedback, setFeedback] = useState<{ key: number; tone: 'good' | 'bad' } | null>(null);
   const score = useRef(0);
   const over = useRef(false);
+  const lo = api.loadout;
+  const roundTime = ROUND + 10 * lo.level('time');
+  const [banner, setBanner] = useState<{ key: number; text: string } | null>(null);
+  const continueGate = useRef(createContinueGate(api)).current;
 
-  const clock = useCountdown(ROUND, !paused, () => {
+  const clock = useCountdown(roundTime, !paused, () => {
     over.current = true;
-    const longest = found.reduce((a, w) => (w.length > a.length ? w : a), '');
-    api.gameOver({
-      score: score.current,
-      stats: [
-        { label: 'Words', value: `${found.length} of ${puzzle.answers.size}` },
-        { label: 'Longest', value: longest ? longest.toUpperCase() : '—' },
-        { label: 'Seven-letter word', value: puzzle.seed.toUpperCase() },
-      ],
-    });
+    continueGate(
+      () => {
+        over.current = false;
+        clock.reset(30);
+        setBanner({ key: Date.now(), text: '+30 seconds' });
+      },
+      () => {
+        const longest = found.reduce((a, w) => (w.length > a.length ? w : a), '');
+        api.gameOver({
+          score: score.current,
+          stats: [
+            { label: 'Words', value: `${found.length} of ${puzzle.answers.size}` },
+            { label: 'Longest', value: longest ? longest.toUpperCase() : '—' },
+            { label: 'Seven-letter word', value: puzzle.seed.toUpperCase() },
+          ],
+        });
+      },
+    );
   });
 
   const word = picked.map((i) => puzzle.letters[i]).join('');
@@ -65,6 +80,8 @@ export function WordBlitz({ api, paused }: GameProps) {
       api.setScore(score.current);
       setFound((f) => [word, ...f]);
       const pangram = word.length === puzzle.letters.length;
+      if (pangram) api.addCoins(3);
+      else if (word.length >= 6) api.addCoins(1);
       flash(pangram ? `SEVEN-LETTER WORD! +${pts}` : `+${pts}`, 'good');
       api.sfx(pangram ? 'win' : word.length >= 5 ? 'powerup' : 'score');
     }
@@ -102,7 +119,7 @@ export function WordBlitz({ api, paused }: GameProps) {
         />
         <Stat label="Words" value={`${found.length}/${puzzle.answers.size}`} />
       </StatBar>
-      <TimerBar ratio={clock.remaining / ROUND} label="Time remaining" />
+      <TimerBar ratio={Math.min(1, clock.remaining / roundTime)} label="Time remaining" />
       <div className={styles.layout}>
         <div
           className={styles.current}
@@ -167,6 +184,7 @@ export function WordBlitz({ api, paused }: GameProps) {
           </div>
         </div>
       </div>
+      {banner && <Banner key={banner.key} text={banner.text} />}
     </DomStage>
   );
 }

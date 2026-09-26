@@ -10,7 +10,6 @@ export default defineMeta({
     'Hold the left or right side (or ←/→) to steer.',
     'You bounce automatically. Springs send you flying.',
     'Brown platforms crumble. Falling off the screen ends the climb.',
-    'Grab coins on the way up; fell? Continue with a rescue spring.',
   ],
   categories: ['endless', 'hyper-casual', 'physics'],
   tags: ['jump', 'platformer', 'climb', 'doodle', 'bounce'],
