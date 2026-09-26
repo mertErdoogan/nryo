@@ -1,0 +1,246 @@
+.top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+
+.gold {
+  font-size: clamp(1.8rem, 8vw, 2.6rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: #fde047;
+  text-shadow: 0 4px 20px rgb(250 204 21 / 0.35);
+}
+
+.rate {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.gems {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgb(167 139 250 / 0.15);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ddd6fe;
+}
+
+.rockWrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 1 1 auto;
+  min-height: 140px;
+  max-height: 260px;
+  width: 100%;
+}
+
+.rock {
+  width: min(52cqw, 32cqh, 220px);
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 46% 54% 50% 50% / 55% 48% 52% 45%;
+  background:
+    radial-gradient(circle at 30% 30%, rgb(253 224 71 / 0.9) 0 6%, transparent 7%),
+    radial-gradient(circle at 65% 55%, rgb(253 224 71 / 0.8) 0 5%, transparent 6%),
+    radial-gradient(circle at 45% 72%, rgb(196 181 253 / 0.9) 0 4%, transparent 5%),
+    radial-gradient(circle at 40% 35%, #78716c, #44403c 60%, #292524);
+  box-shadow:
+    0 20px 40px rgb(0 0 0 / 0.5),
+    inset 0 -10px 20px rgb(0 0 0 / 0.4);
+  touch-action: manipulation;
+  transition: transform 70ms ease-out;
+}
+
+.rock:active {
+  transform: scale(0.94) rotate(-2deg);
+}
+
+.floater {
+  position: absolute;
+  font-weight: 900;
+  color: #fde047;
+  text-shadow: 0 2px 4px rgb(0 0 0 / 0.6);
+  pointer-events: none;
+  animation: rise 800ms ease-out forwards;
+  white-space: nowrap;
+}
+
+.floater[data-lucky='true'] {
+  color: #86efac;
+  font-size: 1.3rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  max-width: 520px;
+  flex: none;
+}
+
+.tab {
+  flex: 1;
+  min-height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(255 255 255 / 0.04);
+  font-weight: 750;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.tab[aria-selected='true'] {
+  background: rgb(250 204 21 / 0.18);
+  border-color: rgb(250 204 21 / 0.5);
+  color: var(--text);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 520px;
+  flex: 1 1 0;
+  min-height: 120px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 4px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.05);
+  border: 1px solid rgb(255 255 255 / 0.07);
+}
+
+.icon {
+  font-size: 26px;
+  width: 36px;
+  text-align: center;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.name {
+  font-weight: 750;
+}
+
+.sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.owned {
+  font-size: 1.2rem;
+  font-weight: 850;
+  color: var(--text-dim);
+  min-width: 28px;
+  text-align: right;
+}
+
+.buy {
+  min-width: 92px;
+  min-height: 42px;
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 0;
+  background: linear-gradient(160deg, #facc15, #ca8a04);
+  color: #1c1917;
+  font-weight: 850;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.buy:disabled {
+  background: rgb(255 255 255 / 0.08);
+  color: var(--text-dim);
+}
+
+.done {
+  color: #86efac;
+  font-weight: 800;
+}
+
+.amounts {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.amount {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 750;
+  color: var(--text-muted);
+}
+
+.amount[aria-pressed='true'] {
+  background: rgb(250 204 21 / 0.2);
+  color: var(--text);
+}
+
+.descend {
+  width: 100%;
+  max-width: 520px;
+  min-height: 48px;
+  border-radius: 14px;
+  border: 0;
+  background: linear-gradient(135deg, #7c3aed, #db2777);
+  color: #fff;
+  font-weight: 850;
+}
+
+.welcome {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(5 5 15 / 0.75);
+  z-index: 5;
+}
+
+.welcomeCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 340px;
+  padding: 24px;
+  border-radius: 22px;
+  background: linear-gradient(160deg, #292524, #1c1917);
+  border: 1px solid rgb(250 204 21 / 0.4);
+  text-align: center;
+  animation: pop-in 300ms var(--ease-spring);
+}
+
+@keyframes rise {
+  to {
+    transform: translateY(-60px);
+    opacity: 0;
+  }
+}

@@ -1,0 +1,140 @@
+.board {
+  --w: min(100cqw - 20px, 100cqh - 120px, 520px);
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 3px;
+  width: var(--w);
+  height: var(--w);
+  margin: auto;
+  padding: 6px;
+  border-radius: 14px;
+  background: #052e16;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.45);
+  flex: none;
+  perspective: 600px;
+}
+
+.cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  border-radius: 4px;
+  background: #15803d;
+  touch-action: manipulation;
+}
+
+.cell:disabled {
+  cursor: default;
+}
+
+.hint {
+  width: 26%;
+  height: 26%;
+  border-radius: 50%;
+  background: rgb(187 247 208 / 0.5);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.cell:hover .hint {
+  background: rgb(187 247 208 / 0.9);
+}
+
+.disc {
+  width: 82%;
+  height: 82%;
+  border-radius: 50%;
+  transition: transform 300ms ease-in-out;
+}
+
+.disc[data-who='1'] {
+  background: radial-gradient(circle at 35% 30%, #4b5563, #030712);
+  box-shadow: 0 3px 0 rgb(0 0 0 / 0.4);
+}
+
+.disc[data-who='2'] {
+  background: radial-gradient(circle at 35% 30%, #ffffff, #d1d5db);
+  box-shadow: 0 3px 0 rgb(0 0 0 / 0.3);
+}
+
+.disc[data-flip='true'] {
+  animation: flip 380ms ease-in-out;
+}
+
+.disc[data-new='true'] {
+  animation: place 220ms var(--ease-spring);
+}
+
+.last {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 2px #fde047;
+  pointer-events: none;
+}
+
+.status {
+  min-height: 24px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(340px, 100%);
+  margin: auto;
+}
+
+.pickerTitle {
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.level {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 56px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: rgb(255 255 255 / 0.06);
+  color: var(--text);
+  font-weight: 750;
+}
+
+.level:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.12);
+}
+
+.level:disabled {
+  opacity: 0.45;
+}
+
+.level small {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+@keyframes flip {
+  50% {
+    transform: rotateY(90deg) scale(1.08);
+  }
+}
+
+@keyframes place {
+  from {
+    transform: scale(0.3);
+  }
+}
+
+@keyframes pulse {
+  50% {
+    transform: scale(0.7);
+    opacity: 0.6;
+  }
+}
