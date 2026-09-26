@@ -1,0 +1,146 @@
+.grid {
+  --w: min(100cqw - 20px, 100cqh - 190px, 470px);
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  width: var(--w);
+  height: var(--w);
+  margin: 0 auto;
+  border: 3px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0f172a;
+  flex: none;
+}
+
+.cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-right: 1px solid #334155;
+  border-bottom: 1px solid #334155;
+  padding: 0;
+  background: #1e293b;
+  font-size: calc(var(--w) / 9 * 0.56);
+  font-weight: 650;
+  color: #7dd3fc;
+  font-variant-numeric: tabular-nums;
+}
+
+.cell:nth-child(9n) {
+  border-right: 0;
+}
+
+.cell[data-col='2'],
+.cell[data-col='5'] {
+  border-right: 2px solid #e2e8f0;
+}
+
+.cell[data-row='2'],
+.cell[data-row='5'] {
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.cell[data-given='true'] {
+  color: #f1f5f9;
+  font-weight: 800;
+}
+
+.cell[data-peer='true'] {
+  background: #24344f;
+}
+
+.cell[data-same='true'] {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.cell[data-selected='true'] {
+  background: #0369a1;
+  box-shadow: inset 0 0 0 2px #7dd3fc;
+}
+
+.cell[data-wrong='true'] {
+  color: #fb7185;
+  background: #4c0519;
+}
+
+.notes {
+  position: absolute;
+  inset: 2px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  font-size: calc(var(--w) / 9 * 0.24);
+  font-weight: 600;
+  color: #94a3b8;
+  line-height: 1;
+}
+
+.notes span {
+  display: grid;
+  place-items: center;
+}
+
+.pad {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 5px;
+  width: min(100%, 470px);
+}
+
+.digit {
+  position: relative;
+  height: 52px;
+  border-radius: 10px;
+  border: 0;
+  background: rgb(255 255 255 / 0.08);
+  color: var(--text);
+  font-size: 1.35rem;
+  font-weight: 750;
+  touch-action: manipulation;
+}
+
+.digit:disabled {
+  opacity: 0.25;
+}
+
+.digit small {
+  position: absolute;
+  bottom: 3px;
+  right: 5px;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+}
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: auto;
+  width: min(340px, 100%);
+}
+
+.pickerTitle {
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.levelButton {
+  width: 100%;
+  min-height: 58px;
+  border-radius: 16px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  background: rgb(255 255 255 / 0.06);
+  font-weight: 750;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.levelButton:hover {
+  background: rgb(255 255 255 / 0.12);
+}
+
+.status {
+  color: var(--text-dim);
+}

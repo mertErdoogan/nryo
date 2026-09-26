@@ -176,3 +176,15 @@
   border-color: transparent;
   color: #fff;
 }
+
+.gameButton[data-tone='primary'] {
+  background: linear-gradient(160deg, #22c55e, #15803d);
+  border-color: transparent;
+  color: #fff;
+}
+
+.gameButton[data-tone='danger'] {
+  background: linear-gradient(160deg, #f43f5e, #be123c);
+  border-color: transparent;
+  color: #fff;
+}

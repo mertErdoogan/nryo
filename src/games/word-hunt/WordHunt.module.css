@@ -1,0 +1,70 @@
+.board {
+  --w: min(100cqw - 24px, 100cqh - 200px, 480px);
+  position: relative;
+  width: var(--w);
+  height: var(--w);
+  margin: 0 auto;
+  border-radius: 18px;
+  background: #f8fafc;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.35);
+  touch-action: none;
+  user-select: none;
+  flex: none;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+  padding: calc(var(--w) * 0.02);
+}
+
+.cell {
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--w) * 0.052);
+  font-weight: 800;
+  color: #1e293b;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.words {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.word {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.08);
+  font-size: 0.8rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+
+.word[data-found='true'] {
+  text-decoration: line-through;
+  opacity: 0.5;
+  background: rgb(94 234 212 / 0.2);
+}
+
+.theme {
+  font-weight: 800;
+  color: #5eead4;
+}

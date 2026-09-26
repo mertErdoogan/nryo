@@ -1,0 +1,173 @@
+.board {
+  --w: min(100cqw - 24px, (100cqh - 240px) * 5 / 6, 340px);
+  display: grid;
+  grid-template-rows: repeat(6, 1fr);
+  gap: calc(var(--w) * 0.025);
+  width: var(--w);
+  aspect-ratio: 5 / 6;
+  margin: auto;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: calc(var(--w) * 0.025);
+}
+
+.row[data-shake='true'] {
+  animation: shake 320ms linear;
+}
+
+.tile {
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 2px solid rgb(255 255 255 / 0.14);
+  font-size: calc(var(--w) * 0.1);
+  font-weight: 850;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.tile[data-filled='true'] {
+  border-color: rgb(255 255 255 / 0.4);
+  animation: type 100ms ease-out;
+}
+
+.tile[data-mark] {
+  border-color: transparent;
+  color: #fff;
+  animation: reveal 480ms ease-in-out both;
+}
+
+.tile[data-mark='correct'] {
+  background: #16a34a;
+}
+
+.tile[data-mark='present'] {
+  background: #ca8a04;
+}
+
+.tile[data-mark='absent'] {
+  background: #3f3f46;
+}
+
+.keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 500px;
+  flex: none;
+}
+
+.keyRow {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.key {
+  flex: 1;
+  max-width: 44px;
+  height: 52px;
+  border-radius: 8px;
+  border: 0;
+  background: #52525b;
+  color: #fff;
+  font-weight: 750;
+  font-size: 1rem;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  transition: background-color 200ms ease-out;
+}
+
+.key:active {
+  filter: brightness(1.25);
+}
+
+.wideKey {
+  flex: 1.6;
+  max-width: 70px;
+  font-size: 0.72rem;
+}
+
+.key[data-mark='correct'] {
+  background: #16a34a;
+}
+
+.key[data-mark='present'] {
+  background: #ca8a04;
+}
+
+.key[data-mark='absent'] {
+  background: #27272a;
+  color: #71717a;
+}
+
+.toast {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: #f4f4f5;
+  color: #18181b;
+  font-weight: 750;
+  z-index: 5;
+  animation: fade 1.6s ease-out both;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@keyframes reveal {
+  0% {
+    transform: rotateX(0);
+    background: transparent;
+    border-color: rgb(255 255 255 / 0.4);
+  }
+  49% {
+    transform: rotateX(90deg);
+    background: transparent;
+    border-color: rgb(255 255 255 / 0.4);
+  }
+  50% {
+    transform: rotateX(90deg);
+  }
+  100% {
+    transform: rotateX(0);
+  }
+}
+
+@keyframes type {
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes shake {
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+
+@keyframes fade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+  10%,
+  80% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+  }
+}

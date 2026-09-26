@@ -75,12 +75,14 @@ export function GameButton({
   disabled,
   pressed,
   label,
+  tone,
 }: {
   children: ReactNode;
   onClick: () => void;
   disabled?: boolean;
   pressed?: boolean;
   label?: string;
+  tone?: 'primary' | 'danger';
 }) {
   return (
     <button
@@ -90,6 +92,7 @@ export function GameButton({
       disabled={disabled}
       aria-pressed={pressed}
       aria-label={label}
+      data-tone={tone}
     >
       {children}
     </button>
