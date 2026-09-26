@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'sky-hopper',
@@ -9,7 +9,8 @@ export default defineMeta({
   howToPlay: [
     'Tap to flap upward — gravity does the rest.',
     'Fly through the gaps between pillars.',
-    'Touching a pillar or the ground ends the run.',
+    'Touching a pillar or the ground ends the run — unless you continue.',
+    'Grab coins in the gaps to buy shields and new birds.',
   ],
   categories: ['hyper-casual', 'endless', 'arcade'],
   tags: ['flappy', 'one-tap', 'bird', 'flying', 'timing'],
@@ -23,4 +24,23 @@ export default defineMeta({
   realtime: true,
   popularity: 93,
   addedAt: '2026-06-01',
+  shop: {
+    title: 'Nest',
+    icon: '🐤',
+    skinLabel: 'Birds',
+    upgrades: [
+      upgrade('shield', 'Bubble shield', '🫧', 'One free pillar bump per level', 3, 120),
+      upgrade('glide', 'Light feathers', '🪶', '4% softer gravity per level', 3, 90),
+      upgrade('magnet', 'Coin magnet', '🧲', 'Grab coins from further away', 3, 70),
+      upgrade('luck', 'Lucky skies', '🍀', 'More coins in the gaps', 3, 80),
+    ],
+    skins: [
+      skin('sunny', 'Sunny', 0, ['#f59e0b', '#fde047', '#fbbf24'], { icon: '🐤' }),
+      skin('blue', 'Bluebird', 150, ['#2563eb', '#93c5fd', '#60a5fa'], { icon: '🐦' }),
+      skin('parrot', 'Parrot', 300, ['#16a34a', '#ef4444', '#facc15'], { icon: '🦜' }),
+      skin('flamingo', 'Flamingo', 450, ['#db2777', '#fbcfe8', '#f472b6'], { icon: '🦩' }),
+      skin('royal', 'Royal Hopper', 900, ['#7c3aed', '#ddd6fe', '#a78bfa'], { icon: '👑' }),
+      skin('phoenix', 'Phoenix', 0, ['#dc2626', '#fb923c', '#fde047'], { icon: '🔥', adUnlock: 3 }),
+    ],
+  },
 });

@@ -4,6 +4,7 @@ import {
   FloatingText,
   Particles,
   Shake,
+  createContinueGate,
   useGameLoop,
   useKeyDown,
   useSeededRng,
@@ -11,7 +12,7 @@ import {
 import type { CanvasView, StagePointer } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import type { GameProps } from '../../platform/types';
-import { collides, freeCell, nextHead, queueTurn, stepTime, type Cell, type Dir } from './logic';
+import { collides, escapeDir, freeCell, nextHead, queueTurn, stepTime, type Cell, type Dir } from './logic';
 
 const COLS = 18;
 const ROWS = 26;
@@ -30,8 +31,25 @@ const KEY_DIRS: Record<string, Dir> = {
   KeyD: 'right',
 };
 
+/** Body hue (start, end) per skin; the rainbow skin cycles. */
+const SKIN_HUES: Record<string, [number, number]> = {
+  neon: [150, 190],
+  fire: [0, 45],
+  ice: [185, 230],
+  candy: [300, 340],
+  gold: [38, 55],
+  rainbow: [0, 360],
+};
+
 export function NeonSnake({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
+  const lo = api.loadout;
+  const [hueA, hueB] = SKIN_HUES[lo.skin.id] ?? SKIN_HUES.neon!;
+  const glow = lo.skin.colors[2];
+  const pace = 1 + 0.06 * lo.level('pace');
+  const bonusEvery = 7 - lo.level('golden');
+  const growBy = Math.max(1, 2 - lo.level('slim'));
+  const continueGate = useRef(createContinueGate(api)).current;
   const view = useRef<CanvasView | null>(null);
   const fx = useRef({
     particles: new Particles(300, rng.next),
@@ -56,6 +74,7 @@ export function NeonSnake({ api, paused }: GameProps) {
     dead: false,
     deadTimer: 0,
     ended: false,
+    waiting: false,
     score: 0,
     eaten: 0,
     time: 0,
@@ -109,7 +128,7 @@ export function NeonSnake({ api, paused }: GameProps) {
       for (const c of s.body)
         particles.burst(c.x * CELL + CELL / 2, c.y * CELL + CELL / 2, {
           count: 3,
-          colors: ['#34d399', '#a7f3d0'],
+          colors: [glow, '#ffffff'],
           speed: 120,
           life: 0.6,
         });
@@ -126,20 +145,21 @@ export function NeonSnake({ api, paused }: GameProps) {
     const py = head.y * CELL + CELL / 2;
     if (head.x === s.food.x && head.y === s.food.y) {
       s.eaten += 1;
-      s.grow += 2;
+      s.grow += growBy;
       s.score += 10;
       floaters.add('+10', px, py - 14, '#6ee7b7', 16, 0.6);
       particles.burst(px, py, { count: 12, colors: ['#f472b6', '#fbcfe8'], speed: 120, life: 0.4 });
       api.sfx('coin');
       s.food = freeCell(COLS, ROWS, s.body, rng) ?? s.food;
-      if (s.eaten % 7 === 0 && !s.bonus) {
+      if (s.eaten % bonusEvery === 0 && !s.bonus) {
         const cell = freeCell(COLS, ROWS, [...s.body, s.food], rng);
         if (cell) s.bonus = { ...cell, ttl: 6 };
       }
       api.setScore(s.score);
     } else if (s.bonus && head.x === s.bonus.x && head.y === s.bonus.y) {
       s.score += 50;
-      s.grow += 3;
+      s.grow += growBy + 1;
+      api.addCoins(2);
       floaters.add('+50', px, py - 14, '#fde047', 20);
       particles.burst(px, py, { count: 24, colors: ['#fde047', '#fff'], speed: 180, life: 0.6 });
       api.sfx('powerup');
@@ -155,7 +175,7 @@ export function NeonSnake({ api, paused }: GameProps) {
     s.time += dt;
     if (s.started && !s.dead) {
       s.acc += dt;
-      const interval = stepTime(s.body.length);
+      const interval = stepTime(s.body.length) * pace;
       while (s.acc >= interval && !s.dead) {
         s.acc -= interval;
         step();
@@ -165,17 +185,37 @@ export function NeonSnake({ api, paused }: GameProps) {
         if (s.bonus.ttl <= 0) s.bonus = null;
       }
     }
-    if (s.dead && !s.ended) {
+    if (s.dead && !s.ended && !s.waiting) {
       s.deadTimer -= dt;
       if (s.deadTimer <= 0) {
-        s.ended = true;
-        api.gameOver({
-          score: s.score,
-          stats: [
-            { label: 'Length', value: String(s.body.length) },
-            { label: 'Orbs', value: String(s.eaten) },
-          ],
-        });
+        s.waiting = true;
+        continueGate(
+          () => {
+            // Point the head at the most open direction; trim if boxed in.
+            let dir = escapeDir(s.body, COLS, ROWS);
+            if (!dir) {
+              s.body = s.body.slice(0, 3);
+              dir = escapeDir(s.body, COLS, ROWS) ?? s.dir;
+            }
+            s.dir = dir;
+            s.queue = [];
+            s.prevBody = s.body;
+            s.acc = -1; // a short breather before moving again
+            s.dead = false;
+            s.waiting = false;
+            fx.current.floaters.add('Go!', W / 2, H * 0.35, '#86efac', 32, 1);
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({
+              score: s.score,
+              stats: [
+                { label: 'Length', value: String(s.body.length) },
+                { label: 'Orbs', value: String(s.eaten) },
+              ],
+            });
+          },
+        );
       }
     }
     particles.update(dt);
@@ -210,9 +250,9 @@ export function NeonSnake({ api, paused }: GameProps) {
     ctx.shadowBlur = 0;
 
     // snake — interpolate between steps for smooth motion
-    const t = s.started && !s.dead ? Math.min(1, s.acc / stepTime(s.body.length)) : 1;
+    const t = s.started && !s.dead ? Math.max(0, Math.min(1, s.acc / (stepTime(s.body.length) * pace))) : 1;
     const n = s.body.length;
-    ctx.shadowColor = '#34d399';
+    ctx.shadowColor = glow;
     ctx.shadowBlur = s.dead ? 0 : 12;
     for (let i = n - 1; i >= 0; i--) {
       const cur = s.body[i]!;
@@ -220,7 +260,9 @@ export function NeonSnake({ api, paused }: GameProps) {
       const x = (prev.x + (cur.x - prev.x) * t) * CELL;
       const y = (prev.y + (cur.y - prev.y) * t) * CELL;
       const k = 1 - i / Math.max(1, n);
-      const color = s.dead ? 'rgba(148,163,184,0.5)' : `hsl(${150 + (1 - k) * 40} 80% ${45 + k * 20}%)`;
+      const hue =
+        lo.skin.id === 'rainbow' ? (i * 18 + s.time * 90) % 360 : hueA + (1 - k) * (hueB - hueA);
+      const color = s.dead ? 'rgba(148,163,184,0.5)' : `hsl(${hue} 80% ${45 + k * 20}%)`;
       fillRoundRect(ctx, x + 2, y + 2, CELL - 4, CELL - 4, i === 0 ? 7 : 5, color);
     }
     ctx.shadowBlur = 0;

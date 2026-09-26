@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'stack-tower',
@@ -10,6 +10,7 @@ export default defineMeta({
     'Tap to drop the sliding block onto the tower.',
     'Anything hanging over the edge is sliced off.',
     'Perfect drops score double — three in a row widen the block.',
+    'Every 10 blocks earns a coin — buy palettes and upgrades in the Workshop.',
   ],
   categories: ['hyper-casual', 'reflex', 'endless'],
   tags: ['timing', 'one-tap', 'tower', 'blocks', 'stack'],
@@ -23,4 +24,22 @@ export default defineMeta({
   realtime: true,
   popularity: 96,
   addedAt: '2026-06-01',
+  shop: {
+    title: 'Workshop',
+    icon: '🧱',
+    skinLabel: 'Palettes',
+    upgrades: [
+      upgrade('perfect', 'Steady hands', '🎯', 'Wider “perfect” window per level', 4, 90),
+      upgrade('slowmo', 'Slow motion', '🐢', 'Blocks slide 5% slower per level', 3, 110),
+      upgrade('regrow', 'Regrowth', '🌱', 'Perfect combos regrow the tower more', 3, 100),
+    ],
+    skins: [
+      skin('prism', 'Prism', 0, ['#a855f7', '#22d3ee', '#f472b6'], { icon: '🌈' }),
+      skin('ocean', 'Ocean', 150, ['#0891b2', '#0e7490', '#67e8f9'], { icon: '🌊' }),
+      skin('sunset', 'Sunset', 150, ['#f43f5e', '#f97316', '#fde68a'], { icon: '🌇' }),
+      skin('forest', 'Forest', 250, ['#65a30d', '#15803d', '#bef264'], { icon: '🌲' }),
+      skin('candy', 'Candy', 350, ['#d946ef', '#f472b6', '#fbcfe8'], { icon: '🍭' }),
+      skin('gold', 'Gold Bars', 0, ['#f59e0b', '#b45309', '#fde68a'], { icon: '🪙', adUnlock: 3 }),
+    ],
+  },
 });
