@@ -164,11 +164,12 @@ export function RoadHop({ api, paused }: GameProps) {
     if (dir === 'up') tr += 1;
     else if (dir === 'down') tr -= 1;
     else tx += dir === 'left' ? -CELL : CELL;
+    // Can't step behind the start or too far below the camera.
+    if (tr < 0 || tr < s.camRow - 1) return;
     // snap to the grid when stepping onto solid ground
     const target = lane(tr);
     if (target.type !== 'river') tx = col(tx) * CELL + CELL / 2;
     if (tx < CELL / 2 - 1 || tx > W - CELL / 2 + 1) return;
-    if (tr < s.camRow - 1) return;
     if (target.type === 'grass' && target.trees.has(col(tx))) return;
     s.hop = { fx: s.x, fr: s.row, tx, tr, t: 0 };
     s.idle = 0;
