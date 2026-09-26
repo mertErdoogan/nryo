@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'memory-match',
@@ -23,4 +23,13 @@ export default defineMeta({
   realtime: true,
   popularity: 83,
   addedAt: '2026-06-02',
+  shop: {
+    title: 'Mind Gym',
+    icon: '🃏',
+    upgrades: [
+      upgrade('time', 'Extra time', '⏱️', '+5 starting seconds per level', 4, 80),
+      upgrade('peek', 'Free peeks', '👀', 'One free peek per level each game', 3, 90),
+    ],
+    skins: [skin('classic', 'Classic', 0, ['#8b5cf6', '#f472b6', '#22d3ee'])],
+  },
 });

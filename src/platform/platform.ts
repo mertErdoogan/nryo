@@ -10,6 +10,9 @@ import { GameSaveService } from './services/saves';
 import { applyDailyAttempt, createDailyStore, getDailyChallenge } from './services/daily';
 import { Analytics, consoleSink, createLocalBufferSink } from './services/analytics';
 import { isBetter, medalFor } from './scoring';
+import { coinsForRound, upgradeCost } from './economy';
+import { createWalletStore } from './services/wallet';
+import { createLoadoutStore, isSkinOwned } from './services/loadouts';
 import type { StorageDriver } from './storage/driver';
 import { KEY_PREFIX } from './storage/driver';
 import { PersistentStore } from './storage/persistent-store';
@@ -50,7 +53,12 @@ export interface RecordRoundInput {
   mode: PlayMode;
   durationMs: number;
   daily: DailyChallenge | null;
+  /** Coins picked up during the round (`api.addCoins`). */
+  pickups?: number;
 }
+
+export type PurchaseResult =
+  { ok: true } | { ok: false; reason: 'insufficient' | 'maxed' | 'unknown' | 'owned' | 'locked' };
 
 /**
  * Wires every persistent service together and implements cross-cutting flows
@@ -66,6 +74,8 @@ export function createPlatform(driver: StorageDriver, options: PlatformOptions) 
   const favorites = createFavoritesStore(driver);
   const recent = createRecentStore(driver);
   const daily = createDailyStore(driver);
+  const wallet = createWalletStore(driver);
+  const loadouts = createLoadoutStore(driver);
   const achievements = new PersistentStore<Record<string, number>>(driver, {
     key: 'achievements',
     version: 1,
@@ -176,6 +186,20 @@ export function createPlatform(driver: StorageDriver, options: PlatformOptions) 
       }
     }
 
+    // ---- coins
+    const coins = coinsForRound({
+      meta,
+      score,
+      won,
+      trivial,
+      isNewBest,
+      medalBefore,
+      medalAfter,
+      pickups: input.pickups ?? 0,
+      dailyFirstCompletion: dailyOutcome?.firstCompletion === true,
+    });
+    wallet.earn(coins.total);
+
     // ---- player totals
     const levelBefore = levelFromXp(player.get().xp);
     const roundXp = xp.reduce((sum, l) => sum + l.xp, 0);
@@ -221,7 +245,64 @@ export function createPlatform(driver: StorageDriver, options: PlatformOptions) 
       levelAfter,
       achievements: unlocked,
       daily: dailyOutcome,
+      coins,
     };
+  }
+
+  // ---- shop
+  function buyUpgrade(meta: GameMeta, upgradeId: string): PurchaseResult {
+    const def = meta.shop?.upgrades.find((u) => u.id === upgradeId);
+    if (!def) return { ok: false, reason: 'unknown' };
+    const loadout = loadouts.of(meta.id, meta.shop);
+    const level = loadout.upgrades[upgradeId] ?? 0;
+    const cost = upgradeCost(def, level);
+    if (cost === null) return { ok: false, reason: 'maxed' };
+    if (!wallet.spend(cost)) return { ok: false, reason: 'insufficient' };
+    loadouts.put(meta.id, { ...loadout, upgrades: { ...loadout.upgrades, [upgradeId]: level + 1 } });
+    wallet.countPurchase();
+    analytics.track('item_purchased', { gameId: meta.id, item: upgradeId, level: level + 1, cost });
+    return { ok: true };
+  }
+
+  function buySkin(meta: GameMeta, skinId: string): PurchaseResult {
+    const shop = meta.shop;
+    const skin = shop?.skins.find((s) => s.id === skinId);
+    if (!shop || !skin) return { ok: false, reason: 'unknown' };
+    const loadout = loadouts.of(meta.id, shop);
+    if (isSkinOwned(loadout, shop, skinId)) return { ok: false, reason: 'owned' };
+    if (skin.adUnlock && skin.price === 0) return { ok: false, reason: 'locked' };
+    if (!wallet.spend(skin.price)) return { ok: false, reason: 'insufficient' };
+    loadouts.put(meta.id, { ...loadout, owned: [...loadout.owned, skinId], equipped: skinId });
+    wallet.countPurchase();
+    analytics.track('item_purchased', { gameId: meta.id, item: skinId, cost: skin.price });
+    return { ok: true };
+  }
+
+  /** Counts one watched ad towards an ad-unlockable skin. Returns true when it just unlocked. */
+  function progressSkinAd(meta: GameMeta, skinId: string): boolean {
+    const shop = meta.shop;
+    const skin = shop?.skins.find((s) => s.id === skinId);
+    if (!shop || !skin?.adUnlock) return false;
+    const loadout = loadouts.of(meta.id, shop);
+    if (isSkinOwned(loadout, shop, skinId)) return false;
+    const watched = (loadout.adProgress[skinId] ?? 0) + 1;
+    const unlocked = watched >= skin.adUnlock;
+    loadouts.put(meta.id, {
+      ...loadout,
+      adProgress: { ...loadout.adProgress, [skinId]: watched },
+      owned: unlocked ? [...loadout.owned, skinId] : loadout.owned,
+      equipped: unlocked ? skinId : loadout.equipped,
+    });
+    return unlocked;
+  }
+
+  function equipSkin(meta: GameMeta, skinId: string): boolean {
+    const shop = meta.shop;
+    if (!shop) return false;
+    const loadout = loadouts.of(meta.id, shop);
+    if (!isSkinOwned(loadout, shop, skinId)) return false;
+    loadouts.put(meta.id, { ...loadout, equipped: skinId });
+    return true;
   }
 
   function toggleFavorite(id: string): boolean {
@@ -231,7 +312,7 @@ export function createPlatform(driver: StorageDriver, options: PlatformOptions) 
     return on;
   }
 
-  const stores = { settings, player, stats, favorites, recent, daily, achievements };
+  const stores = { settings, player, stats, favorites, recent, daily, achievements, wallet, loadouts };
 
   /** Keys owned by the platform (used for sync, export and reset). */
   const storeByKey = new Map<string, PersistentStore<unknown>>(
@@ -264,6 +345,10 @@ export function createPlatform(driver: StorageDriver, options: PlatformOptions) 
     storeByKey,
     snapshot,
     recordRound,
+    buyUpgrade,
+    buySkin,
+    progressSkinAd,
+    equipSkin,
     toggleFavorite,
     evaluateAchievements,
     todaysChallenge,

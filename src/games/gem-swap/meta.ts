@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'gem-swap',
@@ -24,4 +24,10 @@ export default defineMeta({
   realtime: false,
   popularity: 89,
   addedAt: '2026-06-13',
+  shop: {
+    title: 'Jeweller',
+    icon: '💎',
+    upgrades: [upgrade('moves', 'Extra moves', '➕', '+2 starting moves per level', 5, 90)],
+    skins: [skin('classic', 'Classic', 0, ['#f472b6', '#22d3ee', '#facc15'])],
+  },
 });

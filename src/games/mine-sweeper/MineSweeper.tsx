@@ -7,6 +7,7 @@ import {
   Hint,
   Stat,
   StatBar,
+  createContinueGate,
   useSeededRng,
   useStopwatch,
 } from '../../engine';
@@ -41,6 +42,12 @@ export function MineSweeper({ api, paused }: GameProps<Save>) {
   const [flagMode, setFlagMode] = useState(false);
   const [boom, setBoom] = useState<number | null>(null);
   const [done, setDone] = useState(false);
+  // Mines are only uncovered once the round is really over (not while a continue is on offer).
+  const [showMines, setShowMines] = useState(false);
+  const lo = api.loadout;
+  const [hints, setHints] = useState(lo.level('hint'));
+  const [busy, setBusy] = useState(false);
+  const continueGate = useRef(createContinueGate(api)).current;
   const [elapsed, readElapsed] = useStopwatch(!paused && !!mines && !done, resume?.elapsed ?? 0);
   const press = useRef<{ timer: ReturnType<typeof setTimeout>; index: number; fired: boolean } | null>(null);
 
@@ -76,23 +83,39 @@ export function MineSweeper({ api, paused }: GameProps<Save>) {
     api.sfx('explode');
     api.haptic([80, 50, 120]);
     const safeRevealed = [...rev].filter((i) => !m[i]).length;
-    setTimeout(
-      () =>
-        api.gameOver({
-          score: safeRevealed * 2,
-          won: false,
-          stats: [
-            { label: 'Board', value: cfg!.label },
-            { label: 'Cleared', value: `${safeRevealed} squares` },
-          ],
-        }),
-      1100,
+    continueGate(
+      () => {
+        // Defused: the mine gets a flag and the sweep goes on.
+        const fl = new Set(flags);
+        fl.add(hit);
+        setFlags(fl);
+        setBoom(null);
+        setDone(false);
+        persist(m, rev, fl);
+      },
+      () => {
+        setShowMines(true);
+        setTimeout(
+          () =>
+            api.gameOver({
+              score: safeRevealed * 2,
+              won: false,
+              stats: [
+                { label: 'Board', value: cfg!.label },
+                { label: 'Cleared', value: `${safeRevealed} squares` },
+              ],
+            }),
+          900,
+        );
+      },
     );
   };
 
   const win = (rev: Set<number>) => {
     setDone(true);
+    setShowMines(true);
     api.sfx('win');
+    api.addCoins(level === 'hard' ? 12 : level === 'medium' ? 6 : 3);
     const seconds = readElapsed();
     const score = winScore(level!, seconds);
     api.setScore(score);
@@ -156,6 +179,27 @@ export function MineSweeper({ api, paused }: GameProps<Save>) {
     else persist(m, next, flags);
   };
 
+  /** Hint: uncover one safe square next to what you've already cleared. */
+  const safeHint = async () => {
+    if (done || busy || !mines || !cfg) return;
+    const border = new Set<number>();
+    for (const r of revealed)
+      for (const a of neighbors(r, cfg.rows, cfg.cols))
+        if (!revealed.has(a) && !mines[a] && !flags.has(a)) border.add(a);
+    const pool = border.size
+      ? [...border]
+      : mines.map((m, i) => (m || revealed.has(i) ? -1 : i)).filter((i) => i >= 0);
+    if (!pool.length) return;
+    if (hints > 0) setHints((n) => n - 1);
+    else {
+      setBusy(true);
+      const ok = await api.watchAd('A safe square');
+      setBusy(false);
+      if (!ok) return;
+    }
+    reveal(rng.pick(pool));
+  };
+
   if (!level || !cfg) {
     return (
       <DomStage center>
@@ -185,7 +229,7 @@ export function MineSweeper({ api, paused }: GameProps<Save>) {
       </StatBar>
       <div className={styles.board} style={style} role="group" aria-label={`Minefield ${cfg.label}`}>
         {Array.from({ length: cfg.rows * cfg.cols }, (_, i) => {
-          const open = revealed.has(i) || (done && !!mines?.[i]);
+          const open = revealed.has(i) || (showMines && !!mines?.[i]);
           const isMine = !!mines?.[i];
           const flagged = flags.has(i);
           let content: string | number = '';
@@ -200,7 +244,7 @@ export function MineSweeper({ api, paused }: GameProps<Save>) {
               data-open={open}
               data-mine={open && isMine}
               data-boom={boom === i}
-              data-wrongflag={done && flagged && !isMine}
+              data-wrongflag={showMines && flagged && !isMine}
               aria-label={
                 open
                   ? isMine
@@ -244,6 +288,13 @@ export function MineSweeper({ api, paused }: GameProps<Save>) {
       <ActionRow>
         <GameButton pressed={flagMode} onClick={() => setFlagMode((f) => !f)} label="Toggle flag mode">
           🚩 Flag mode {flagMode ? 'on' : 'off'}
+        </GameButton>
+        <GameButton
+          onClick={() => void safeHint()}
+          label="Reveal a safe square"
+          disabled={busy || done || !mines}
+        >
+          💡 Safe square {hints > 0 ? `(${hints})` : '(ad)'}
         </GameButton>
       </ActionRow>
     </DomStage>

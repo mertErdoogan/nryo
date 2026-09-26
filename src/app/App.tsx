@@ -9,6 +9,8 @@ import { CategoriesPage } from '../pages/CategoriesPage';
 import { FavoritesPage } from '../pages/FavoritesPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { ToastHost, showToast } from '../ui/Toasts';
+import { AdHost } from '../ui/AdHost';
+import { initAds } from '../platform/ads';
 import { AppErrorBoundary } from './AppErrorBoundary';
 import { Header, MobileNav } from './Header';
 import { Link, useRoute } from './router';
@@ -75,6 +77,7 @@ function useGlobalEffects() {
 
   useEffect(() => {
     platform.analytics.track('app_opened', { returning: platform.player.get().rounds > 0 });
+    initAds();
     // Warm up the game page chunk once the home screen is idle.
     const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1200));
     idle(() => void import('../pages/PlayPage'));
@@ -149,6 +152,7 @@ export function App() {
       <SearchPalette />
       <SettingsDialog />
       <ToastHost />
+      <AdHost />
     </>
   );
 }

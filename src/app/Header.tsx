@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { useFavorites, useLevel, usePlayer } from '../hooks/usePlatform';
+import { useFavorites, useLevel, usePlayer, useWallet } from '../hooks/usePlatform';
+import { CoinAmount } from '../ui/Coins';
 import { getAvatar } from '../platform/cosmetics';
 import { Icon, type IconName } from '../ui/Icon';
 import { isActivePath, Link, useLocation } from './router';
@@ -44,6 +45,15 @@ function LevelChip() {
         <span className={styles.levelLabel}>Level</span>
         <span className={styles.levelValue}>{level.level}</span>
       </span>
+    </Link>
+  );
+}
+
+function WalletChip() {
+  const wallet = useWallet();
+  return (
+    <Link to="/profile#wallet" className={styles.walletChip} aria-label={`${wallet.coins} coins`}>
+      <CoinAmount value={wallet.coins} size={20} />
     </Link>
   );
 }
@@ -104,6 +114,7 @@ export function Header() {
         >
           <Icon name="search" />
         </button>
+        <WalletChip />
         <LevelChip />
         <button
           type="button"

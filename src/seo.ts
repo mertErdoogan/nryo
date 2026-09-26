@@ -5,7 +5,7 @@ import { CATEGORIES, getCategory } from './platform/categories';
 export const SITE_NAME = 'Nryo Arcade';
 export const SITE_TAGLINE = 'Free browser games. No sign-up. Play instantly.';
 export const SITE_DESCRIPTION =
-  'Play 40+ free browser games instantly — arcade, puzzle, word, racing, strategy and more. No login, no downloads. Your scores and progress are saved right in your browser.';
+  'Play 80+ free browser games instantly — arcade, puzzle, word, racing, strategy and more. No login, no downloads. Your scores and progress are saved right in your browser.';
 
 export interface PageMeta {
   title: string;

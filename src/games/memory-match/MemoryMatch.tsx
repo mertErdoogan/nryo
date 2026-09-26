@@ -1,6 +1,17 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { Banner, DomStage, Hint, Stat, StatBar, TimerBar, useCountdown, useSeededRng } from '../../engine';
+import {
+  Banner,
+  DomStage,
+  Hint,
+  PowerChip,
+  Stat,
+  StatBar,
+  TimerBar,
+  createContinueGate,
+  useCountdown,
+  useSeededRng,
+} from '../../engine';
 import type { GameProps } from '../../platform/types';
 import { deal, layoutForLevel, levelBonusSeconds, matchPoints, type Card } from './logic';
 import styles from './MemoryMatch.module.css';
@@ -17,6 +28,11 @@ export function MemoryMatch({ api, paused }: GameProps) {
   const [transition, setTransition] = useState(false);
   const [banner, setBanner] = useState<{ key: number; text: string; sub?: string } | null>(null);
   const stats = useRef({ score: 0, combo: 0, bestCombo: 0, matches: 0, flips: 0, over: false });
+  const lo = api.loadout;
+  const startTime = START_SECONDS + 5 * lo.level('time');
+  const [peeks, setPeeks] = useState(lo.level('peek'));
+  const [busy, setBusy] = useState(false);
+  const continueGate = useRef(createContinueGate(api)).current;
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const later = (fn: () => void, ms: number) => timers.current.push(setTimeout(fn, ms));
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
@@ -25,17 +41,25 @@ export function MemoryMatch({ api, paused }: GameProps) {
     if (stats.current.over) return;
     stats.current.over = true;
     const s = stats.current;
-    api.gameOver({
-      score: s.score,
-      stats: [
-        { label: 'Boards', value: String(level - 1) },
-        { label: 'Pairs', value: String(s.matches) },
-        { label: 'Best streak', value: String(s.bestCombo) },
-      ],
-    });
+    continueGate(
+      () => {
+        s.over = false;
+        clock.reset(20);
+        setBanner({ key: Date.now(), text: '+20 seconds' });
+      },
+      () =>
+        api.gameOver({
+          score: s.score,
+          stats: [
+            { label: 'Boards', value: String(level - 1) },
+            { label: 'Pairs', value: String(s.matches) },
+            { label: 'Best streak', value: String(s.bestCombo) },
+          ],
+        }),
+    );
   };
 
-  const clock = useCountdown(START_SECONDS, !paused && !preview && !transition, finish);
+  const clock = useCountdown(startTime, !paused && !preview && !transition && !busy, finish);
 
   // Preview: show all cards briefly at the start of each board.
   useEffect(() => {
@@ -74,6 +98,7 @@ export function MemoryMatch({ api, paused }: GameProps) {
         const timeBonus = Math.round(clock.remaining * 5);
         s.score += 200 * level + timeBonus;
         api.setScore(s.score);
+        api.addCoins(1 + Math.floor(level / 3));
         clock.add(bonusTime);
         setTransition(true);
         setBanner({
@@ -101,6 +126,20 @@ export function MemoryMatch({ api, paused }: GameProps) {
     }
   };
 
+  /** Flip every card face-up for a moment. */
+  const peek = async () => {
+    if (preview || transition || busy || stats.current.over) return;
+    if (peeks > 0) setPeeks((n) => n - 1);
+    else {
+      setBusy(true);
+      const ok = await api.watchAd('A peek at the cards');
+      setBusy(false);
+      if (!ok) return;
+    }
+    setOpen([]);
+    setPreview(true);
+  };
+
   const { cols, rows } = layoutForLevel(level);
   const style = { '--cols': cols, '--rows': rows } as CSSProperties;
 
@@ -119,7 +158,7 @@ export function MemoryMatch({ api, paused }: GameProps) {
           tone={stats.current.combo >= 2 ? 'good' : undefined}
         />
       </StatBar>
-      <TimerBar ratio={clock.remaining / START_SECONDS} label="Time remaining" />
+      <TimerBar ratio={Math.min(1, clock.remaining / startTime)} label="Time remaining" />
       <div className={styles.board} style={style} role="group" aria-label={`Memory board ${level}`}>
         {cards.map((card, i) => {
           const up = preview || card.matched || open.includes(i);
@@ -144,6 +183,14 @@ export function MemoryMatch({ api, paused }: GameProps) {
         })}
       </div>
       <Hint>{preview ? 'Memorise the cards…' : 'Find the pairs'}</Hint>
+      <PowerChip
+        corner="inline"
+        icon="👀"
+        label="Peek"
+        badge={peeks > 0 ? peeks : 'ad'}
+        onClick={() => void peek()}
+        disabled={busy || preview || transition}
+      />
       {banner && <Banner key={banner.key} text={banner.text} sub={banner.sub} />}
     </DomStage>
   );

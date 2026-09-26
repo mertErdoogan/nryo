@@ -544,3 +544,58 @@
     transform: translateY(-3px);
   }
 }
+
+/* ---------- Revive ---------- */
+.reviveRing {
+  --p: 1;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, #12122a 78%, transparent 80% 100%),
+    conic-gradient(var(--game-accent) calc(var(--p) * 100%), rgb(255 255 255 / 0.1) 0);
+  font-size: 2rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  transition: background 0.3s linear;
+}
+
+/* ---------- Coins on results ---------- */
+.coinCard {
+  background: linear-gradient(135deg, rgb(251 191 36 / 0.14), rgb(249 115 22 / 0.08));
+  border-color: rgb(251 191 36 / 0.3);
+}
+
+.coinTotal {
+  font-size: 1.4rem;
+}
+
+.coinLines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.coinActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.shopBadge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: #f59e0b;
+  color: #1a1206;
+  font-size: 12px;
+  font-weight: 800;
+}

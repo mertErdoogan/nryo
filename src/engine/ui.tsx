@@ -64,6 +64,34 @@ export function Banner({ text, sub }: { text: string; sub?: string }) {
   );
 }
 
+/**
+ * Floating power-up chip for canvas games ("↩️ Mulligan · 2", "🔨 Hammer · ad").
+ * `badge` shows the free uses left, or "ad" when the next use needs a rewarded ad.
+ */
+export function PowerChip({
+  icon,
+  label,
+  badge,
+  onClick,
+  disabled,
+  corner = 'bottom-left',
+}: {
+  icon: string;
+  label: string;
+  badge?: string | number;
+  onClick: () => void;
+  disabled?: boolean;
+  /** Where to float over a canvas; 'inline' flows with DOM content instead. */
+  corner?: 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right' | 'inline';
+}) {
+  return (
+    <button type="button" className={styles.chip} data-corner={corner} onClick={onClick} disabled={disabled}>
+      <span aria-hidden="true">{icon}</span> {label}
+      {badge !== undefined && <span className={styles.chipBadge}>{badge}</span>}
+    </button>
+  );
+}
+
 export function Hint({ children }: { children: ReactNode }) {
   return <p className={styles.hint}>{children}</p>;
 }

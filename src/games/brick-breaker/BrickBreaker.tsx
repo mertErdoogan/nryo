@@ -4,6 +4,7 @@ import {
   FloatingText,
   Particles,
   Shake,
+  createContinueGate,
   useGameLoop,
   useHeldKeys,
   useKeyDown,
@@ -43,6 +44,12 @@ const HP_COLORS = ['#f472b6', '#c084fc', '#60a5fa'];
 export function BrickBreaker({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
+  const lo = api.loadout;
+  const [paddleColor, glowColor, ballColor] = lo.skin.colors;
+  const basePaddle = 72 + 6 * lo.level('paddle');
+  const powerChance = 0.13 + 0.03 * lo.level('luck');
+  const powerTime = 1 + 0.25 * lo.level('duration');
+  const continueGate = useRef(createContinueGate(api)).current;
   const keys = useHeldKeys(!paused);
   const fx = useRef({
     particles: new Particles(500, rng.next),
@@ -58,7 +65,8 @@ export function BrickBreaker({ api, paused }: GameProps) {
     wideTimer: 0,
     slowTimer: 0,
     powers: [] as { kind: PowerKind; x: number; y: number }[],
-    lives: 3,
+    lives: 3 + lo.level('lives'),
+    waiting: false,
     score: 0,
     combo: 0,
     speedBoost: 0,
@@ -71,7 +79,7 @@ export function BrickBreaker({ api, paused }: GameProps) {
   }).current;
 
   const baseSpeed = () => (300 + s.level * 14 + s.speedBoost) * (s.slowTimer > 0 ? 0.7 : 1);
-  const paddleW = () => (s.wideTimer > 0 ? 108 : 72);
+  const paddleW = () => (s.wideTimer > 0 ? basePaddle * 1.5 : basePaddle);
 
   const launch = () => {
     if (s.over || s.clearTimer > 0) return;
@@ -126,7 +134,7 @@ export function BrickBreaker({ api, paused }: GameProps) {
       size: 5,
     });
     api.sfx('score');
-    if (rng.chance(0.13)) {
+    if (rng.chance(powerChance)) {
       const roll = rng.next();
       const kind: PowerKind = roll < 0.05 ? 'life' : roll < 0.4 ? 'wide' : roll < 0.72 ? 'multi' : 'slow';
       s.powers.push({ kind, x: cx, y: cy });
@@ -239,6 +247,7 @@ export function BrickBreaker({ api, paused }: GameProps) {
       if (s.clearTimer <= 0 && s.bricks.every((b) => b.steel)) {
         const bonus = 200 * s.level;
         addScore(bonus);
+        api.addCoins(1 + Math.floor(s.level / 2));
         floaters.add(`Wall ${s.level} cleared! +${bonus}`, W / 2, H / 2, '#86efac', 22, 1.4);
         particles.burst(W / 2, H / 2, {
           count: 60,
@@ -250,11 +259,24 @@ export function BrickBreaker({ api, paused }: GameProps) {
         s.clearTimer = 1.5;
         s.balls = [];
       }
-    } else if (!s.ended) {
+    } else if (!s.ended && !s.waiting) {
       s.overTimer -= dt;
       if (s.overTimer <= 0) {
-        s.ended = true;
-        api.gameOver({ score: s.score, stats: [{ label: 'Wall reached', value: String(s.level) }] });
+        s.waiting = true;
+        continueGate(
+          () => {
+            s.lives = 1;
+            s.balls = [{ x: s.paddleX, y: PADDLE_Y - BALL_R - 1, vx: 0, vy: 0, docked: true }];
+            s.wideTimer = 8;
+            s.over = false;
+            s.waiting = false;
+            fx.current.floaters.add('Extra ball!', W / 2, H / 2, '#86efac', 24, 1.2);
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({ score: s.score, stats: [{ label: 'Wall reached', value: String(s.level) }] });
+          },
+        );
       }
     }
 
@@ -270,8 +292,8 @@ export function BrickBreaker({ api, paused }: GameProps) {
           POWER_COLORS[p.kind],
           16,
         );
-        if (p.kind === 'wide') s.wideTimer = 12;
-        else if (p.kind === 'slow') s.slowTimer = 8;
+        if (p.kind === 'wide') s.wideTimer = 12 * powerTime;
+        else if (p.kind === 'slow') s.slowTimer = 8 * powerTime;
         else if (p.kind === 'life') s.lives = Math.min(5, s.lives + 1);
         else {
           const src = s.balls.find((b) => !b.docked) ?? s.balls[0];
@@ -324,7 +346,7 @@ export function BrickBreaker({ api, paused }: GameProps) {
       text(ctx, POWER_LABEL[p.kind], p.x, p.y + 1, { size: 11, weight: 800, color: '#0f172a' });
     }
     const pwNow = paddleW();
-    ctx.shadowColor = s.wideTimer > 0 ? '#60a5fa' : '#f472b6';
+    ctx.shadowColor = s.wideTimer > 0 ? '#60a5fa' : glowColor;
     ctx.shadowBlur = 16;
     fillRoundRect(
       ctx,
@@ -333,13 +355,13 @@ export function BrickBreaker({ api, paused }: GameProps) {
       pwNow,
       PADDLE_H,
       6,
-      s.wideTimer > 0 ? '#93c5fd' : '#f9a8d4',
+      s.wideTimer > 0 ? '#93c5fd' : paddleColor,
     );
     ctx.shadowBlur = 0;
     for (const b of s.balls) {
       ctx.shadowColor = '#fff';
       ctx.shadowBlur = 10;
-      circle(ctx, b.x, b.y, BALL_R, s.slowTimer > 0 ? '#bef264' : '#ffffff');
+      circle(ctx, b.x, b.y, BALL_R, s.slowTimer > 0 ? '#bef264' : ballColor);
       ctx.shadowBlur = 0;
     }
     particles.draw(ctx);

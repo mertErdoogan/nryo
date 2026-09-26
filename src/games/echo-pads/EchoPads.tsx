@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { DomStage, Hint, useKeyDown, useSeededRng } from '../../engine';
+import { DomStage, Hint, PowerChip, createContinueGate, useKeyDown, useSeededRng } from '../../engine';
 import type { GameProps, SoundName } from '../../platform/types';
 import { checkInput, gapTime, litTime } from './logic';
 import styles from './EchoPads.module.css';
@@ -15,6 +15,11 @@ export function EchoPads({ api, paused }: GameProps) {
   const [input, setInput] = useState<number[]>([]);
   const [lit, setLit] = useState<number | null>(null);
   const [phase, setPhase] = useState<Phase>('intro');
+  const lo = api.loadout;
+  const tempo = 1 + 0.12 * lo.level('tempo');
+  const [replays, setReplays] = useState(lo.level('replay'));
+  const [busy, setBusy] = useState(false);
+  const continueGate = useRef(createContinueGate(api)).current;
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const clearAll = () => {
     timers.current.forEach(clearTimeout);
@@ -28,8 +33,8 @@ export function EchoPads({ api, paused }: GameProps) {
       clearAll();
       setPhase('showing');
       setInput([]);
-      const on = litTime(seq.length);
-      const gap = gapTime(seq.length);
+      const on = litTime(seq.length) * tempo;
+      const gap = gapTime(seq.length) * tempo;
       let t = 500;
       seq.forEach((pad) => {
         later(() => {
@@ -41,7 +46,7 @@ export function EchoPads({ api, paused }: GameProps) {
       });
       later(() => setPhase('input'), t);
     },
-    [api],
+    [api, tempo],
   );
 
   // Start after a short intro; pausing mid-playback replays the sequence on resume.
@@ -71,13 +76,17 @@ export function EchoPads({ api, paused }: GameProps) {
       api.sfx('error');
       api.haptic([80, 40, 80]);
       const completed = sequence.length - 1;
-      later(
+      continueGate(
+        () => play(sequence),
         () =>
-          api.gameOver({
-            score: completed,
-            stats: [{ label: 'Longest sequence', value: String(completed) }],
-          }),
-        700,
+          later(
+            () =>
+              api.gameOver({
+                score: completed,
+                stats: [{ label: 'Longest sequence', value: String(completed) }],
+              }),
+            400,
+          ),
       );
       return;
     }
@@ -89,6 +98,7 @@ export function EchoPads({ api, paused }: GameProps) {
       const grown = [...sequence, rng.int(0, 3)];
       later(() => {
         api.sfx(sequence.length % 5 === 0 ? 'powerup' : 'score');
+        if (sequence.length % 5 === 0) api.addCoins(1);
         setSequence(grown);
         play(grown);
       }, 650);
@@ -102,6 +112,19 @@ export function EchoPads({ api, paused }: GameProps) {
     if (pad < 0) return false;
     press(pad);
   }, !paused);
+
+  /** Watch the sequence again before answering. */
+  const replay = async () => {
+    if (phase !== 'input' || busy || input.length > 0) return;
+    if (replays > 0) setReplays((n) => n - 1);
+    else {
+      setBusy(true);
+      const ok = await api.watchAd('A replay');
+      setBusy(false);
+      if (!ok) return;
+    }
+    play(sequence);
+  };
 
   const status =
     phase === 'showing'
@@ -139,6 +162,14 @@ export function EchoPads({ api, paused }: GameProps) {
         </div>
       </div>
       <Hint>{phase === 'input' ? `${input.length} / ${sequence.length}` : 'Remember the order'}</Hint>
+      <PowerChip
+        corner="inline"
+        icon="🔁"
+        label="Replay"
+        badge={replays > 0 ? replays : 'ad'}
+        onClick={() => void replay()}
+        disabled={busy || phase !== 'input' || input.length > 0}
+      />
     </DomStage>
   );
 }

@@ -4,6 +4,7 @@ import {
   FloatingText,
   Particles,
   Shake,
+  createContinueGate,
   useGameLoop,
   useHeldKeys,
   useSeededRng,
@@ -24,6 +25,11 @@ const MAX_PUCK = 950;
 export function AirHockey({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
+  const lo = api.loadout;
+  const [malletA, malletB] = lo.skin.colors;
+  const malletR = 26 + 2 * lo.level('mallet');
+  const reach = 1 + 0.1 * lo.level('speed');
+  const continueGate = useRef(createContinueGate(api)).current;
   const keys = useHeldKeys(!paused);
   const fx = useRef({
     particles: new Particles(300, rng.next),
@@ -32,7 +38,7 @@ export function AirHockey({ api, paused }: GameProps) {
   });
   const s = useRef({
     puck: { x: W / 2, y: H / 2 + 60, vx: 0, vy: 0, r: 17 } as Disc,
-    me: { x: W / 2, y: H - 90, vx: 0, vy: 0, r: 26 } as Disc,
+    me: { x: W / 2, y: H - 90, vx: 0, vy: 0, r: malletR } as Disc,
     ai: { x: W / 2, y: 90, vx: 0, vy: 0, r: 26 } as Disc,
     target: { x: W / 2, y: H - 90 },
     my: 0,
@@ -45,6 +51,7 @@ export function AirHockey({ api, paused }: GameProps) {
     over: false,
     overTimer: 0,
     ended: false,
+    waiting: false,
     started: false,
     time: 0,
     banner: 'Match 1 · first to 5',
@@ -84,6 +91,7 @@ export function AirHockey({ api, paused }: GameProps) {
     api.setScore(s.goals * 100 + s.wins * 500);
     if (s.my >= WIN) {
       s.wins += 1;
+      api.addCoins(3 + s.level);
       s.level += 1;
       s.my = 0;
       s.their = 0;
@@ -124,7 +132,7 @@ export function AirHockey({ api, paused }: GameProps) {
     const me = s.me;
     const tx = clamp(s.target.x, T.x + me.r, T.x + T.w - me.r);
     const ty = clamp(s.target.y, H / 2 + me.r, T.y + T.h - me.r);
-    const maxStep = 1400 * dt;
+    const maxStep = 1400 * reach * dt;
     const mx = clamp(tx - me.x, -maxStep, maxStep);
     const my = clamp(ty - me.y, -maxStep, maxStep);
     me.vx = mx / Math.max(dt, 1e-3);
@@ -207,19 +215,35 @@ export function AirHockey({ api, paused }: GameProps) {
         puck.vx *= damp;
         puck.vy *= damp;
       }
-    } else if (!s.ended) {
+    } else if (!s.ended && !s.waiting) {
       s.overTimer -= dt;
       if (s.overTimer <= 0) {
-        s.ended = true;
-        api.gameOver({
-          score: s.goals * 100 + s.wins * 500,
-          won: s.wins > 0,
-          stats: [
-            { label: 'Matches won', value: String(s.wins) },
-            { label: 'Goals', value: String(s.goals) },
-            { label: 'AI level reached', value: String(s.level) },
-          ],
-        });
+        s.waiting = true;
+        continueGate(
+          () => {
+            // Rematch against the same AI, keeping your wins and goals.
+            s.my = 0;
+            s.their = 0;
+            s.over = false;
+            s.waiting = false;
+            s.banner = `Rematch · level ${s.level} AI`;
+            s.bannerT = 2;
+            resetPuck(true);
+            s.pause = 1.5;
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({
+              score: s.goals * 100 + s.wins * 500,
+              won: s.wins > 0,
+              stats: [
+                { label: 'Matches won', value: String(s.wins) },
+                { label: 'Goals', value: String(s.goals) },
+                { label: 'AI level reached', value: String(s.level) },
+              ],
+            });
+          },
+        );
       }
     }
     particles.update(dt);
@@ -262,7 +286,7 @@ export function AirHockey({ api, paused }: GameProps) {
     // mallets
     for (const [m, c1, c2] of [
       [s.ai, '#e11d48', '#fda4af'],
-      [s.me, '#0891b2', '#a5f3fc'],
+      [s.me, malletA, malletB],
     ] as const) {
       circle(ctx, m.x + 2, m.y + 4, m.r, 'rgba(0,0,0,0.2)');
       circle(ctx, m.x, m.y, m.r, c1);

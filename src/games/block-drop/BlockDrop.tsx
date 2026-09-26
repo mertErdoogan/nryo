@@ -6,6 +6,7 @@ import {
   Particles,
   Shake,
   TouchButton,
+  createContinueGate,
   useGameLoop,
   useHeldKeys,
   useKeyDown,
@@ -17,7 +18,7 @@ import type { GameProps } from '../../platform/types';
 import {
   bag,
   cells,
-  COLORS,
+  PALETTES,
   COLS,
   dropDistance,
   emptyBoard,
@@ -66,6 +67,7 @@ function drawMini(
   cx: number,
   cy: number,
   size: number,
+  colors: Record<PieceType, string>,
 ) {
   if (!type) return;
   const cs = cells({ type, x: 0, y: 0, rot: 0 });
@@ -76,11 +78,16 @@ function drawMini(
   const w = (maxX - minX + 1) * size;
   const h = (maxY - minY + 1) * size;
   for (const [x, y] of cs)
-    drawBlock(ctx, cx - w / 2 + (x - minX) * size, cy - h / 2 + (y - minY) * size, size, COLORS[type]);
+    drawBlock(ctx, cx - w / 2 + (x - minX) * size, cy - h / 2 + (y - minY) * size, size, colors[type]);
 }
 
 export function BlockDrop({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
+  const lo = api.loadout;
+  const COLORS = PALETTES[lo.skin.id] ?? PALETTES.classic!;
+  const lockDelay = LOCK_DELAY + 0.1 * lo.level('lock');
+  const gravityScale = 1 + 0.1 * lo.level('calm');
+  const continueGate = useRef(createContinueGate(api)).current;
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
   const fx = useRef({
@@ -107,6 +114,7 @@ export function BlockDrop({ api, paused }: GameProps) {
     over: false,
     overTimer: 0,
     ended: false,
+    waiting: false,
     time: 0,
     started: false,
     touch: null as null | {
@@ -194,6 +202,7 @@ export function BlockDrop({ api, paused }: GameProps) {
         );
       fx.current.shake.add(cleared.length * 3);
       api.sfx(cleared.length === 4 ? 'win' : 'score');
+      if (cleared.length === 4) api.addCoins(2);
       api.haptic(cleared.length * 15);
       for (const y of cleared) {
         for (let x = 0; x < COLS; x++) {
@@ -208,6 +217,7 @@ export function BlockDrop({ api, paused }: GameProps) {
       const newLevel = Math.floor(s.lines / 10) + 1;
       if (newLevel > s.level) {
         s.level = newLevel;
+        api.addCoins(1);
         fx.current.floaters.add(`Level ${s.level}`, BX + (COLS * CELL) / 2, BY + 200, '#67e8f9', 26, 1.4);
         api.sfx('levelup');
       }
@@ -329,7 +339,8 @@ export function BlockDrop({ api, paused }: GameProps) {
         }
       } else s.das.dir = 0;
       const soft = k.has('ArrowDown') || k.has('KeyS') || s.softDrop;
-      const interval = soft ? Math.min(0.04, gravityFor(s.level)) : gravityFor(s.level);
+      const fall = gravityFor(s.level) * gravityScale;
+      const interval = soft ? Math.min(0.04, fall) : fall;
       s.gravity += dt;
       while (s.gravity >= interval && s.piece) {
         s.gravity -= interval;
@@ -339,21 +350,39 @@ export function BlockDrop({ api, paused }: GameProps) {
       }
       if (s.piece && !fits(s.board, { ...s.piece, y: s.piece.y + 1 })) {
         s.lockTimer += dt;
-        if (s.lockTimer >= LOCK_DELAY) lockPiece();
+        if (s.lockTimer >= lockDelay) lockPiece();
       } else s.lockTimer = 0;
       if (soft) api.setScore(s.score);
     }
-    if (s.over && !s.ended) {
+    if (s.over && !s.ended && !s.waiting) {
       s.overTimer -= dt;
       if (s.overTimer <= 0) {
-        s.ended = true;
-        api.gameOver({
-          score: s.score,
-          stats: [
-            { label: 'Lines', value: String(s.lines) },
-            { label: 'Level', value: String(s.level) },
-          ],
-        });
+        s.waiting = true;
+        continueGate(
+          () => {
+            // Blast away the bottom rows so the stack drops down.
+            s.board = removeRows(
+              s.board,
+              Array.from({ length: 8 }, (_, i) => ROWS - 1 - i),
+            );
+            s.over = false;
+            s.waiting = false;
+            s.piece = null;
+            fx.current.shake.add(10);
+            fx.current.floaters.add('8 rows cleared!', BX + (COLS * CELL) / 2, BY + 200, '#86efac', 24, 1.2);
+            next();
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({
+              score: s.score,
+              stats: [
+                { label: 'Lines', value: String(s.lines) },
+                { label: 'Level', value: String(s.level) },
+              ],
+            });
+          },
+        );
       }
     }
     particles.update(dt);
@@ -415,10 +444,10 @@ export function BlockDrop({ api, paused }: GameProps) {
     const pw = W - px - 8;
     text(ctx, 'NEXT', px + pw / 2, BY + 8, { size: 11, weight: 800, color: '#c4b5fd' });
     fillRoundRect(ctx, px, BY + 18, pw, 64, 10, 'rgba(255,255,255,0.06)');
-    drawMini(ctx, s.queue[0] ?? null, px + pw / 2, BY + 50, 13);
+    drawMini(ctx, s.queue[0] ?? null, px + pw / 2, BY + 50, 13, COLORS);
     fillRoundRect(ctx, px, BY + 88, pw, 90, 10, 'rgba(255,255,255,0.03)');
-    drawMini(ctx, s.queue[1] ?? null, px + pw / 2, BY + 112, 10);
-    drawMini(ctx, s.queue[2] ?? null, px + pw / 2, BY + 152, 10);
+    drawMini(ctx, s.queue[1] ?? null, px + pw / 2, BY + 112, 10, COLORS);
+    drawMini(ctx, s.queue[2] ?? null, px + pw / 2, BY + 152, 10, COLORS);
     text(ctx, 'HOLD', px + pw / 2, BY + 198, { size: 11, weight: 800, color: '#c4b5fd' });
     fillRoundRect(
       ctx,
@@ -429,7 +458,7 @@ export function BlockDrop({ api, paused }: GameProps) {
       10,
       s.canHold ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)',
     );
-    drawMini(ctx, s.hold, px + pw / 2, BY + 240, 13);
+    drawMini(ctx, s.hold, px + pw / 2, BY + 240, 13, COLORS);
     text(ctx, 'LEVEL', px + pw / 2, BY + 296, { size: 11, weight: 800, color: '#c4b5fd' });
     text(ctx, String(s.level), px + pw / 2, BY + 318, { size: 22, weight: 850 });
     text(ctx, 'LINES', px + pw / 2, BY + 346, { size: 11, weight: 800, color: '#c4b5fd' });

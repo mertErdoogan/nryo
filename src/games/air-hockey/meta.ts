@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'air-hockey',
@@ -23,4 +23,20 @@ export default defineMeta({
   realtime: true,
   popularity: 80,
   addedAt: '2026-06-21',
+  shop: {
+    title: 'Pro Shop',
+    icon: '🏒',
+    skinLabel: 'Mallets',
+    upgrades: [
+      upgrade('mallet', 'Big mallet', '⭕', 'Larger mallet each level', 3, 120),
+      upgrade('speed', 'Quick hands', '⚡', 'Mallet follows 10% faster per level', 3, 90),
+    ],
+    skins: [
+      skin('ice', 'Ice Blue', 0, ['#0891b2', '#a5f3fc', '#67e8f9']),
+      skin('lime', 'Lime', 120, ['#65a30d', '#d9f99d', '#a3e635'], { icon: '🟢' }),
+      skin('violet', 'Violet', 200, ['#7c3aed', '#ddd6fe', '#a78bfa'], { icon: '🟣' }),
+      skin('carbon', 'Carbon', 350, ['#111827', '#9ca3af', '#f59e0b'], { icon: '⚫' }),
+      skin('gold', 'Champion', 0, ['#d97706', '#fde68a', '#fbbf24'], { icon: '🏆', adUnlock: 3 }),
+    ],
+  },
 });

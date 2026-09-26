@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'tile-tapper',
@@ -23,4 +23,20 @@ export default defineMeta({
   realtime: true,
   popularity: 81,
   addedAt: '2026-06-06',
+  shop: {
+    title: 'Music Shop',
+    icon: '🎹',
+    skinLabel: 'Tiles',
+    upgrades: [
+      upgrade('tempo', 'Easy tempo', '🎼', 'Tiles scroll 4% slower per level', 3, 100),
+      upgrade('forgive', 'Safety net', '🛟', 'Forgive one wrong tap per level each run', 3, 120),
+    ],
+    skins: [
+      skin('ebony', 'Ebony', 0, ['#1e293b', '#020617', '#94a3b8'], { icon: '🎹' }),
+      skin('ocean', 'Deep Sea', 150, ['#0e7490', '#082f49', '#67e8f9'], { icon: '🌊' }),
+      skin('berry', 'Berry', 200, ['#86198f', '#3b0764', '#f0abfc'], { icon: '🫐' }),
+      skin('forest', 'Forest', 200, ['#166534', '#052e16', '#86efac'], { icon: '🌲' }),
+      skin('gold', 'Golden Keys', 0, ['#b45309', '#451a03', '#fde047'], { icon: '🏆', adUnlock: 3 }),
+    ],
+  },
 });

@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'mine-sweeper',
@@ -24,4 +24,13 @@ export default defineMeta({
   realtime: false,
   popularity: 84,
   addedAt: '2026-06-11',
+  shop: {
+    title: 'Bomb Squad',
+    icon: '💣',
+    upgrades: [
+      upgrade('hint', 'Metal detector', '📡', 'One free safe-square hint per level each board', 3, 100),
+    ],
+    skins: [skin('classic', 'Classic', 0, ['#64748b', '#e2e8f0', '#ef4444'])],
+  },
+  maxRevives: 1,
 });

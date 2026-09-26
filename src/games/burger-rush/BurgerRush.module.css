@@ -1,0 +1,235 @@
+.shop {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(100%, 460px);
+  flex: 1;
+}
+
+.counter {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.customer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 150px;
+  padding: 8px 4px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.08);
+  border: 2px solid transparent;
+}
+
+.customer[data-empty='true'] {
+  opacity: 0.35;
+}
+
+.customer[data-ready='true'] {
+  border-color: #86efac;
+  box-shadow: 0 0 14px rgb(134 239 172 / 0.45);
+}
+
+.face {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.order {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 0;
+  font-size: 15px;
+  line-height: 1.05;
+}
+
+.patience {
+  width: 80%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 0.15);
+  overflow: hidden;
+}
+
+.patience span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+}
+
+.plate {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 14px;
+  min-height: 130px;
+  padding: 10px;
+  border-radius: 16px;
+  background: var(--counter);
+  color: #1e293b;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  font-size: 26px;
+  line-height: 0.9;
+  min-width: 90px;
+}
+
+.stack::before {
+  content: '';
+  order: -1;
+  width: 110px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.12);
+}
+
+.grill {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.patty {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 52px;
+  border-radius: 12px;
+  background: #334155;
+  border: 2px solid #1e293b;
+  font-size: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.patty small {
+  position: absolute;
+  bottom: 2px;
+  left: 4px;
+  right: 4px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.2);
+}
+
+.patty small i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+}
+
+.patty[data-state='ready'] {
+  border-color: #86efac;
+  animation: sizzle 0.6s ease-in-out infinite;
+}
+
+.patty[data-state='burnt'] {
+  border-color: #ef4444;
+}
+
+@keyframes sizzle {
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.pantry {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 2px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.1);
+  border: 1px solid rgb(255 255 255 / 0.15);
+  font-size: 24px;
+}
+
+.ing span {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.hearts {
+  font-size: 16px;
+}
+
+.layer {
+  width: var(--w, 90px);
+  height: calc(var(--w, 90px) * 0.13);
+  border-radius: 4px;
+  margin-top: -1px;
+}
+
+.layer[data-k='bunB'] {
+  height: calc(var(--w, 90px) * 0.2);
+  border-radius: 4px 4px 14px 14px;
+  background: #d97706;
+}
+
+.layer[data-k='bunT'] {
+  height: calc(var(--w, 90px) * 0.34);
+  border-radius: 999px 999px 6px 6px;
+  background:
+    radial-gradient(circle at 30% 40%, #fef3c7 0 2px, transparent 3px),
+    radial-gradient(circle at 60% 30%, #fef3c7 0 2px, transparent 3px),
+    radial-gradient(circle at 75% 55%, #fef3c7 0 2px, transparent 3px), #f59e0b;
+}
+
+.layer[data-k='patty'] {
+  height: calc(var(--w, 90px) * 0.18);
+  border-radius: 8px;
+  background: #78350f;
+}
+
+.layer[data-k='cheese'] {
+  height: calc(var(--w, 90px) * 0.08);
+  background: #facc15;
+  width: calc(var(--w, 90px) * 1.08);
+}
+
+.layer[data-k='lettuce'] {
+  background: #22c55e;
+  border-radius: 10px 4px 10px 4px;
+  width: calc(var(--w, 90px) * 1.1);
+}
+
+.layer[data-k='tomato'] {
+  background: #ef4444;
+  width: calc(var(--w, 90px) * 0.9);
+}
+
+.layer[data-k='onion'] {
+  background: #e9d5ff;
+  height: calc(var(--w, 90px) * 0.08);
+}
+
+.mini {
+  --w: 54px;
+  min-width: 0;
+}
+
+.mini::before {
+  display: none;
+}
+
+.ing .mini {
+  --w: 40px;
+  min-height: 22px;
+  justify-content: center;
+}

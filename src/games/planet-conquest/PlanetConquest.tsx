@@ -1,5 +1,13 @@
 import { useRef } from 'react';
-import { CanvasStage, FloatingText, makeStars, Particles, useGameLoop, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  makeStars,
+  Particles,
+  createContinueGate,
+  useGameLoop,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { circle, prompt, text } from '../../engine/draw';
 import { createRng } from '../../lib/rng';
@@ -9,7 +17,7 @@ import { aiOrders, FLEET_SPEED, generateMap, land, production, type Fleet, type 
 
 const W = 360;
 const H = 640;
-const COLORS = ['#64748b', '#3b82f6', '#ef4444', '#22c55e'];
+const BASE_COLORS = ['#64748b', '#3b82f6', '#ef4444', '#22c55e'];
 const LIGHT = ['#94a3b8', '#93c5fd', '#fca5a5', '#86efac'];
 
 const progressSchema = obj({ level: num({ int: true, min: 1, max: 999 }) });
@@ -19,10 +27,17 @@ export const progressSpec: VersionedSpec<Progress> = { version: 1, is: progressS
 export function PlanetConquest({ api, paused }: GameProps<unknown, Progress>) {
   const rng = useSeededRng(api.seed);
   const level = api.mode === 'daily' ? 3 : (api.progress?.level ?? 1);
+  const lo = api.loadout;
+  const COLORS = [BASE_COLORS[0]!, lo.skin.colors[0], BASE_COLORS[2]!, BASE_COLORS[3]!];
+  const myProduction = 1 + 0.08 * lo.level('production');
+  const myFleetSpeed = 1 + 0.1 * lo.level('engines');
+  const continueGate = useRef(createContinueGate(api)).current;
   const view = useRef<CanvasView | null>(null);
   const fx = useRef({ particles: new Particles(400, rng.next), floaters: new FloatingText() });
   const s = useRef({
-    planets: generateMap(rng, level, W, H),
+    planets: generateMap(rng, level, W, H).map((p) =>
+      p.owner === 1 ? { ...p, ships: p.ships + 10 * lo.level('garrison') } : p,
+    ),
     fleets: [] as Fleet[],
     drag: null as null | { from: number; x: number; y: number },
     aiTimers: [0, 0, 2.5, 3.5],
@@ -71,10 +86,31 @@ export function PlanetConquest({ api, paused }: GameProps<unknown, Progress>) {
   const end = (won: boolean) => {
     if (s.over) return;
     s.over = true;
+    if (!won) {
+      api.sfx('gameover');
+      continueGate(
+        () => {
+          // A rescue fleet claims a new home: the biggest neutral world, else the weakest enemy one.
+          const neutral = s.planets.filter((p) => p.owner === 0).sort((a, b) => b.r - a.r)[0];
+          const home = neutral ?? [...s.planets].sort((a, b) => a.ships - b.ships)[0]!;
+          home.owner = 1;
+          home.ships = 30;
+          s.over = false;
+          fx.current.floaters.add('Rescue fleet arrived!', home.x, home.y - home.r - 14, '#93c5fd', 16, 1.6);
+        },
+        () => finish(false),
+      );
+      return;
+    }
+    finish(true);
+  };
+
+  const finish = (won: boolean) => {
     const score = won ? Math.round(1000 + level * 200 + Math.max(0, 180 - s.t) * 5) : s.captured * 50;
     api.setScore(score);
     if (won && api.mode === 'normal') api.saveProgress({ level: level + 1 });
-    api.sfx(won ? 'win' : 'gameover');
+    if (won) api.addCoins(2 + level);
+    if (won) api.sfx('win');
     fx.current.floaters.add(
       won ? 'GALAXY CONQUERED' : 'DEFEATED',
       W / 2,
@@ -105,7 +141,7 @@ export function PlanetConquest({ api, paused }: GameProps<unknown, Progress>) {
     s.time += dt;
     if (!s.over) {
       s.t += dt;
-      for (const p of s.planets) p.ships += production(p) * dt;
+      for (const p of s.planets) p.ships += production(p) * (p.owner === 1 ? myProduction : 1) * dt;
       // AI turns
       for (let owner = 2; owner <= 3; owner++) {
         if (!s.planets.some((p) => p.owner === owner)) continue;
@@ -133,6 +169,7 @@ export function PlanetConquest({ api, paused }: GameProps<unknown, Progress>) {
             });
             if (f.owner === 1) {
               s.captured += 1;
+              if (s.captured % 3 === 0) api.addCoins(1);
               floaters.add('Captured!', target.x, target.y - target.r - 10, '#93c5fd', 14);
               api.sfx('score');
             } else if (before === 1) {
@@ -143,8 +180,9 @@ export function PlanetConquest({ api, paused }: GameProps<unknown, Progress>) {
           } else if (f.owner !== target.owner && rng.chance(0.3)) api.sfx('tick');
           f.ships = -1;
         } else {
-          f.x += (dx / d) * FLEET_SPEED * dt;
-          f.y += (dy / d) * FLEET_SPEED * dt;
+          const speed = FLEET_SPEED * (f.owner === 1 ? myFleetSpeed : 1);
+          f.x += (dx / d) * speed * dt;
+          f.y += (dy / d) * speed * dt;
         }
       }
       s.fleets = s.fleets.filter((f) => f.ships > 0);

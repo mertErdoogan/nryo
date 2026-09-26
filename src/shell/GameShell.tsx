@@ -2,11 +2,20 @@ import type { CSSProperties } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { goBack, navigate, useSearchParams } from '../app/router';
 import { useSaves, useSettings, useStats, useTodaysChallenge } from '../hooks/usePlatform';
+import { ECONOMY, reviveCost } from '../platform/economy';
+import { toActiveLoadout } from '../platform/services/loadouts';
 import { randomSeed } from '../lib/rng';
 import { platform } from '../platform';
-import { maybeShowInterstitial } from '../platform/ads';
+import { maybeShowInterstitial, noteRoundFinished, rewardedAvailable, showRewarded } from '../platform/ads';
 import { haptic, sound } from '../platform/audio';
-import type { GameApi, GameEntry, GameModule, PlayMode, RoundOutcome } from '../platform/types';
+import type {
+  ActiveLoadout,
+  GameApi,
+  GameEntry,
+  GameModule,
+  PlayMode,
+  RoundOutcome,
+} from '../platform/types';
 import { Dialog } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 import { GameErrorBoundary } from './GameErrorBoundary';
@@ -14,11 +23,17 @@ import { Hud } from './Hud';
 import { PauseOverlay } from './PauseOverlay';
 import { ReadyOverlay } from './ReadyOverlay';
 import { ResultsOverlay } from './ResultsOverlay';
+import { ReviveOverlay } from './ReviveOverlay';
+import { ShopOverlay } from './ShopOverlay';
 import { useGameModule } from './useGameModule';
 import { createValueStore } from './value-store';
 import styles from './Shell.module.css';
 
-export type Phase = 'ready' | 'playing' | 'paused' | 'over';
+/**
+ * revive: the player just lost and is being offered a continue.
+ * ad: an opt-in rewarded ad requested by the game is playing.
+ */
+export type Phase = 'ready' | 'playing' | 'paused' | 'revive' | 'ad' | 'over';
 
 interface Run {
   key: number;
@@ -27,6 +42,12 @@ interface Run {
   resume: unknown;
   progress: unknown;
   best: number | null;
+  loadout: ActiveLoadout;
+}
+
+interface ReviveRequest {
+  runKey: number;
+  resolve(ok: boolean): void;
 }
 
 const RESULTS_DELAY_MS = 750;
@@ -54,10 +75,17 @@ export function GameShell({ game }: { game: GameEntry }) {
   const [run, setRun] = useState<Run | null>(null);
   const [outcome, setOutcome] = useState<RoundOutcome | null>(null);
   const [confirmRestart, setConfirmRestart] = useState(false);
+  const [shopOpen, setShopOpen] = useState(false);
+  const [revive, setRevive] = useState<ReviveRequest | null>(null);
+  const revivesUsedRef = useRef(0);
+  const pickupsRef = useRef(0);
+  const maxRevives = game.maxRevives ?? ECONOMY.defaultMaxRevives;
   const scoreStore = useMemo(() => createValueStore(0), []);
 
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
+  const runRef = useRef(run);
+  runRef.current = run;
   const endedRunRef = useRef(-1);
   const activeMsRef = useRef(0);
   const segmentStartRef = useRef<number | null>(null);
@@ -93,6 +121,10 @@ export function GameShell({ game }: { game: GameEntry }) {
         platform.saves.clear(game.id);
       const progress = module.progress ? platform.saves.loadProgress(game.id, module.progress) : null;
       activeMsRef.current = 0;
+      revivesUsedRef.current = 0;
+      pickupsRef.current = 0;
+      setRevive(null);
+      setShopOpen(false);
       scoreStore.set(0);
       setOutcome(null);
       setRun((prev) => ({
@@ -102,13 +134,14 @@ export function GameShell({ game }: { game: GameEntry }) {
         resume,
         progress,
         best: platform.stats.get()[game.id]?.best ?? null,
+        loadout: toActiveLoadout(platform.loadouts.of(game.id, game.shop), game.shop),
       }));
       setPhase('playing');
       platform.recent.touch(game.id);
       platform.analytics.track(resume ? 'game_resumed' : 'game_started', { gameId: game.id, mode });
       if (mode === 'daily') platform.analytics.track('daily_challenge_started', { gameId: game.id });
     },
-    [module, dailyAvailable, challenge, game.id, scoreStore],
+    [module, dailyAvailable, challenge, game.id, game.shop, scoreStore],
   );
 
   // ---- one-tap continue / autostart from links
@@ -154,7 +187,9 @@ export function GameShell({ game }: { game: GameEntry }) {
           mode: run.mode,
           durationMs: activeMsRef.current,
           daily: run.mode === 'daily' ? challenge : null,
+          pickups: pickupsRef.current,
         });
+        noteRoundFinished(activeMsRef.current);
         resultsTimer.current = setTimeout(() => {
           setOutcome(result2);
           setPhase('over');
@@ -174,8 +209,53 @@ export function GameShell({ game }: { game: GameEntry }) {
       },
       sfx: (name) => sound.play(name),
       haptic: (pattern) => haptic(settingsRef.current.haptics, pattern),
+      loadout: run.loadout,
+      addCoins: (amount) => {
+        if (!ended() && Number.isFinite(amount) && amount > 0) pickupsRef.current += Math.floor(amount);
+      },
+      requestRevive: () => {
+        if (
+          ended() ||
+          runRef.current?.key !== runKey ||
+          revivesUsedRef.current >= maxRevives ||
+          phaseRef.current === 'revive'
+        )
+          return Promise.resolve(false);
+        const affordable = platform.wallet.get().coins >= reviveCost(revivesUsedRef.current);
+        if (!rewardedAvailable() && !affordable) return Promise.resolve(false);
+        return new Promise<boolean>((resolve) => {
+          setRevive({ runKey, resolve });
+          setPhase('revive');
+        });
+      },
+      watchAd: async (reason) => {
+        if (ended()) return false;
+        const resumeTo = phaseRef.current === 'playing' ? 'playing' : null;
+        if (resumeTo) setPhase('ad');
+        const outcome = await showRewarded('in-game', reason.slice(0, 60));
+        if (resumeTo && phaseRef.current === 'ad') setPhase('playing');
+        return outcome === 'rewarded' && !ended();
+      },
     };
-  }, [run, module, game, challenge, scoreStore]);
+  }, [run, module, game, challenge, scoreStore, maxRevives]);
+
+  const settleRevive = useCallback(
+    (ok: boolean) => {
+      const req = revive;
+      if (!req) return;
+      setRevive(null);
+      if (runRef.current?.key !== req.runKey) return;
+      if (ok) {
+        revivesUsedRef.current += 1;
+        platform.wallet.countRevive();
+        platform.analytics.track('revive_used', { gameId: game.id, count: revivesUsedRef.current });
+        sound.play('powerup');
+      }
+      setPhase('playing');
+      req.resolve(ok);
+    },
+    [revive, game.id],
+  );
 
   useEffect(
     () => () => {
@@ -185,15 +265,13 @@ export function GameShell({ game }: { game: GameEntry }) {
   );
 
   // ---- abandon tracking when leaving mid-round
-  const runRef = useRef(run);
-  runRef.current = run;
   useEffect(
     () => () => {
       const r = runRef.current;
       if (
         r &&
         endedRunRef.current !== r.key &&
-        (phaseRef.current === 'playing' || phaseRef.current === 'paused')
+        (phaseRef.current === 'playing' || phaseRef.current === 'paused' || phaseRef.current === 'revive')
       ) {
         platform.analytics.track('game_abandoned', { gameId: game.id, score: scoreStore.get() });
       }
@@ -230,6 +308,7 @@ export function GameShell({ game }: { game: GameEntry }) {
   const exit = useCallback(() => goBack('/games'), []);
 
   const playAgain = useCallback(() => {
+    setShopOpen(false);
     void maybeShowInterstitial('between-games').then(() => start({ resume: false }));
   }, [start]);
 
@@ -256,6 +335,7 @@ export function GameShell({ game }: { game: GameEntry }) {
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.closest('dialog')))
         return;
       const p = phaseRef.current;
+      if (shopOpen) return;
       if (e.key === 'Escape' || (e.key.toLowerCase() === 'p' && p !== 'ready')) {
         if (p === 'playing') {
           e.preventDefault();
@@ -271,7 +351,7 @@ export function GameShell({ game }: { game: GameEntry }) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [module, pause, resume, start, game.id, dailyAvailable]);
+  }, [module, pause, resume, start, game.id, dailyAvailable, shopOpen]);
 
   // Clean one-shot params so a refresh shows the ready screen instead of re-triggering.
   useEffect(() => {
@@ -306,7 +386,7 @@ export function GameShell({ game }: { game: GameEntry }) {
       />
       <div className={styles.stage} data-testid="game-stage" data-phase={phase}>
         {run && api && Component && (
-          <div className={styles.gameRoot} inert={phase === 'paused' || phase === 'over' ? true : undefined}>
+          <div className={styles.gameRoot} inert={phase !== 'playing' ? true : undefined}>
             <GameErrorBoundary
               key={run.key}
               gameId={game.id}
@@ -329,6 +409,7 @@ export function GameShell({ game }: { game: GameEntry }) {
             onPlay={() => start({ resume: false })}
             onContinue={() => start({ resume: true })}
             onRetryLoad={mod.retry}
+            onShop={game.shop ? () => setShopOpen(true) : undefined}
           />
         )}
         {phase === 'paused' && !confirmRestart && (
@@ -340,8 +421,27 @@ export function GameShell({ game }: { game: GameEntry }) {
             resumable={!!game.resumable}
           />
         )}
+        {phase === 'revive' && revive && (
+          <ReviveOverlay
+            game={game}
+            score={scoreStore.get()}
+            best={run?.best ?? null}
+            revivesUsed={revivesUsedRef.current}
+            maxRevives={maxRevives}
+            onDecide={settleRevive}
+          />
+        )}
         {phase === 'over' && outcome && (
-          <ResultsOverlay game={game} outcome={outcome} onPlayAgain={playAgain} onExit={exit} />
+          <ResultsOverlay
+            game={game}
+            outcome={outcome}
+            onPlayAgain={playAgain}
+            onExit={exit}
+            onShop={game.shop ? () => setShopOpen(true) : undefined}
+          />
+        )}
+        {shopOpen && game.shop && (phase === 'ready' || phase === 'over') && (
+          <ShopOverlay game={game} shop={game.shop} onClose={() => setShopOpen(false)} />
         )}
       </div>
       <Dialog open={confirmRestart} onClose={() => setConfirmRestart(false)} title="Start over?">

@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'five-letters',
@@ -24,4 +24,10 @@ export default defineMeta({
   realtime: false,
   popularity: 91,
   addedAt: '2026-06-10',
+  shop: {
+    title: 'Word Shop',
+    icon: '🔤',
+    upgrades: [upgrade('hint', 'Free hints', '💡', 'One free letter hint per level each game', 3, 100)],
+    skins: [skin('classic', 'Classic', 0, ['#22c55e', '#eab308', '#475569'])],
+  },
 });

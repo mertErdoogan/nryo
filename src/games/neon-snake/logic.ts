@@ -50,3 +50,23 @@ export function queueTurn(queue: Dir[], current: Dir, dir: Dir): Dir[] {
   if (dir === last || isOpposite(dir, last) || queue.length >= 2) return queue;
   return [...queue, dir];
 }
+
+/** After a continue: the direction with the longest free run ahead of the head, or null if boxed in. */
+export function escapeDir(body: readonly Cell[], cols: number, rows: number): Dir | null {
+  let best: Dir | null = null;
+  let bestRun = 0;
+  for (const dir of Object.keys(DELTA) as Dir[]) {
+    let run = 0;
+    let cell = body[0]!;
+    for (;;) {
+      cell = nextHead(cell, dir);
+      if (collides(cell, body, cols, rows, false)) break;
+      run += 1;
+    }
+    if (run > bestRun) {
+      bestRun = run;
+      best = dir;
+    }
+  }
+  return best;
+}

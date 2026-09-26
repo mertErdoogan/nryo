@@ -3,8 +3,8 @@ import { CATEGORIES } from '../platform/categories';
 import { GAMES } from './catalog';
 
 describe('game catalog', () => {
-  it('contains 30–40+ uniquely identified games', () => {
-    expect(GAMES.length).toBeGreaterThanOrEqual(30);
+  it('contains 80+ uniquely identified games', () => {
+    expect(GAMES.length).toBeGreaterThanOrEqual(80);
     expect(new Set(GAMES.map((g) => g.id)).size).toBe(GAMES.length);
     expect(new Set(GAMES.map((g) => g.title)).size).toBe(GAMES.length);
   });
@@ -32,6 +32,31 @@ describe('game catalog', () => {
     expect(g.addedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(g.popularity).toBeGreaterThanOrEqual(0);
     expect(g.popularity).toBeLessThanOrEqual(100);
+  });
+
+  it.each(GAMES.filter((g) => g.shop).map((g) => [g.id, g] as const))('%s has a valid shop', (_id, g) => {
+    const shop = g.shop!;
+    expect(shop.title.length).toBeGreaterThan(1);
+    expect(shop.skins.length).toBeGreaterThan(0);
+    // The first skin is what everyone starts with.
+    expect(shop.skins[0]!.price).toBe(0);
+    expect(shop.skins[0]!.adUnlock).toBeUndefined();
+    const ids = [...shop.skins.map((x) => `skin:${x.id}`), ...shop.upgrades.map((u) => `up:${u.id}`)];
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const skin of shop.skins) {
+      for (const c of skin.colors) expect(c).toMatch(/^#[0-9a-f]{6}$/i);
+      // Every non-default skin is obtainable: coins or rewarded ads.
+      if (skin !== shop.skins[0]) expect(skin.price > 0 || (skin.adUnlock ?? 0) > 0).toBe(true);
+    }
+    for (const u of shop.upgrades) {
+      expect(u.maxLevel).toBeGreaterThanOrEqual(1);
+      expect(u.maxLevel).toBeLessThanOrEqual(8);
+      expect(u.baseCost).toBeGreaterThan(0);
+    }
+  });
+
+  it('gives most games a shop', () => {
+    expect(GAMES.filter((g) => g.shop).length).toBeGreaterThanOrEqual(GAMES.length - 6);
   });
 
   it('covers every category with at least two games', () => {

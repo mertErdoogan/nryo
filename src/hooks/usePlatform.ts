@@ -29,3 +29,6 @@ export function useTodaysChallenge() {
 }
 
 export { useTodayKey };
+
+export const useWallet = () => useStore(platform.wallet);
+export const useLoadouts = () => useStore(platform.loadouts);

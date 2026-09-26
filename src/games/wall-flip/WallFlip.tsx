@@ -4,6 +4,8 @@ import {
   FloatingText,
   Particles,
   Shake,
+  createContinueGate,
+  drawCoin,
   useGameLoop,
   useKeyDown,
   useSeededRng,
@@ -47,6 +49,11 @@ type Obstacle = Spike | Saw | Coin;
 
 export function WallFlip({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
+  const lo = api.loadout;
+  const [bodyColor, coreColor, glowColor] = lo.skin.colors;
+  const jumpTime = JUMP_TIME * (1 - 0.08 * lo.level('jump'));
+  const magnet = 22 + 10 * lo.level('magnet');
+  const continueGate = useRef(createContinueGate(api)).current;
   const view = useRef<CanvasView | null>(null);
   const fx = useRef({
     particles: new Particles(400, rng.next),
@@ -64,6 +71,9 @@ export function WallFlip({ api, paused }: GameProps) {
     dead: false,
     deadTimer: 0,
     ended: false,
+    waiting: false,
+    shields: lo.level('shield'),
+    invuln: 0,
     distance: 0,
     coins: 0,
     score: 0,
@@ -118,17 +128,24 @@ export function WallFlip({ api, paused }: GameProps) {
         s.obstacles.push({ kind: 'coin', x: coinSide, y: y - h / 2 - 30 + i * 30, taken: false });
     }
     // Minimum spacing leaves time for one flip at current speed.
-    return Math.max(h + SIZE + s.speed * (JUMP_TIME + 0.22), 200 - Math.min(40, d / 100));
+    return Math.max(h + SIZE + s.speed * (jumpTime + 0.22), 200 - Math.min(40, d / 100));
   };
 
   const die = () => {
-    if (s.dead) return;
+    if (s.dead || s.invuln > 0) return;
+    if (s.shields > 0) {
+      s.shields -= 1;
+      s.invuln = 1;
+      fx.current.floaters.add('Shield!', s.x, RUNNER_Y - 36, '#67e8f9', 18, 0.8);
+      api.sfx('hit');
+      return;
+    }
     s.dead = true;
     s.deadTimer = 0.9;
     fx.current.shake.add(12);
     fx.current.particles.burst(s.x, RUNNER_Y, {
       count: 36,
-      colors: ['#22d3ee', '#a5f3fc', '#fff'],
+      colors: [glowColor, bodyColor, '#fff'],
       speed: 280,
       life: 0.8,
       shape: 'square',
@@ -162,7 +179,7 @@ export function WallFlip({ api, paused }: GameProps) {
     }
 
     if (s.jumping) {
-      s.jumpT += dt / JUMP_TIME;
+      s.jumpT += dt / jumpTime;
       const t = Math.min(1, s.jumpT);
       s.x = s.from + (s.to - s.from) * (1 - (1 - t) * (1 - t));
       if (t >= 1) {
@@ -170,7 +187,7 @@ export function WallFlip({ api, paused }: GameProps) {
         s.x = s.to;
         particles.burst(s.x + (s.side === 'L' ? -SIZE / 2 : SIZE / 2), RUNNER_Y, {
           count: 6,
-          color: '#a5f3fc',
+          color: bodyColor,
           speed: 90,
           life: 0.3,
           size: 3,
@@ -187,26 +204,49 @@ export function WallFlip({ api, paused }: GameProps) {
         } else if (o.kind === 'saw') {
           const sx = o.x + Math.sin(s.time * 2 + o.phase) * o.swing;
           if (circleRect(sx, o.y, o.r - 3, runner)) die();
-        } else if (!o.taken && Math.abs(o.x - s.x) < 22 && Math.abs(o.y - RUNNER_Y) < 22) {
+        } else if (
+          !o.taken &&
+          Math.abs(o.x - s.x) < magnet + 20 * lo.level('magnet') &&
+          Math.abs(o.y - RUNNER_Y) < magnet
+        ) {
           o.taken = true;
           s.coins += 1;
+          api.addCoins(1);
           floaters.add('+5', o.x, o.y - 10, '#fde047', 16, 0.6);
           api.sfx('coin');
         }
       }
       s.trail.push({ x: s.x, y: RUNNER_Y, a: 1 });
       if (s.trail.length > 14) s.trail.shift();
-    } else if (!s.ended) {
+      s.invuln = Math.max(0, s.invuln - dt);
+    } else if (!s.ended && !s.waiting) {
       s.deadTimer -= dt;
       if (s.deadTimer <= 0) {
-        s.ended = true;
-        api.gameOver({
-          score: s.score,
-          stats: [
-            { label: 'Height', value: `${Math.floor(s.distance / 10)} m` },
-            { label: 'Coins', value: String(s.coins) },
-          ],
-        });
+        s.waiting = true;
+        continueGate(
+          () => {
+            s.obstacles = s.obstacles.filter(
+              (o) =>
+                o.kind === 'coin' ||
+                o.y > RUNNER_Y + 60 ||
+                o.y + (o.kind === 'spike' ? o.h : 0) < RUNNER_Y - 260,
+            );
+            s.dead = false;
+            s.waiting = false;
+            s.invuln = 2;
+            fx.current.floaters.add('Keep climbing!', W / 2, H * 0.35, '#86efac', 24, 1.2);
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({
+              score: s.score,
+              stats: [
+                { label: 'Height', value: `${Math.floor(s.distance / 10)} m` },
+                { label: 'Coins', value: String(s.coins) },
+              ],
+            });
+          },
+        );
       }
     }
     for (const t of s.trail) {
@@ -286,29 +326,32 @@ export function WallFlip({ api, paused }: GameProps) {
         ctx.fill();
         circle(ctx, 0, 0, 6, '#64748b');
         ctx.restore();
-      } else if (!o.taken) {
-        const pulse = 1 + Math.sin(s.time * 6 + o.y * 0.05) * 0.1;
-        circle(ctx, o.x, o.y, 8 * pulse, '#fde047');
-        circle(ctx, o.x - 2, o.y - 2, 3, '#fef9c3');
-      }
+      } else if (!o.taken) drawCoin(ctx, o.x, o.y, 8, s.time);
     }
 
     for (const t of s.trail) {
       if (t.a <= 0) continue;
       ctx.globalAlpha = t.a * 0.25;
-      fillRoundRect(ctx, t.x - SIZE / 2, t.y - SIZE / 2, SIZE, SIZE, 6, '#22d3ee');
+      fillRoundRect(ctx, t.x - SIZE / 2, t.y - SIZE / 2, SIZE, SIZE, 6, glowColor);
     }
     ctx.globalAlpha = 1;
-    if (!s.dead) {
+    if (!s.dead && (s.invuln <= 0 || Math.floor(s.time * 10) % 2 === 0)) {
       ctx.save();
       ctx.translate(s.x, RUNNER_Y);
       ctx.rotate(s.jumping ? s.jumpT * Math.PI * (s.side === 'R' ? 1 : -1) : 0);
-      ctx.shadowColor = '#22d3ee';
+      ctx.shadowColor = glowColor;
       ctx.shadowBlur = 16;
-      fillRoundRect(ctx, -SIZE / 2, -SIZE / 2, SIZE, SIZE, 6, '#a5f3fc');
+      fillRoundRect(ctx, -SIZE / 2, -SIZE / 2, SIZE, SIZE, 6, bodyColor);
       ctx.shadowBlur = 0;
-      fillRoundRect(ctx, -SIZE / 2 + 5, -SIZE / 2 + 5, SIZE - 10, SIZE - 10, 4, '#0891b2');
+      fillRoundRect(ctx, -SIZE / 2 + 5, -SIZE / 2 + 5, SIZE - 10, SIZE - 10, 4, coreColor);
       ctx.restore();
+      if (s.shields > 0) {
+        ctx.strokeStyle = 'rgba(103,232,249,0.6)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(s.x, RUNNER_Y, SIZE * 0.9, 0, TAU);
+        ctx.stroke();
+      }
     }
     particles.draw(ctx);
     floaters.draw(ctx);

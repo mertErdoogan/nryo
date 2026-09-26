@@ -186,6 +186,21 @@
     background-color var(--dur) var(--ease-out);
 }
 
+.walletChip {
+  display: inline-flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: border-color var(--dur) var(--ease-out);
+}
+
+.walletChip:hover {
+  border-color: rgb(251 191 36 / 0.45);
+}
+
 .levelChip:hover {
   border-color: var(--border-strong);
   background: var(--surface-2);
@@ -232,6 +247,10 @@
 
   .levelChip {
     padding: 0 4px;
+  }
+
+  .walletChip {
+    padding: 0 8px;
   }
 
   .wordmarkSub {

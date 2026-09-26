@@ -6,6 +6,7 @@ import {
   makeStars,
   Particles,
   Shake,
+  createContinueGate,
   useGameLoop,
   useHeldKeys,
   useSeededRng,
@@ -40,6 +41,12 @@ interface Pickup {
 
 export function MeteorDodge({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
+  const lo = api.loadout;
+  const [hullColor, cockpitColor, flameColor] = lo.skin.colors;
+  const thrust = 1 + 0.1 * lo.level('thrusters');
+  const hitScale = 1 - 0.06 * lo.level('hull');
+  const magnet = 26 + 12 * lo.level('magnet');
+  const continueGate = useRef(createContinueGate(api)).current;
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
   const fx = useRef({
@@ -63,8 +70,10 @@ export function MeteorDodge({ api, paused }: GameProps) {
     pickupTimer: 5,
     meteors: [] as Meteor[],
     pickups: [] as Pickup[],
-    shield: false,
+    shield: lo.level('shield') > 0,
     shieldFlash: 0,
+    invuln: 0,
+    waiting: false,
     crystals: 0,
     bonus: 0,
     score: 0,
@@ -157,7 +166,7 @@ export function MeteorDodge({ api, paused }: GameProps) {
 
     if (!s.dead) {
       const follow = Math.min(1, dt * 14);
-      const maxStep = 520 * dt;
+      const maxStep = 520 * thrust * dt;
       s.x += clamp((s.targetX - s.x) * follow, -maxStep, maxStep);
       s.y += clamp((s.targetY - s.y) * follow, -maxStep, maxStep);
     }
@@ -172,7 +181,7 @@ export function MeteorDodge({ api, paused }: GameProps) {
       s.pickupTimer -= dt;
       if (s.pickupTimer <= 0) {
         s.pickups.push({
-          kind: !s.shield && rng.chance(0.3) ? 'shield' : 'crystal',
+          kind: !s.shield && rng.chance(0.3 + 0.08 * lo.level('shield')) ? 'shield' : 'crystal',
           x: rng.range(30, W - 30),
           y: -20,
           vy: 150,
@@ -192,8 +201,9 @@ export function MeteorDodge({ api, paused }: GameProps) {
       m.rot += m.spin * dt;
       if (!s.dead) {
         const d = dist(m.x, m.y, s.x, s.y);
-        if (d < m.r * 0.85 + SHIP_R * 0.8) hit(m);
-        else if (d < m.r + SHIP_R + 14 && m.y > s.y && !m.near) {
+        if (d < (m.r * 0.85 + SHIP_R * 0.8) * hitScale) {
+          if (s.invuln <= 0) hit(m);
+        } else if (d < m.r + SHIP_R + 14 && m.y > s.y && !m.near) {
           m.near = true;
           s.nearMisses += 1;
           s.bonus += 5;
@@ -204,7 +214,7 @@ export function MeteorDodge({ api, paused }: GameProps) {
     s.meteors = s.meteors.filter((m) => m.y < H + 60 && m.x > -80 && m.x < W + 80);
     for (const p of s.pickups) {
       p.y += p.vy * dt;
-      if (!s.dead && dist(p.x, p.y, s.x, s.y) < 26) {
+      if (!s.dead && dist(p.x, p.y, s.x, s.y) < magnet) {
         p.y = H + 100;
         if (p.kind === 'shield') {
           s.shield = true;
@@ -213,6 +223,7 @@ export function MeteorDodge({ api, paused }: GameProps) {
         } else {
           s.crystals += 1;
           s.bonus += 25;
+          api.addCoins(1);
           floaters.add('+25', s.x, s.y - 30, '#f0abfc', 18);
           particles.burst(p.x, p.y, { count: 12, colors: ['#f0abfc', '#fff'], speed: 140, life: 0.4 });
           api.sfx('coin');
@@ -221,25 +232,38 @@ export function MeteorDodge({ api, paused }: GameProps) {
     }
     s.pickups = s.pickups.filter((p) => p.y < H + 40);
 
-    if (s.dead && !s.ended) {
+    s.invuln = Math.max(0, s.invuln - dt);
+    if (s.dead && !s.ended && !s.waiting) {
       s.deadTimer -= dt;
       if (s.deadTimer <= 0) {
-        s.ended = true;
-        api.gameOver({
-          score: s.score,
-          stats: [
-            { label: 'Survived', value: `${s.t.toFixed(1)}s` },
-            { label: 'Crystals', value: String(s.crystals) },
-            { label: 'Close calls', value: String(s.nearMisses) },
-          ],
-        });
+        s.waiting = true;
+        continueGate(
+          () => {
+            s.meteors = s.meteors.filter((m) => dist(m.x, m.y, s.x, s.y) > 220);
+            s.dead = false;
+            s.waiting = false;
+            s.invuln = 2.5;
+            fx.current.floaters.add('Back in the fight!', W / 2, H * 0.4, '#86efac', 24, 1.2);
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({
+              score: s.score,
+              stats: [
+                { label: 'Survived', value: `${s.t.toFixed(1)}s` },
+                { label: 'Crystals', value: String(s.crystals) },
+                { label: 'Close calls', value: String(s.nearMisses) },
+              ],
+            });
+          },
+        );
       }
     }
     s.shieldFlash = Math.max(0, s.shieldFlash - dt * 2);
     if (!s.dead && s.started && rng.chance(0.6)) {
       particles.burst(s.x, s.y + 14, {
         count: 1,
-        colors: ['#fb923c', '#fde047'],
+        colors: [flameColor, '#fde047'],
         speed: 80,
         life: 0.3,
         size: 4,
@@ -327,12 +351,23 @@ export function MeteorDodge({ api, paused }: GameProps) {
       ctx.restore();
     }
 
-    if (!s.dead) {
+    if (!s.dead && (s.invuln <= 0 || Math.floor(s.time * 10) % 2 === 0)) {
       ctx.save();
       ctx.translate(s.x, s.y);
       const tilt = clamp((s.targetX - s.x) / 60, -0.4, 0.4);
       ctx.rotate(tilt);
-      ctx.fillStyle = '#e2e8f0';
+      if (lo.skin.id === 'stealth' || lo.skin.id === 'solar') {
+        ctx.fillStyle = cockpitColor;
+        ctx.beginPath();
+        ctx.moveTo(-6, 4);
+        ctx.lineTo(-20, 14);
+        ctx.lineTo(-10, 12);
+        ctx.moveTo(6, 4);
+        ctx.lineTo(20, 14);
+        ctx.lineTo(10, 12);
+        ctx.fill();
+      }
+      ctx.fillStyle = hullColor;
       ctx.beginPath();
       ctx.moveTo(0, -18);
       ctx.lineTo(13, 12);
@@ -340,7 +375,7 @@ export function MeteorDodge({ api, paused }: GameProps) {
       ctx.lineTo(-13, 12);
       ctx.closePath();
       ctx.fill();
-      circle(ctx, 0, -3, 4, '#38bdf8');
+      circle(ctx, 0, -3, 4, cockpitColor);
       ctx.restore();
       if (s.shield) {
         ctx.strokeStyle = `rgba(96,165,250,${0.6 + Math.sin(s.time * 8) * 0.2})`;

@@ -1,6 +1,13 @@
 import type { CSSProperties } from 'react';
 import { useRef, useState } from 'react';
-import { CanvasStage, FloatingText, Particles, useGameLoop, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  createContinueGate,
+  useGameLoop,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { circle, fillRoundRect, text } from '../../engine/draw';
 import { arr, num, obj, oneOf, type Infer } from '../../lib/schema';
@@ -84,14 +91,17 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
   const [menu, setMenu] = useState<Tower | null>(null);
   const [, setTick] = useState(0);
   const r = api.resume;
+  const lo = api.loadout;
+  const damageScale = 1 + 0.06 * lo.level('damage');
+  const continueGate = useRef(createContinueGate(api)).current;
   const s = useRef({
     towers: (r?.towers ?? []).map((t) => ({ ...t, cd: 0, angle: 0 })) as Tower[],
     creeps: [] as Creep[],
     shots: [] as Shot[],
     queue: [] as CreepKind[],
     spawnTimer: 0,
-    coins: r?.coins ?? START_COINS,
-    lives: r?.lives ?? START_LIVES,
+    coins: r?.coins ?? START_COINS + 25 * lo.level('gold'),
+    lives: r?.lives ?? START_LIVES + 3 * lo.level('lives'),
     wave: r?.wave ?? 0,
     score: r?.score ?? 0,
     kills: r?.kills ?? 0,
@@ -121,7 +131,7 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
     if (s.wave > 0 && s.breakTimer > 0) {
       const bonus = Math.round(s.breakTimer * 2);
       s.coins += bonus;
-      if (bonus > 0) fx.current.floaters.add(`Early call +${bonus}🪙`, W / 2, MAP_Y + 40, '#fde047', 16);
+      if (bonus > 0) fx.current.floaters.add(`Early call +${bonus} gold`, W / 2, MAP_Y + 40, '#fde047', 16);
     }
     s.wave += 1;
     s.queue = waveCreeps(s.wave);
@@ -139,19 +149,29 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
       api.setScore(s.score);
     }
     api.sfx(won ? 'win' : 'gameover');
-    setTimeout(
-      () =>
-        api.gameOver({
-          score: s.score,
-          won,
-          stats: [
-            { label: 'Waves', value: `${won ? WAVES : s.wave - 1}/${WAVES}` },
-            { label: 'Creeps stopped', value: String(s.kills) },
-            { label: 'Lives left', value: String(Math.max(0, s.lives)) },
-          ],
-        }),
-      800,
-    );
+    const end = () =>
+      api.gameOver({
+        score: s.score,
+        won,
+        stats: [
+          { label: 'Waves', value: `${won ? WAVES : s.wave - 1}/${WAVES}` },
+          { label: 'Creeps stopped', value: String(s.kills) },
+          { label: 'Lives left', value: String(Math.max(0, s.lives)) },
+        ],
+      });
+    if (won) {
+      setTimeout(end, 800);
+      return;
+    }
+    continueGate(() => {
+      // Reinforcements: the creeps on the road are swept away and the base is repaired.
+      s.creeps = [];
+      s.shots = [];
+      s.lives = 10;
+      s.over = false;
+      fx.current.floaters.add('Base repaired: 10 ♥', W / 2, MAP_Y + 60, '#86efac', 20, 1.4);
+      refresh();
+    }, end);
   };
 
   const onDown = (p: StagePointer) => {
@@ -175,7 +195,7 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
     }
     const cost = TOWERS[selectedType].cost;
     if (s.coins < cost) {
-      fx.current.floaters.add('Not enough coins', p.x, p.y - 10, '#fca5a5', 14, 0.8);
+      fx.current.floaters.add('Not enough gold', p.x, p.y - 10, '#fca5a5', 14, 0.8);
       api.sfx('error');
       return;
     }
@@ -279,7 +299,13 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
         if (best) t.angle = Math.atan2(best.y - ty, best.x - tx);
         if (best && t.cd <= 0) {
           t.cd = TOWERS[t.type].rate;
-          s.shots.push({ x: tx, y: ty, target: best, type: t.type, damage: towerDamage(t.type, t.level) });
+          s.shots.push({
+            x: tx,
+            y: ty,
+            target: best,
+            type: t.type,
+            damage: towerDamage(t.type, t.level) * damageScale,
+          });
           if (t.type === 'cannon') api.sfx('shoot');
         }
       }
@@ -325,7 +351,7 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
             speed: 120,
             life: 0.4,
           });
-          floaters.add(`+${def.reward}🪙`, c.x, c.y - 12, '#fde047', 12, 0.6);
+          floaters.add(`+${def.reward}`, c.x, c.y - 12, '#fde047', 12, 0.6);
           if (c.kind === 'boss') api.sfx('explode');
           else if (rng.chance(0.4)) api.sfx('hit');
           c.hp = -1;
@@ -339,6 +365,7 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
         s.breakTimer = BREAK;
         s.score += 100;
         s.coins += 20 + s.wave * 3;
+        api.addCoins(1 + Math.floor(s.wave / 5));
         floaters.add(`Wave ${s.wave} cleared!`, W / 2, MAP_Y + ROWS * CELL * 0.5, '#bef264', 24, 1.4);
         api.sfx('score');
         if (s.wave >= WAVES) finish(true);
@@ -440,7 +467,7 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
     ctx.fillStyle = '#0c0a09';
     ctx.fillRect(0, 0, W, MAP_Y);
     text(ctx, `Wave ${s.wave}/${WAVES}`, 12, 22, { size: 14, weight: 800, align: 'left' });
-    text(ctx, `🪙 ${s.coins}`, W / 2, 22, { size: 15, weight: 800, color: '#fde047' });
+    text(ctx, `💰 ${s.coins}`, W / 2, 22, { size: 15, weight: 800, color: '#fde047' });
     text(ctx, `♥ ${Math.max(0, s.lives)}`, W - 12, 22, {
       size: 15,
       weight: 800,
@@ -479,7 +506,7 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
           >
             <span aria-hidden="true">{TOWERS[type].icon}</span>
             {TOWERS[type].name}
-            <strong>🪙{TOWERS[type].cost}</strong>
+            <strong>💰{TOWERS[type].cost}</strong>
           </button>
         ))}
         <button
@@ -500,7 +527,7 @@ export function TowerGuard({ api, paused }: GameProps<Save>) {
             disabled={menu.level >= 3 || s.coins < upgradeCost(menu.type, menu.level)}
             onClick={() => upgrade(menu)}
           >
-            {menu.level >= 3 ? 'Max level' : `Upgrade 🪙${upgradeCost(menu.type, menu.level)}`}
+            {menu.level >= 3 ? 'Max level' : `Upgrade 💰${upgradeCost(menu.type, menu.level)}`}
           </button>
           <button type="button" className={styles.btn} onClick={() => sell(menu)}>
             Sell +{sellValue(menu.type, menu.level)}

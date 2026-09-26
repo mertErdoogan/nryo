@@ -1,6 +1,15 @@
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { Banner, DomStage, Hint, Stat, StatBar, useSeededRng } from '../../engine';
+import {
+  Banner,
+  DomStage,
+  Hint,
+  PowerChip,
+  Stat,
+  StatBar,
+  createContinueGate,
+  useSeededRng,
+} from '../../engine';
 import type { GameProps } from '../../platform/types';
 import { gridSizeFor, pickTiles, showTime, tilesFor } from './logic';
 import styles from './GridRecall.module.css';
@@ -14,7 +23,12 @@ export function GridRecall({ api, paused }: GameProps) {
   const [found, setFound] = useState<Set<number>>(new Set());
   const [wrong, setWrong] = useState<Set<number>>(new Set());
   const [phase, setPhase] = useState<Phase>('show');
-  const [lives, setLives] = useState(3);
+  const lo = api.loadout;
+  const [lives, setLives] = useState(3 + lo.level('lives'));
+  const peekTime = 1 + 0.15 * lo.level('focus');
+  const [peeks, setPeeks] = useState(lo.level('peek'));
+  const [busy, setBusy] = useState(false);
+  const continueGate = useRef(createContinueGate(api)).current;
   const [banner, setBanner] = useState<{ key: number; text: string } | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const over = useRef(false);
@@ -24,9 +38,9 @@ export function GridRecall({ api, paused }: GameProps) {
   // Show the pattern, then hide it (restarts after a pause).
   useEffect(() => {
     if (phase !== 'show' || paused) return;
-    const t = setTimeout(() => setPhase('input'), showTime(targets.size));
+    const t = setTimeout(() => setPhase('input'), showTime(targets.size) * peekTime);
     return () => clearTimeout(t);
-  }, [phase, paused, targets]);
+  }, [phase, paused, targets, peekTime]);
 
   const startLevel = (lv: number) => {
     setLevel(lv);
@@ -44,6 +58,7 @@ export function GridRecall({ api, paused }: GameProps) {
       api.sfx('tap');
       if (next.size === targets.size) {
         api.setScore(level);
+        if (level % 3 === 0) api.addCoins(1);
         api.sfx('score');
         setPhase('next');
         setBanner({ key: Date.now(), text: `Level ${level + 1}` });
@@ -63,19 +78,40 @@ export function GridRecall({ api, paused }: GameProps) {
         over.current = true;
         later(
           () =>
-            api.gameOver({
-              score: level - 1,
-              stats: [
-                { label: 'Level reached', value: String(level) },
-                { label: 'Tiles in last level', value: String(targets.size) },
-              ],
-            }),
+            continueGate(
+              () => {
+                over.current = false;
+                setLives(1);
+                startLevel(level);
+              },
+              () =>
+                api.gameOver({
+                  score: level - 1,
+                  stats: [
+                    { label: 'Level reached', value: String(level) },
+                    { label: 'Tiles in last level', value: String(targets.size) },
+                  ],
+                }),
+            ),
           1200,
         );
       } else {
         later(() => startLevel(level), 1600);
       }
     }
+  };
+
+  /** Flash the pattern once more. */
+  const peek = async () => {
+    if (phase !== 'input' || busy || over.current) return;
+    if (peeks > 0) setPeeks((p) => p - 1);
+    else {
+      setBusy(true);
+      const ok = await api.watchAd('Another look');
+      setBusy(false);
+      if (!ok) return;
+    }
+    setPhase('show');
   };
 
   const n = gridSizeFor(level);
@@ -122,6 +158,14 @@ export function GridRecall({ api, paused }: GameProps) {
                 : 'Out of lives!'
               : 'Nice memory!'}
       </Hint>
+      <PowerChip
+        corner="inline"
+        icon="👀"
+        label="Peek again"
+        badge={peeks > 0 ? peeks : 'ad'}
+        onClick={() => void peek()}
+        disabled={busy || phase !== 'input'}
+      />
       {banner && phase === 'next' && <Banner key={banner.key} text={banner.text} />}
     </DomStage>
   );

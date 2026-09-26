@@ -1,5 +1,13 @@
 import { useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, useGameLoop, useKeyDown, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  createContinueGate,
+  useGameLoop,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { fillRoundRect, text } from '../../engine/draw';
 import type { GameProps, SoundName } from '../../platform/types';
@@ -41,7 +49,13 @@ export function TileTapper({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
   const fx = useRef({ particles: new Particles(300, rng.next), floaters: new FloatingText() });
+  const lo = api.loadout;
+  const [tileTop, tileBottom, sparkColor] = lo.skin.colors;
+  const tempo = 1 - 0.04 * lo.level('tempo');
+  const continueGate = useRef(createContinueGate(api)).current;
   const s = useRef({
+    forgives: lo.level('forgive'),
+    waiting: false,
     rows: [] as Row[],
     scroll: 0,
     started: false,
@@ -73,6 +87,12 @@ export function TileTapper({ api, paused }: GameProps) {
   };
 
   const failAt = (lane: number, index: number, kind: 'white' | 'missed') => {
+    if (kind === 'white' && s.forgives > 0) {
+      s.forgives -= 1;
+      fx.current.floaters.add('Saved!', lane * LANE_W + LANE_W / 2, H * 0.5, '#0ea5e9', 20, 0.7);
+      api.sfx('miss');
+      return;
+    }
     s.fail = { lane, index, kind };
     s.failTimer = 1.1;
     api.sfx('error');
@@ -106,11 +126,12 @@ export function TileTapper({ api, paused }: GameProps) {
     const top = rowTop(row.index, s.scroll, H);
     fx.current.particles.burst(lane * LANE_W + LANE_W / 2, top + ROW_H / 2, {
       count: 8,
-      colors: ['#94a3b8', '#e2e8f0'],
+      colors: [sparkColor, '#e2e8f0'],
       speed: 120,
       life: 0.35,
     });
     if (s.score % 25 === 0) {
+      api.addCoins(1);
       fx.current.floaters.add(`${s.score}!`, W / 2, H * 0.35, '#fde047', 34, 1);
       s.flash = 1;
     }
@@ -132,7 +153,7 @@ export function TileTapper({ api, paused }: GameProps) {
     s.flash = Math.max(0, s.flash - dt * 2);
 
     if (s.started && !s.fail) {
-      s.scroll += speedForScore(s.score) * dt;
+      s.scroll += speedForScore(s.score) * tempo * dt;
       ensureRows();
       const missed = s.rows.find((r) => !r.tapped && rowTop(r.index, s.scroll, H) > H);
       if (missed) {
@@ -147,12 +168,27 @@ export function TileTapper({ api, paused }: GameProps) {
         s.rewind -= step;
       }
       s.failTimer -= dt;
-      if (s.failTimer <= 0 && !s.ended) {
-        s.ended = true;
-        api.gameOver({
-          score: s.score,
-          stats: [{ label: 'Top speed', value: `${(speedForScore(s.score) / ROW_H).toFixed(1)} tiles/s` }],
-        });
+      if (s.failTimer <= 0 && !s.ended && !s.waiting) {
+        s.waiting = true;
+        continueGate(
+          () => {
+            // Resume from the next pending tile; the song waits for your tap.
+            s.fail = null;
+            s.rewind = 0;
+            s.started = false;
+            s.waiting = false;
+            fx.current.floaters.add('Tap to resume', W / 2, H * 0.4, '#0ea5e9', 24, 1.4);
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({
+              score: s.score,
+              stats: [
+                { label: 'Top speed', value: `${(speedForScore(s.score) / ROW_H).toFixed(1)} tiles/s` },
+              ],
+            });
+          },
+        );
       }
     }
     particles.update(dt);
@@ -177,8 +213,8 @@ export function TileTapper({ api, paused }: GameProps) {
         ctx.fillRect(x + 1, top + 1, LANE_W - 2, ROW_H - 2);
       } else {
         const g = ctx.createLinearGradient(0, top, 0, top + ROW_H);
-        g.addColorStop(0, blink ? '#ef4444' : '#1e293b');
-        g.addColorStop(1, blink ? '#b91c1c' : '#020617');
+        g.addColorStop(0, blink ? '#ef4444' : tileTop);
+        g.addColorStop(1, blink ? '#b91c1c' : tileBottom);
         fillRoundRect(ctx, x + 2, top + 2, LANE_W - 4, ROW_H - 4, 6, g);
         if (r.index === 0 && !s.started)
           text(ctx, 'START', x + LANE_W / 2, top + ROW_H / 2, { size: 17, weight: 800, color: '#e2e8f0' });

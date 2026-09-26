@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'word-hunt',
@@ -23,4 +23,13 @@ export default defineMeta({
   realtime: true,
   popularity: 73,
   addedAt: '2026-06-11',
+  shop: {
+    title: 'Word Shop',
+    icon: '🔎',
+    upgrades: [
+      upgrade('time', 'Extra time', '⏱️', '+15 seconds per level', 4, 80),
+      upgrade('hint', 'Free hints', '💡', 'One free hint per level each puzzle', 3, 90),
+    ],
+    skins: [skin('classic', 'Classic', 0, ['#0ea5e9', '#f472b6', '#fde047'])],
+  },
 });

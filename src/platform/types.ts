@@ -92,7 +92,76 @@ export interface GameMeta {
   popularity: number;
   /** Release date YYYY-MM-DD (drives the "New" filter). */
   addedAt: string;
+  /** Permanent upgrades and cosmetic skins bought with coins (the game's garage/armory/wardrobe). */
+  shop?: GameShop;
+  /**
+   * How many times per round the player may continue after losing (watch an ad
+   * or pay coins). Only meaningful for games that call `api.requestRevive()`.
+   * Defaults to 2.
+   */
+  maxRevives?: number;
 }
+
+/** A permanent, levelled upgrade bought with coins, e.g. "Engine", "Magnet", "Blade". */
+export interface UpgradeDef {
+  id: string;
+  name: string;
+  icon: string;
+  /** What one level does, e.g. "+8% top speed per level". */
+  description: string;
+  maxLevel: number;
+  /** Price of the first level; later levels grow geometrically. */
+  baseCost: number;
+  /** Multiplier per level (default 1.6). */
+  growth?: number;
+}
+
+/** A cosmetic (sometimes stat-flavoured) item: a car, outfit, weapon finish, ball… */
+export interface SkinDef {
+  id: string;
+  name: string;
+  /** Coin price. 0 = owned from the start. */
+  price: number;
+  /** Primary, secondary and accent colours the game draws with. */
+  colors: [string, string, string];
+  /** Optional emoji/glyph used in the shop tile. */
+  icon?: string;
+  /** Short note shown in the shop, e.g. "+10% grip" for games whose skins carry perks. */
+  perk?: string;
+  /** Unlocked by watching this many rewarded ads instead of paying coins. */
+  adUnlock?: number;
+}
+
+export interface GameShop {
+  /** Name of the shop, e.g. "Garage", "Armory", "Wardrobe". */
+  title: string;
+  /** Emoji shown on the shop button. */
+  icon: string;
+  upgrades: UpgradeDef[];
+  /** First skin is the default and must be free. */
+  skins: SkinDef[];
+  /** Label for the skin row, e.g. "Cars", "Outfits", "Balls". */
+  skinLabel?: string;
+}
+
+/** What the player owns and has equipped for one game. */
+export interface GameLoadout {
+  upgrades: Record<string, number>;
+  owned: string[];
+  equipped: string;
+  /** Rewarded ads watched towards ad-unlockable skins. */
+  adProgress: Record<string, number>;
+}
+
+/** Read-only view of the loadout handed to a game at the start of a round. */
+export interface ActiveLoadout {
+  /** Level of an upgrade (0 when not bought or unknown). */
+  level(id: string): number;
+  /** The equipped skin (the default skin when the game has no shop). */
+  skin: SkinDef;
+}
+
+export type AdOutcome = 'rewarded' | 'dismissed' | 'unavailable';
 
 /** A catalog entry: meta plus resolved assets and a lazy loader. */
 export interface GameEntry extends GameMeta {
@@ -179,6 +248,24 @@ export interface GameApi<S = unknown, P = unknown> {
   saveProgress(data: P): void;
   sfx(name: SoundName): void;
   haptic(pattern: number | number[]): void;
+  /** Upgrades bought in this game's shop and the equipped skin. */
+  readonly loadout: ActiveLoadout;
+  /** Coins picked up during the round; paid out with the round reward. */
+  addCoins(amount: number): void;
+  /**
+   * Call when the player has just lost. The shell pauses the game and offers a
+   * continue (rewarded ad or coins). Resolves true if the player continues —
+   * restore the player (brief invulnerability, clear nearby hazards) and carry
+   * on; otherwise call `gameOver`. Resolves false immediately when no continue
+   * is available (limit reached, round already over).
+   */
+  requestRevive(): Promise<boolean>;
+  /**
+   * Opt-in rewarded ad for an in-game perk (hint, extra tube, undo, +time).
+   * Only call from an explicit player action on a button that says an ad
+   * will play. Resolves true when the reward should be granted.
+   */
+  watchAd(reason: string): Promise<boolean>;
 }
 
 export interface GameProps<S = unknown, P = unknown> {
@@ -315,6 +402,12 @@ export interface RoundOutcome {
   levelAfter: number;
   achievements: Achievement[];
   daily: { target: number; completed: boolean; firstCompletion: boolean; streak: number } | null;
+  coins: { lines: CoinLine[]; total: number };
+}
+
+export interface CoinLine {
+  label: string;
+  coins: number;
 }
 
 export type AnalyticsEventName =
@@ -336,7 +429,16 @@ export type AnalyticsEventName =
   | 'recommendation_clicked'
   | 'progress_exported'
   | 'progress_imported'
-  | 'progress_reset';
+  | 'progress_reset'
+  | 'ad_requested'
+  | 'ad_rewarded'
+  | 'ad_dismissed'
+  | 'ad_unavailable'
+  | 'ad_interstitial'
+  | 'revive_used'
+  | 'coins_doubled'
+  | 'item_purchased'
+  | 'daily_reward_claimed';
 
 export type AnalyticsProps = Record<string, string | number | boolean | null>;
 

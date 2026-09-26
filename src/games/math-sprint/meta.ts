@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'math-sprint',
@@ -23,4 +23,14 @@ export default defineMeta({
   realtime: true,
   popularity: 77,
   addedAt: '2026-06-07',
+  shop: {
+    title: 'Brain Gym',
+    icon: '🧮',
+    upgrades: [
+      upgrade('time', 'Extra time', '⏱️', '+4 starting seconds per level', 5, 70),
+      upgrade('shield', 'Mistake shield', '🛡️', 'First mistakes cost no time (one per level)', 3, 100),
+      upgrade('fifty', 'Free 50/50s', '✂️', 'One free 50/50 per level each round', 3, 90),
+    ],
+    skins: [skin('classic', 'Classic', 0, ['#6366f1', '#0f172a', '#22c55e'])],
+  },
 });

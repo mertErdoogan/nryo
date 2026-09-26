@@ -28,7 +28,7 @@ const progressSchema = obj({ bestTime: num({ min: 0 }), ghost: arr(num(), { max:
 type Progress = Infer<typeof progressSchema>;
 export const progressSpec: VersionedSpec<Progress> = { version: 1, is: progressSchema.is };
 
-function drawCar(ctx: CanvasRenderingContext2D, car: Car, color: string, alpha = 1) {
+function drawCar(ctx: CanvasRenderingContext2D, car: Car, color: string, alpha = 1, stripe?: string) {
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.translate(car.x, car.y);
@@ -37,8 +37,8 @@ function drawCar(ctx: CanvasRenderingContext2D, car: Car, color: string, alpha =
   ctx.fillRect(-15, -8, 32, 20);
   fillRoundRect(ctx, -17, -10, 34, 20, 6, color);
   fillRoundRect(ctx, 0, -7, 9, 14, 3, 'rgba(15,23,42,0.7)');
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.fillRect(-15, -1.5, 13, 3);
+  ctx.fillStyle = stripe ?? 'rgba(255,255,255,0.35)';
+  ctx.fillRect(-15, -1.5, stripe ? 30 : 13, 3);
   ctx.fillStyle = '#111827';
   ctx.fillRect(-13, -12, 8, 3);
   ctx.fillRect(-13, 9, 8, 3);
@@ -59,6 +59,9 @@ export function TurboLaps({ api, paused }: GameProps<unknown, Progress>) {
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
   const fx = useRef({ particles: new Particles(300, rng.next) });
+  const lo = api.loadout;
+  const [carColor, stripeColor] = lo.skin.colors;
+  const topSpeed = MAX_SPEED * (1 + 0.025 * lo.level('engine') + (lo.skin.id === 'gt' ? 0.02 : 0));
   const ghostData = api.progress?.ghost ?? [];
   const s = useRef({
     player: makeCar(points, 0, 18, 8),
@@ -119,7 +122,7 @@ export function TurboLaps({ api, paused }: GameProps<unknown, Progress>) {
       s.t += dt;
       const n = points.length;
       if (!s.player.finished) {
-        const lapDone = stepCar(s.player, points, steer, braking ? -1 : 1, MAX_SPEED, dt);
+        const lapDone = stepCar(s.player, points, steer, braking ? -1 : 1, topSpeed, dt);
         if (s.player.offTrack && s.player.speed > 60 && rng.chance(0.5)) {
           particles.burst(s.player.x, s.player.y, {
             count: 1,
@@ -141,6 +144,7 @@ export function TurboLaps({ api, paused }: GameProps<unknown, Progress>) {
             s.finished = true;
             s.endTimer = 1.6;
             const pos = position();
+            api.addCoins([10, 5, 2, 0][pos - 1] ?? 0);
             api.setScore(Math.round(s.t * 1000));
             api.sfx(pos === 1 ? 'win' : 'score');
             const ms = Math.round(s.t * 1000);
@@ -272,7 +276,7 @@ export function TurboLaps({ api, paused }: GameProps<unknown, Progress>) {
     }
     particles.draw(ctx);
     for (const r of s.rivals) drawCar(ctx, r.car, r.color);
-    drawCar(ctx, s.player, '#ef4444');
+    drawCar(ctx, s.player, carColor, 1, lo.skin.id === 'kart' ? undefined : stripeColor);
     ctx.restore();
 
     // ---- HUD

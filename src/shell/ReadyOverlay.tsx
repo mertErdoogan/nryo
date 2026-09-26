@@ -3,6 +3,10 @@ import { isCoarsePointer } from '../engine/input';
 import { formatScore } from '../lib/format';
 import { getCategory } from '../platform/categories';
 import { MEDAL_NAMES, nextMedal } from '../platform/scoring';
+import { useLoadouts, useWallet } from '../hooks/usePlatform';
+import { resolveLoadout } from '../platform/services/loadouts';
+import { affordableCount } from '../platform/shop';
+import { CoinAmount } from '../ui/Coins';
 import type { GameEntry, GameStats } from '../platform/types';
 import { Button } from '../ui/Button';
 import { Icon } from '../ui/Icon';
@@ -20,6 +24,29 @@ interface ReadyOverlayProps {
   onPlay: () => void;
   onContinue: () => void;
   onRetryLoad: () => void;
+  onShop?: () => void;
+}
+
+function ShopButton({ game, onShop }: { game: GameEntry; onShop: () => void }) {
+  const wallet = useWallet();
+  const loadouts = useLoadouts();
+  const shop = game.shop!;
+  const affordable = affordableCount(shop, resolveLoadout(loadouts[game.id], shop), wallet.coins);
+  return (
+    <div className={styles.actions}>
+      <Button onClick={onShop} data-testid="open-shop">
+        <span aria-hidden="true">{shop.icon}</span> {shop.title}
+        {affordable > 0 && (
+          <span className={styles.shopBadge} aria-label={`${affordable} affordable`}>
+            {affordable}
+          </span>
+        )}
+      </Button>
+      <span className={styles.pill}>
+        <CoinAmount value={wallet.coins} />
+      </span>
+    </div>
+  );
 }
 
 export function ReadyOverlay(props: ReadyOverlayProps) {
@@ -127,6 +154,7 @@ export function ReadyOverlay(props: ReadyOverlayProps) {
             )}
           </div>
         )}
+        {props.onShop && game.shop && !props.loadError && <ShopButton game={game} onShop={props.onShop} />}
         {props.canContinue && props.continueLabel && (
           <p className={styles.hint}>Saved: {props.continueLabel}</p>
         )}

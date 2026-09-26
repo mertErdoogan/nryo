@@ -1,5 +1,15 @@
 import { useMemo, useRef, useState } from 'react';
-import { Banner, DomStage, Stat, StatBar, TimerBar, useCountdown, useSeededRng } from '../../engine';
+import {
+  Banner,
+  DomStage,
+  PowerChip,
+  Stat,
+  StatBar,
+  TimerBar,
+  createContinueGate,
+  useCountdown,
+  useSeededRng,
+} from '../../engine';
 import type { GameProps } from '../../platform/types';
 import { generate, lineCells, matchSelection, SIZE, wordPoints, type Cell, type Placement } from './logic';
 import styles from './WordHunt.module.css';
@@ -18,10 +28,32 @@ export function WordHunt({ api, paused }: GameProps) {
   const score = useRef(0);
   const foundCount = useRef(0);
   const over = useRef(false);
+  const lo = api.loadout;
+  const roundTime = ROUND + 15 * lo.level('time');
+  const [hints, setHints] = useState(lo.level('hint'));
+  const [hinted, setHinted] = useState<Placement | null>(null);
+  const [busy, setBusy] = useState(false);
+  const continueGate = useRef(createContinueGate(api)).current;
 
   const finish = (all: boolean, remaining: number) => {
     if (over.current) return;
     over.current = true;
+    if (!all) {
+      continueGate(
+        () => {
+          over.current = false;
+          clock.reset(45);
+          setBanner({ key: Date.now(), text: '+45 seconds' });
+        },
+        () => settle(false, 0),
+      );
+      return;
+    }
+    api.addCoins(3);
+    settle(true, remaining);
+  };
+
+  const settle = (all: boolean, remaining: number) => {
     const bonus = all ? Math.round(remaining * 5) : 0;
     score.current += bonus;
     api.setScore(score.current);
@@ -36,7 +68,7 @@ export function WordHunt({ api, paused }: GameProps) {
     });
   };
 
-  const clock = useCountdown(ROUND, !paused, () => finish(false, 0));
+  const clock = useCountdown(roundTime, !paused && !busy, () => finish(false, 0));
 
   const cellAt = (clientX: number, clientY: number): Cell | null => {
     const el = boardRef.current;
@@ -61,6 +93,8 @@ export function WordHunt({ api, paused }: GameProps) {
     const next = [...found, match];
     setFound(next);
     foundCount.current = next.length;
+    if (next.length % 3 === 0) api.addCoins(1);
+    if (hinted === match) setHinted(null);
     score.current += wordPoints(match.word);
     api.setScore(score.current);
     api.sfx(next.length === puzzle.placements.length ? 'win' : 'score');
@@ -73,6 +107,22 @@ export function WordHunt({ api, paused }: GameProps) {
     const pad = 2;
     const size = (100 - pad * 2) / SIZE;
     return { x: pad + (cell.c + 0.5) * size, y: pad + (cell.r + 0.5) * size };
+  };
+
+  /** Hint: circle the first letter of a word you haven't found. */
+  const hint = async () => {
+    if (busy || over.current) return;
+    const left = puzzle.placements.filter((p) => !found.includes(p) && p !== hinted);
+    if (!left.length) return;
+    if (hints > 0) setHints((n) => n - 1);
+    else {
+      setBusy(true);
+      const ok = await api.watchAd('A word hint');
+      setBusy(false);
+      if (!ok) return;
+    }
+    setHinted(rng.pick(left));
+    api.sfx('powerup');
   };
 
   const renderLine = (cells: Cell[], color: string, key: string, opacity = 0.45) => {
@@ -105,7 +155,7 @@ export function WordHunt({ api, paused }: GameProps) {
         />
         <Stat label="Found" value={`${found.length}/${puzzle.placements.length}`} />
       </StatBar>
-      <TimerBar ratio={clock.remaining / ROUND} label="Time remaining" />
+      <TimerBar ratio={Math.min(1, clock.remaining / roundTime)} label="Time remaining" />
       <div
         ref={boardRef}
         className={styles.board}
@@ -147,6 +197,17 @@ export function WordHunt({ api, paused }: GameProps) {
             ),
           )}
           {renderLine(selection, '#0ea5e9', 'selection', 0.55)}
+          {hinted && !found.includes(hinted) && (
+            <circle
+              className={styles.hint}
+              cx={centre(hinted).x}
+              cy={centre(hinted).y}
+              r={4.6}
+              fill="none"
+              stroke="#fde047"
+              strokeWidth={1.2}
+            />
+          )}
         </svg>
         <div className={styles.grid}>
           {puzzle.grid.flatMap((row, r) =>
@@ -165,7 +226,21 @@ export function WordHunt({ api, paused }: GameProps) {
           </span>
         ))}
       </div>
-      {banner && <Banner key={banner.key} text={banner.text} sub={`+${wordPoints(banner.text)}`} />}
+      <PowerChip
+        corner="inline"
+        icon="💡"
+        label="Hint"
+        badge={hints > 0 ? hints : 'ad'}
+        onClick={() => void hint()}
+        disabled={busy}
+      />
+      {banner && (
+        <Banner
+          key={banner.key}
+          text={banner.text}
+          sub={banner.text.startsWith('+') ? undefined : `+${wordPoints(banner.text)}`}
+        />
+      )}
     </DomStage>
   );
 }

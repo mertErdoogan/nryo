@@ -1,9 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   CanvasStage,
   FloatingText,
   Particles,
+  PowerChip,
   Shake,
+  createContinueGate,
   useGameLoop,
   useKeyDown,
   useSeededRng,
@@ -86,6 +88,10 @@ export function BlockFit({ api, paused }: GameProps<Save>) {
     shake: new Shake(rng.next),
   });
   const deal = () => [randomPiece(rng), randomPiece(rng), randomPiece(rng)];
+  const lo = api.loadout;
+  const [rerolls, setRerolls] = useState(lo.level('reroll'));
+  const [busy, setBusy] = useState(false);
+  const continueGate = useRef(createContinueGate(api)).current;
   const s = useRef({
     board: (api.resume?.board ?? emptyBoard()) as Board,
     tray: (api.resume?.tray ?? deal()) as (number | null)[],
@@ -112,9 +118,17 @@ export function BlockFit({ api, paused }: GameProps<Save>) {
     if (left.length > 0 && left.every((p) => !fitsAnywhere(s.board, p))) {
       s.over = true;
       api.sfx('gameover');
-      setTimeout(
+      continueGate(
+        () => {
+          // Bomb the middle: clear the centre 4×4 and deal a fresh tray.
+          s.board = s.board.map((row, r) => row.map((v, c) => (r >= 2 && r < 6 && c >= 2 && c < 6 ? -1 : v)));
+          s.tray = deal();
+          s.over = false;
+          fx.current.shake.add(8);
+          fx.current.floaters.add('Board blasted!', W / 2, BY + CELL * 4, '#86efac', 24, 1.2);
+          if (!checkOver()) persist();
+        },
         () => api.gameOver({ score: s.score, stats: [{ label: 'Lines cleared', value: String(s.lines) }] }),
-        900,
       );
       return true;
     }
@@ -140,6 +154,8 @@ export function BlockFit({ api, paused }: GameProps<Save>) {
     s.streak = lines > 0 ? s.streak + 1 : 0;
     const pts = placePoints(PIECES[piece]!.cells.length, lines, s.streak);
     s.score += pts;
+    if (Math.floor((s.lines + lines) / 10) > Math.floor(s.lines / 10)) api.addCoins(1);
+    if (lines >= 3) api.addCoins(1);
     s.lines += lines;
     s.board = res.board;
     s.tray[slot] = null;
@@ -352,15 +368,42 @@ export function BlockFit({ api, paused }: GameProps<Save>) {
     }
   }, !paused);
 
+  /** Swap the whole tray for three new pieces. */
+  const reroll = async () => {
+    if (s.over || busy) return;
+    if (rerolls > 0) setRerolls((n) => n - 1);
+    else {
+      setBusy(true);
+      const ok = await api.watchAd('New pieces');
+      setBusy(false);
+      if (!ok || s.over) return;
+    }
+    s.tray = deal();
+    s.drag = null;
+    s.keyboard = null;
+    api.sfx('swap');
+    if (!checkOver()) persist();
+  };
+
   return (
-    <CanvasStage
-      ref={view}
-      width={W}
-      height={H}
-      label="Block Fit board"
-      onPointerDown={onDown}
-      onPointerMove={onMove}
-      onPointerUp={onUp}
-    />
+    <div style={{ position: 'absolute', inset: 0 }}>
+      <CanvasStage
+        ref={view}
+        width={W}
+        height={H}
+        label="Block Fit board"
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+      />
+      <PowerChip
+        corner="top-left"
+        icon="🔄"
+        label="New pieces"
+        badge={rerolls > 0 ? rerolls : 'ad'}
+        onClick={() => void reroll()}
+        disabled={busy || paused}
+      />
+    </div>
   );
 }

@@ -4,6 +4,7 @@ import {
   FloatingText,
   Particles,
   Shake,
+  createContinueGate,
   useGameLoop,
   useKeyDown,
   useSeededRng,
@@ -31,11 +32,27 @@ interface Debris extends Slab {
   hue: number;
 }
 
+/** Starting hue and hue step per block for each palette skin (null = random). */
+const PALETTES: Record<string, [number | null, number]> = {
+  prism: [null, 7],
+  ocean: [175, 2.5],
+  sunset: [345, 2],
+  forest: [85, 2.5],
+  candy: [285, 3],
+  gold: [38, 0.6],
+};
+
 export function StackTower({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
+  const lo = api.loadout;
+  const [paletteHue, hueStep] = PALETTES[lo.skin.id] ?? PALETTES.prism!;
+  const tolerance = PERFECT_TOLERANCE + 1.5 * lo.level('perfect');
+  const slow = 1 - 0.05 * lo.level('slowmo');
+  const comboGrow = 10 + 5 * lo.level('regrow');
+  const continueGate = useRef(createContinueGate(api)).current;
   const state = useRef({
-    hue0: rng.int(0, 359),
+    hue0: paletteHue ?? rng.int(0, 359),
     stack: [{ x: (W - BASE_W) / 2, w: BASE_W, level: 0 }] as Placed[],
     moving: { x: -BASE_W, w: BASE_W, dir: 1 },
     debris: [] as Debris[],
@@ -47,6 +64,7 @@ export function StackTower({ api, paused }: GameProps) {
     started: false,
     over: false,
     overTimer: 0,
+    waiting: false,
     time: 0,
     flash: 0,
   });
@@ -57,7 +75,8 @@ export function StackTower({ api, paused }: GameProps) {
   });
 
   const levelY = (level: number) => H - 120 - level * BLOCK_H;
-  const colorFor = (level: number, light = 55) => hsl(state.current.hue0 + level * 7, 80, light);
+  const colorFor = (level: number, light = 55) =>
+    hsl(state.current.hue0 + level * hueStep, lo.skin.id === 'gold' ? 90 : 80, light);
 
   const spawnNext = () => {
     const s = state.current;
@@ -72,7 +91,7 @@ export function StackTower({ api, paused }: GameProps) {
     s.started = true;
     const top = s.stack[s.stack.length - 1]!;
     const level = s.stack.length;
-    const result = resolveDrop(top, s.moving, PERFECT_TOLERANCE);
+    const result = resolveDrop(top, s.moving, tolerance);
     const y = levelY(level);
     if (result.kind === 'miss') {
       s.debris.push({ ...s.moving, y, vy: 0, vx: s.moving.dir * 60, rot: 0, hue: level });
@@ -89,7 +108,7 @@ export function StackTower({ api, paused }: GameProps) {
       s.maxCombo = Math.max(s.maxCombo, s.combo);
       let placed = result.placed;
       if (s.combo >= 3) {
-        const grow = Math.min(10, BASE_W - placed.w);
+        const grow = Math.min(comboGrow, BASE_W - placed.w);
         placed = { x: placed.x - grow / 2, w: placed.w + grow };
       }
       s.stack.push({ ...placed, level });
@@ -112,6 +131,10 @@ export function StackTower({ api, paused }: GameProps) {
       api.sfx('tap');
     }
     api.setScore(s.score);
+    if (level % 10 === 0) {
+      api.addCoins(1);
+      fx.current.floaters.add('+1 coin', W / 2, y - 60, '#fde047', 16);
+    }
     spawnNext();
   };
 
@@ -127,22 +150,33 @@ export function StackTower({ api, paused }: GameProps) {
     s.time += dt;
 
     if (!s.over) {
-      const speed = speedForLevel(s.stack.length) * (s.started ? 1 : 0.75);
+      const speed = speedForLevel(s.stack.length) * slow * (s.started ? 1 : 0.75);
       s.moving.x += s.moving.dir * speed * dt;
       if (s.moving.x + s.moving.w > W + 10 && s.moving.dir > 0) s.moving.dir = -1;
       if (s.moving.x < -10 && s.moving.dir < 0) s.moving.dir = 1;
     } else {
       s.overTimer -= dt;
-      if (s.overTimer <= 0 && s.overTimer > -1) {
-        s.overTimer = -2;
-        api.gameOver({
-          score: s.score,
-          stats: [
-            { label: 'Blocks', value: String(s.stack.length - 1) },
-            { label: 'Perfects', value: String(s.perfects) },
-            { label: 'Best combo', value: `×${s.maxCombo}` },
-          ],
-        });
+      if (s.overTimer <= 0 && !s.waiting) {
+        s.waiting = true;
+        continueGate(
+          () => {
+            // Try that block again.
+            s.over = false;
+            s.waiting = false;
+            spawnNext();
+            fx.current.floaters.add('One more try!', W / 2, levelY(s.stack.length) - 40, '#86efac', 22);
+          },
+          () => {
+            api.gameOver({
+              score: s.score,
+              stats: [
+                { label: 'Blocks', value: String(s.stack.length - 1) },
+                { label: 'Perfects', value: String(s.perfects) },
+                { label: 'Best combo', value: `×${s.maxCombo}` },
+              ],
+            });
+          },
+        );
       }
     }
 

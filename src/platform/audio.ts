@@ -111,6 +111,12 @@ class SoundEngine {
   private enabled = true;
   private volume = 0.6;
   private lastPlayed = new Map<SoundName, number>();
+  private held = false;
+
+  /** Silences game audio while an ad is playing. */
+  hold(on: boolean): void {
+    this.held = on;
+  }
 
   configure(enabled: boolean, volume: number): void {
     this.enabled = enabled;
@@ -139,7 +145,7 @@ class SoundEngine {
   }
 
   play(name: SoundName): void {
-    if (!this.enabled || !this.ctx || !this.master || this.ctx.state !== 'running') return;
+    if (this.held || !this.enabled || !this.ctx || !this.master || this.ctx.state !== 'running') return;
     const now = this.ctx.currentTime;
     const last = this.lastPlayed.get(name) ?? -1;
     if (now - last < 0.03) return; // avoid stacking identical sounds in one frame

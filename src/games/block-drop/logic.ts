@@ -63,6 +63,23 @@ export const COLORS: Record<PieceType, string> = {
   L: '#f97316',
 };
 
+/** Alternative palettes for the shop skins (same piece order as COLORS). */
+export const PALETTES: Record<string, Record<PieceType, string>> = {
+  classic: COLORS,
+  pastel: {
+    I: '#a5f3fc',
+    O: '#fef08a',
+    T: '#e9d5ff',
+    S: '#bbf7d0',
+    Z: '#fecaca',
+    J: '#bfdbfe',
+    L: '#fed7aa',
+  },
+  neon: { I: '#00fff0', O: '#fffb00', T: '#ff00e6', S: '#39ff14', Z: '#ff3131', J: '#3d5afe', L: '#ff9100' },
+  ocean: { I: '#67e8f9', O: '#5eead4', T: '#818cf8', S: '#2dd4bf', Z: '#38bdf8', J: '#1d4ed8', L: '#0891b2' },
+  gold: { I: '#fde68a', O: '#facc15', T: '#eab308', S: '#ca8a04', Z: '#f59e0b', J: '#d97706', L: '#fbbf24' },
+};
+
 export interface Piece {
   type: PieceType;
   x: number;

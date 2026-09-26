@@ -1,10 +1,10 @@
 .board {
-  --w: min(100cqw - 24px, (100cqh - 240px) * 5 / 6, 340px);
+  --w: min(100cqw - 24px, (100cqh - 290px) * 5 / var(--rows, 6), 340px);
   display: grid;
-  grid-template-rows: repeat(6, 1fr);
+  grid-template-rows: repeat(var(--rows, 6), 1fr);
   gap: calc(var(--w) * 0.025);
   width: var(--w);
-  aspect-ratio: 5 / 6;
+  aspect-ratio: 5 / var(--rows, 6);
   margin: auto;
 }
 
@@ -170,4 +170,9 @@
   100% {
     opacity: 0;
   }
+}
+
+.tile[data-hint='true'] {
+  color: rgb(134 239 172 / 0.55);
+  border-style: dashed;
 }

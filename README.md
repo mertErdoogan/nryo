@@ -1,13 +1,22 @@
 # Nryo Arcade
 
-**41 free browser games. No sign-up. Play instantly.**
+**81 free browser games. No sign-up. Play instantly.**
 
 Nryo Arcade is a static web gaming platform: arcade, puzzle, word, brain, racing, action, physics, strategy and
-reflex games that start with one tap and remember your progress on your device. There are no accounts, no
-backend and no third-party scripts. Everything runs in the browser and works offline once loaded.
+reflex games that start with one tap and remember your progress on your device. There are no accounts and no
+backend, and no third-party script is loaded unless you configure an ad network. Everything runs in the browser
+and works offline once loaded.
 
-- **41 original games** across 13 categories, each with its own mechanics, controls, scoring, medals and
+- **81 original games** across 13 categories, each with its own mechanics, controls, scoring, medals and
   results screen
+- **Coins, upgrades and skins**: every round pays coins. Most games have their own shop (Garage, Armory,
+  Hangar, Wardrobe…) with permanent upgrades and skins: faster cars, stronger weapons, new outfits and balls
+- **Continues the player chooses**: after a crash or a loss, a short countdown offers to carry on from the same
+  spot by watching a rewarded ad or paying coins (1–2 times per round). Declining is always one tap away
+- **Player-friendly ads**: rewarded ads are opt-in (continue, double coins, free coins, daily bonus, skin
+  unlocks, in-game hints). Interstitials only appear between rounds and are strictly paced. Providers are
+  pluggable: Google AdSense (H5 Games Ads), built-in house ads, or none. See [Monetization](#monetization)
+- **Daily login reward** with a 7-day streak track
 - **Progress that persists**: best scores, medals, favorites, recently played, unfinished rounds, XP and levels,
   34 achievements, unlockable avatars and colors, settings, daily challenge streaks, all versioned and validated
 - **Daily challenge**: one game a day, the same seed and target for everyone, with streaks
@@ -51,21 +60,21 @@ First e2e run on a new machine: `npx playwright install chromium`. Set `E2E_SKIP
 
 ## Games
 
-| Category     | Games                                                                                                 |
-| ------------ | ----------------------------------------------------------------------------------------------------- |
-| Hyper Casual | Stack Tower, Sky Hopper, Pin Spin, Wall Flip, Tile Tapper, Sky Climber, Hoop Shot, Block Fit…         |
-| Arcade       | Neon Snake, Block Drop, Brick Breaker, Star Defender, Whack Attack, Air Hockey…                       |
-| Action       | Arena Survivor, Slither Arena, Star Defender, Meteor Dodge, Target Rush                               |
-| Racing       | Road Rush (endless traffic), Turbo Laps (3 AI rivals + your ghost lap)                                |
-| Puzzle       | 2048 Merge, Sudoku, Mine Sweeper, Pipe Link, Gem Swap, Block Fit, Word Hunt, Tower Guard…             |
-| Brain        | Math Sprint, Color Clash, Reflex Test, Echo Pads, Grid Recall, Memory Match, Five Letters…            |
-| Word         | Five Letters, Word Blitz, Word Hunt                                                                   |
-| Memory       | Memory Match, Grid Recall, Echo Pads                                                                  |
-| Strategy     | Tower Guard, Planet Conquest, Four in a Row, Reversi, Gem Miner Tycoon (incremental), Arena Survivor… |
-| Reflex       | Reflex Test, Target Rush, Whack Attack, Tile Tapper, Pin Spin, Stack Tower, Color Clash…              |
-| Physics      | Mini Golf, Hoop Shot, Bounce Barrage, Air Hockey, Brick Breaker, Sky Climber                          |
-| Endless      | Meteor Dodge, Road Rush, Sky Hopper, Sky Climber, Wall Flip, Neon Snake, Slither Arena…               |
-| Versus (AI)  | Air Hockey, Four in a Row, Reversi, Planet Conquest, Slither Arena, Turbo Laps                        |
+| Category     | Games                                                                                                  |
+| ------------ | ------------------------------------------------------------------------------------------------------ |
+| Hyper Casual | Stack Tower, Sky Hopper, Helix Fall, Road Hop, Orbit Jump, Color Gate, Rise Up, Deep Fisher, Jet Dash… |
+| Arcade       | Neon Snake, Block Drop, Brick Breaker, Ball Blast, Sky Ace, Geo Jump, Bubble Pop, Whack Attack…        |
+| Action       | Arena Survivor, Boss Rush, Zombie Siege, Dungeon Dash, Tank Duel, Sniper Range, Black Hole…            |
+| Racing       | Road Rush, Neon Racer, Drift King, Hill Rider, Drag Race Tycoon, Ski Rush, Turbo Laps (+ ghost lap)    |
+| Puzzle       | 2048 Merge, Sudoku, Mine Sweeper, Ball Sort, Triple Tile, Parking Jam, Merge Drop, Pipe Link…          |
+| Brain        | Math Sprint, Color Clash, Echo Pads, Grid Recall, Ball Sort, Checkers, Sea Battle, Anagram Rush…       |
+| Word         | Five Letters, Word Blitz, Word Hunt, Word Rescue, Anagram Rush                                         |
+| Memory       | Memory Match, Grid Recall, Echo Pads, Triple Tile                                                      |
+| Strategy     | Tower Guard, Planet Conquest, Checkers, Sea Battle, Color Land, Burger Rush, Gem Miner Tycoon…         |
+| Reflex       | Reflex Test, Fruit Slash, Hex Spin, Target Rush, Tile Tapper, Penalty Kick, Archer Master…             |
+| Physics      | Mini Golf, Bowling Strike, Pinball Frenzy, Tower Crane, Archer Master, Hill Rider, Hoop Shot…          |
+| Endless      | Meteor Dodge, Road Rush, Ninja Run, Jet Dash, Ski Rush, Neon Racer, Drift King, Sky Climber…           |
+| Versus (AI)  | Air Hockey, Checkers, Sea Battle, Tank Duel, Color Land, Black Hole, Penalty Kick, Drag Race Tycoon…   |
 
 Games belong to up to three categories (the first is primary), so rows overlap and "…" marks a longer list.
 The app builds its catalog, filters and search from each game's metadata. This table is just a summary.
@@ -193,6 +202,11 @@ interface GameApi<Save, Progress> {
   saveProgress(data: Progress): void;
   sfx(name: SoundName): void;
   haptic(pattern: number | number[]): void;
+  // economy
+  loadout: { level(upgradeId: string): number; skin: SkinDef }; // what the player bought and equipped
+  addCoins(n: number): void; // coins picked up during the round (paid out on the results screen)
+  requestRevive(): Promise<boolean>; // offer a continue (ad or coins); true = keep playing
+  watchAd(label: string): Promise<boolean>; // opt-in rewarded ad for an in-game helper (hint, undo…)
 }
 ```
 
@@ -204,6 +218,43 @@ Rules every game follows:
   challenge and shows the results screen.
 - Use `api.seed` (via `useSeededRng`) for any randomness that decides the layout, so daily challenges are fair.
 - A new round is a fresh mount (the shell changes the component `key`), so no manual reset logic is needed.
+
+### Shops and continues
+
+A game opts into the economy from its metadata. The shell renders the shop, charges coins, stores what was
+bought and hands the result to the game as `api.loadout`. The first skin is the free default; a skin can cost
+coins, or be unlocked by watching a few rewarded ads (`adUnlock`).
+
+```ts
+shop: {
+  title: 'Garage',
+  icon: '🚗',
+  skinLabel: 'Cars',
+  upgrades: [upgrade('handling', 'Steering', '🛞', '+8% steering speed per level', 5, 60)],
+  skins: [
+    skin('hatch', 'City Hatch', 0, ['#fbbf24', '#b45309', '#fef9c3']),
+    skin('super', 'Supercar', 1500, ['#a3e635', '#111827', '#ecfccb'], { perk: '+18% steering' }),
+    skin('gold', 'Golden GT', 0, ['#f59e0b', '#78350f', '#fef3c7'], { adUnlock: 3 }),
+  ],
+},
+maxRevives: 2, // optional, defaults to 2
+```
+
+```ts
+const steer = 1 + 0.08 * api.loadout.level('handling'); // upgrades are just numbers
+const [body, trim] = api.loadout.skin.colors; // skins are colours (+ an id for special art)
+
+const continueGate = useRef(createContinueGate(api)).current;
+// on a crash:
+continueGate(
+  () => resumeFromHere(), // player watched an ad or paid: clear the danger and carry on
+  () => api.gameOver({ score }), // player declined, timed out, or used up their continues
+);
+```
+
+The continue overlay shows an 8-second countdown with three choices: watch an ad, pay coins (120 → 240 → 400
+per round) or decline. `PowerChip` renders a small "💡 Hint · 2" / "↩️ Undo · ad" button for optional helpers
+that use free charges first and then `api.watchAd()`.
 
 The engine (`src/engine`) provides `CanvasStage` (DPR-aware canvas with logical coordinates and pointer mapping),
 `useGameLoop` (rAF with clamped delta time), countdown/stopwatch hooks, keyboard/touch helpers, particles, floating
@@ -302,6 +353,8 @@ All state lives in `localStorage` under the `nryo:` prefix, behind one API
 | `nryo:daily`           | daily challenge records per date, streaks                                      |
 | `nryo:save:<game>`     | an unfinished round + summary (powers "Continue Playing")                      |
 | `nryo:progress:<game>` | long-lived game data (unlocked AI levels, ghost laps, idle economy, level)     |
+| `nryo:wallet`          | coin balance, lifetime earned/spent, ads watched, daily login streak           |
+| `nryo:loadouts`        | per game: upgrade levels, owned and equipped skins, ad-unlock progress         |
 | `nryo:events`          | local analytics ring buffer (never transmitted)                                |
 
 How it stays safe:
@@ -324,13 +377,73 @@ How it stays safe:
 
 ## Testing
 
-| Layer      | Where                                               | What it covers                                                                                                                                                                                                                                                                                                                                                  |
-| ---------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unit       | `src/lib`, `src/platform/__tests__`                 | schema, RNG, formatting, dates, storage envelopes/migration/corruption, XP/levels, medals, achievements, daily rotation and streaks, discovery/search, rivals                                                                                                                                                                                                   |
-| Game logic | `src/games/logic.test.ts`, `turbo-laps/sim.test.ts` | rules of many games (2048 merges, Sudoku uniqueness, Mine Sweeper flood fill, Four in a Row AI, Reversi, word lists…), plus an AI race simulation                                                                                                                                                                                                               |
-| Catalog    | `src/games/catalog.test.ts`                         | metadata consistency for every game; every game chunk lazy-loads a component                                                                                                                                                                                                                                                                                    |
-| Component  | `*.test.tsx`                                        | GameCard, header navigation/search, home & favorites pages, GameShell lifecycle, resume, crash isolation                                                                                                                                                                                                                                                        |
-| End-to-end | `e2e/`                                              | play → results → refresh → best score kept; favorite → refresh; recently played; 2048 continue after refresh; settings persist; corrupted storage recovery; daily challenge; every game loads, plays, pauses and resumes without errors (desktop + mobile); no horizontal overflow from 360 to 1440 px; offline play via the service worker; per-route metadata |
+| Layer      | Where                                           | What it covers                                                                                                                                                                                                                                                                                                                                                  |
+| ---------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit       | `src/lib`, `src/platform/__tests__`             | schema, RNG, formatting, dates, storage envelopes/migration/corruption, XP/levels, medals, achievements, daily rotation and streaks, discovery/search, rivals, coin economy, prices, ad pacing                                                                                                                                                                  |
+| Game logic | `src/games/*.test.ts`, `turbo-laps/sim.test.ts` | rules of many games (2048 merges, Sudoku uniqueness, Mine Sweeper flood fill, Ball Sort and Parking Jam solvers, Checkers captures, bowling scoring, Sea Battle fleets, drag-race physics, word lists…), plus an AI race simulation                                                                                                                             |
+| Catalog    | `src/games/catalog.test.ts`                     | metadata consistency for every game; every shop is valid (free default skin, unique ids, obtainable items); every game chunk lazy-loads a component                                                                                                                                                                                                             |
+| Component  | `*.test.tsx`                                    | GameCard, header navigation/search, home & favorites pages, GameShell lifecycle, resume, crash isolation                                                                                                                                                                                                                                                        |
+| End-to-end | `e2e/`                                          | play → results → refresh → best score kept; favorite → refresh; recently played; 2048 continue after refresh; settings persist; corrupted storage recovery; daily challenge; every game loads, plays, pauses and resumes without errors (desktop + mobile); no horizontal overflow from 360 to 1440 px; offline play via the service worker; per-route metadata |
+
+---
+
+## Monetization
+
+The goal is revenue without making the games worse. Ads are something the player asks for in exchange for a
+clear reward, and the things that keep players around (fair difficulty, coins, upgrades) come first.
+
+**The loop**: play a round → earn coins (optionally doubled by an ad) → buy an upgrade or a skin → play again a
+little stronger. Losing offers a continue from the same spot.
+
+| Where                    | What the player gets                                       | How                                          |
+| ------------------------ | ---------------------------------------------------------- | -------------------------------------------- |
+| Continue after a loss    | Keep the run: extra life, time, moves, a rematch, a rewind | rewarded ad or coins, max 1–2 per round      |
+| Results screen           | Double the coins from this round                           | rewarded ad                                  |
+| Shop                     | Free coins (5 per day), skins unlocked by ads              | rewarded ad                                  |
+| Home page                | Double today's daily login reward                          | rewarded ad                                  |
+| In-game helpers          | Hint, undo, 50/50, reroll, mulligan, peek, radar…          | free charges from upgrades, then rewarded ad |
+| Between rounds           | Nothing (it's the price of free games)                     | interstitial, paced (below)                  |
+| Home, game list and page | Nothing                                                    | display banner, only if a slot id is set     |
+
+**Pacing** (`src/platform/ads/policy.ts`): no interstitial before the player's third round of a visit, at most
+one every 3 minutes, none within 2.5 minutes after a rewarded ad, and rounds shorter than 15 seconds don't count.
+Never during play and never on first visit. Rewarded ads are never capped: they are always the player's choice.
+Sound is muted while an ad plays.
+
+**Economy** (`src/platform/economy.ts`): a round pays 5 coins plus up to 35 more depending on the score relative
+to the gold medal, plus coins collected in the game, +15 for a win, +20 for a new best, +25 per new medal tier and
++100 for the daily challenge. Upgrade prices grow ×1.6 per level. All numbers live in one `ECONOMY` object.
+
+### Ad providers
+
+Set at build time (`.env` or the environment):
+
+| Variable                   | Default | Purpose                                                                                             |
+| -------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
+| `VITE_ADSENSE_CLIENT`      | unset   | Your AdSense publisher id (`ca-pub-…`). Enables AdSense, widens the CSP and writes `ads.txt`.       |
+| `VITE_ADS_PROVIDER`        | auto    | `adsense`, `house` or `none`. Defaults to `adsense` when a client id is set, otherwise `house`.     |
+| `VITE_ADSENSE_TEST`        | unset   | `1` requests Google test ads (use on staging).                                                      |
+| `VITE_ADSENSE_SLOT_HOME`   | unset   | Display ad unit id for the home banner. Banners only render when their slot id is set.              |
+| `VITE_ADSENSE_SLOT_LIST`   | unset   | Display ad unit id for the game list.                                                               |
+| `VITE_ADSENSE_SLOT_GAME`   | unset   | Display ad unit id for the game page (never shown while playing).                                   |
+| `VITE_ADS_REWARD_FALLBACK` | `1`     | `0` disables the house-ad fallback when AdSense has no rewarded ad (continues then use coins only). |
+
+- **house** (default, no network): a 5-second card that promotes another game in the catalog. The reward can
+  be claimed once the countdown ends, and the card can be closed at any time (without the reward). It keeps
+  every reward path working in development and on sites without an ad account. No interstitials.
+- **adsense**: Google's [Ad Placement API](https://developers.google.com/ad-placement) (H5 Games Ads) for
+  rewarded (`adBreak({ type: 'reward' })`) and interstitial (`type: 'next'`) ads, plus regular AdSense display
+  units for banners. Setup: get an AdSense account approved for your domain and request H5 games ads, create
+  display ad units for the banner slots you want, set the variables above and deploy. The build writes
+  `ads.txt` for you.
+- **none**: no ads at all; continues and helpers fall back to coins and free charges.
+
+**Consent**: in the EEA, UK and Switzerland, Google requires a certified consent management platform before
+serving personalised ads. AdSense's own _Privacy & messaging_ tool provides one without code changes. The app
+itself stores nothing about ads beyond local counters (`nryo:wallet`) and sends no data anywhere.
+
+To add another network, implement `AdProvider` (`src/platform/ads/types.ts`): `init`, `prepareRewarded` and
+`showInterstitial`.
 
 ---
 
@@ -350,6 +463,8 @@ Pages, GitHub Pages, S3/CloudFront, nginx).
   | `SITE_URL`  | unset   | Public origin, e.g. `https://arcade.example.com`. Enables absolute canonical/OG URLs, `sitemap.xml` and the sitemap line in `robots.txt`. |
   | `BASE_PATH` | `/`     | Serve from a sub-path, e.g. `BASE_PATH=/arcade/` for GitHub Pages project sites.                                                          |
 
+  Ad settings are listed under [Monetization](#monetization).
+
   ```bash
   SITE_URL=https://arcade.example.com npm run build
   ```
@@ -357,7 +472,7 @@ Pages, GitHub Pages, S3/CloudFront, nginx).
 - **Caching**: files in `assets/` are content-hashed and can be cached forever. Serve `sw.js` and HTML with
   `Cache-Control: no-cache`, so updates roll out on the next visit.
 - **Security**: a strict Content-Security-Policy `<meta>` is injected at build time (`script-src 'self'`, no
-  third-party origins). There is no `eval`, no `dangerouslySetInnerHTML`, and no user-provided HTML. Nicknames
+  third-party origins). Only when `VITE_ADSENSE_CLIENT` is set does it also allow Google's ad origins. There is no `eval`, no `dangerouslySetInnerHTML`, and no user-provided HTML. Nicknames
   are sanitized and length-limited.
 - **Offline**: the generated service worker precaches the app shell, every game chunk, thumbnails and fonts.
   Navigations are network-first with an offline fallback, and assets are cache-first.
@@ -368,8 +483,10 @@ Pages, GitHub Pages, S3/CloudFront, nginx).
   resumed, completed, restarted, abandoned or crashed, favorites, achievements, level-ups, daily challenge, search,
   recommendation clicks, export/import/reset. Events currently go only to a local ring buffer. To connect a
   provider, register a sink with `platform.analytics.addSink({ name, track })`.
-- **Ads**: `src/platform/ads.ts` defines typed placements and a `maybeShowInterstitial()` hook between rounds.
-  Ads are disabled and no ad code is loaded. `AdSlot` components render nothing while disabled.
+- **Ads**: `src/platform/ads/` holds the provider interface, pacing rules and the AdSense and house providers.
+  Ad events (`ad_requested`, `ad_rewarded`, `ad_dismissed`, `ad_unavailable`, `ad_interstitial`) and economy
+  events (`revive_used`, `coins_doubled`, `item_purchased`, `daily_reward_claimed`) go through the same
+  analytics API, so you can measure which placements earn without annoying anyone.
 
 ---
 

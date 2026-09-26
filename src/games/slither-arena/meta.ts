@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'slither-arena',
@@ -26,4 +26,23 @@ export default defineMeta({
   realtime: true,
   popularity: 88,
   addedAt: '2026-06-16',
+  shop: {
+    title: 'Snake Pit',
+    icon: '🐍',
+    skinLabel: 'Skins',
+    upgrades: [
+      upgrade('start', 'Head start', '📏', '+10 starting length per level', 4, 80),
+      upgrade('speed', 'Slither speed', '💨', '+5% cruise and boost speed per level', 3, 110),
+      upgrade('boost', 'Efficient boost', '⚡', 'Boosting burns 15% less length per level', 3, 90),
+      upgrade('magnet', 'Big mouth', '🧲', 'Eat orbs from further away', 3, 70),
+    ],
+    skins: [
+      skin('violet', 'Violet', 0, ['#8b5cf6', '#c4b5fd', '#6d28d9'], { icon: '🟣' }),
+      skin('lime', 'Lime', 120, ['#84cc16', '#d9f99d', '#4d7c0f'], { icon: '🟢' }),
+      skin('ocean', 'Ocean', 120, ['#0ea5e9', '#bae6fd', '#0369a1'], { icon: '🔵' }),
+      skin('ember', 'Ember', 250, ['#f97316', '#fed7aa', '#c2410c'], { icon: '🟠' }),
+      skin('rose', 'Rose', 250, ['#f43f5e', '#fecdd3', '#be123c'], { icon: '🌹' }),
+      skin('rainbow', 'Rainbow', 0, ['#ef4444', '#22c55e', '#3b82f6'], { icon: '🌈', adUnlock: 3 }),
+    ],
+  },
 });

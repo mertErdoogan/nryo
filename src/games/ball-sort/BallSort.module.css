@@ -1,0 +1,102 @@
+.board {
+  --tube-w: min(56px, (100cqw - 40px) / var(--per-row) - 10px);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+  gap: 18px 10px;
+  width: min(100%, 560px);
+  flex: 1;
+  padding: 8px 0 16px;
+}
+
+.tube {
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 4px;
+  width: var(--tube-w);
+  height: calc(var(--tube-w) * 4 + 30px);
+  padding: 6px 0;
+  border: 3px solid rgb(255 255 255 / 0.55);
+  border-top: 0;
+  border-radius: 0 0 calc(var(--tube-w) / 2) calc(var(--tube-w) / 2);
+  background: rgb(255 255 255 / 0.08);
+  transition:
+    transform 160ms var(--ease-out),
+    border-color 160ms;
+  cursor: pointer;
+}
+
+.tube::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -8px;
+  right: -8px;
+  height: 6px;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.55);
+}
+
+.tube[data-selected='true'] {
+  border-color: #fde047;
+  transform: translateY(-6px);
+}
+
+.tube[data-selected='true'] .ball:last-child {
+  transform: translateY(-22px);
+}
+
+.tube[data-hint='true'] {
+  border-color: #86efac;
+  box-shadow: 0 0 18px rgb(134 239 172 / 0.6);
+}
+
+.tube[data-done='true'] {
+  border-color: #fde047;
+  box-shadow: 0 0 20px rgb(253 224 71 / 0.45);
+}
+
+.ball {
+  width: calc(var(--tube-w) - 10px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  box-shadow:
+    inset -4px -5px 0 rgb(0 0 0 / 0.18),
+    inset 4px 4px 0 rgb(255 255 255 / 0.3);
+  transition: transform 160ms var(--ease-spring);
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.1);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  font-weight: 750;
+  font-size: 0.85rem;
+}
+
+.tool:disabled {
+  opacity: 0.45;
+}
+
+.tool small {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.18);
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}

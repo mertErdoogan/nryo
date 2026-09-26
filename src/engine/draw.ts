@@ -106,3 +106,63 @@ export function prompt(
   const alpha = 0.55 + Math.sin(time * 4) * 0.35;
   text(ctx, value, x, y, { size, weight: 700, alpha, stroke: 'rgba(0,0,0,0.35)', strokeWidth: 5 });
 }
+
+/** A spinning gold coin (pickups in canvas games). `time` drives the spin. */
+export function drawCoin(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, time = 0): void {
+  const squash = Math.abs(Math.cos(time * 3 + x * 0.05));
+  const w = Math.max(0.18, squash) * r;
+  ctx.save();
+  ctx.fillStyle = '#b45309';
+  ctx.beginPath();
+  ctx.ellipse(x + 1, y + 1, w, r, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fbbf24';
+  ctx.beginPath();
+  ctx.ellipse(x, y, w, r, 0, 0, Math.PI * 2);
+  ctx.fill();
+  if (squash > 0.4) {
+    ctx.fillStyle = '#fde68a';
+    ctx.beginPath();
+    ctx.ellipse(x - w * 0.25, y - r * 0.25, w * 0.35, r * 0.35, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/** Rounded translucent label used for in-canvas HUD readouts (coins, lives, wave…). */
+export function hudPill(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  label: string,
+  opts: { align?: 'left' | 'right' | 'center'; color?: string; size?: number; coin?: boolean } = {},
+): void {
+  const size = opts.size ?? 15;
+  ctx.save();
+  ctx.font = `800 ${size}px ${GAME_FONT}`;
+  const tw = ctx.measureText(label).width;
+  const pad = 10;
+  const icon = opts.coin ? size + 4 : 0;
+  const w = tw + pad * 2 + icon;
+  const h = size + 14;
+  const left = opts.align === 'right' ? x - w : opts.align === 'center' ? x - w / 2 : x;
+  fillRoundRect(ctx, left, y, w, h, h / 2, 'rgba(0,0,0,0.42)');
+  if (opts.coin) drawCoin(ctx, left + pad + size / 2 - 1, y + h / 2, size / 2, 0);
+  ctx.fillStyle = opts.color ?? '#fff';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, left + pad + icon, y + h / 2 + 1);
+  ctx.restore();
+}
+
+/** Lightens (amount > 0) or darkens (amount < 0) a #rrggbb colour. */
+export function shade(hex: string, amount: number): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return hex;
+  const n = parseInt(m[1]!, 16);
+  const mix = (c: number) =>
+    Math.round(amount >= 0 ? c + (255 - c) * amount : c * (1 + amount))
+      .toString(16)
+      .padStart(2, '0');
+  return `#${mix((n >> 16) & 255)}${mix((n >> 8) & 255)}${mix(n & 255)}`;
+}

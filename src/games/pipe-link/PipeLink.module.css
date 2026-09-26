@@ -15,7 +15,7 @@
 
 .grid[data-solved='true'] {
   box-shadow:
-    0 0 0 3px #67e8f9,
+    0 0 0 3px var(--glow, #67e8f9),
     0 0 60px rgb(103 232 249 / 0.4);
 }
 
@@ -46,7 +46,7 @@
 }
 
 .tile[data-on='true'] .pipe {
-  stroke: #67e8f9;
+  stroke: var(--glow, #67e8f9);
   filter: drop-shadow(0 0 3px #22d3ee);
 }
 

@@ -4,6 +4,8 @@ import {
   FloatingText,
   Particles,
   Shake,
+  createContinueGate,
+  drawCoin,
   useGameLoop,
   useKeyDown,
   useSeededRng,
@@ -23,6 +25,12 @@ const R = 15;
 
 export function SkyHopper({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
+  const lo = api.loadout;
+  const [bodyColor, bellyColor, wingColor] = lo.skin.colors;
+  const gravity = GRAVITY * (1 - 0.04 * lo.level('glide'));
+  const magnet = R + 10 + 12 * lo.level('magnet');
+  const coinChance = 0.35 + 0.1 * lo.level('luck');
+  const continueGate = useRef(createContinueGate(api)).current;
   const view = useRef<CanvasView | null>(null);
   const fx = useRef({
     particles: new Particles(300, rng.next),
@@ -38,6 +46,11 @@ export function SkyHopper({ api, paused }: GameProps) {
     ended: false,
     score: 0,
     pillars: [] as Pillar[],
+    coins: [] as { x: number; y: number }[],
+    shields: lo.level('shield'),
+    invuln: 0,
+    waiting: false,
+    coinCount: 0,
     scroll: 0,
     time: 0,
     flapAnim: 0,
@@ -50,7 +63,9 @@ export function SkyHopper({ api, paused }: GameProps) {
 
   const spawn = (x: number) => {
     const gap = gapForScore(s.score + s.pillars.length);
-    s.pillars.push({ x, gap, gapY: rng.range(110 + gap / 2, FLOOR - 40 - gap / 2), passed: false });
+    const gapY = rng.range(110 + gap / 2, FLOOR - 40 - gap / 2);
+    s.pillars.push({ x, gap, gapY, passed: false });
+    if (rng.chance(coinChance)) s.coins.push({ x: x + PILLAR_W / 2, y: gapY });
   };
 
   const flap = () => {
@@ -73,8 +88,21 @@ export function SkyHopper({ api, paused }: GameProps) {
     });
   };
 
-  const die = () => {
-    if (s.dead) return;
+  const die = (floor = false) => {
+    if (s.dead || s.invuln > 0) return;
+    if (s.shields > 0 && !floor) {
+      s.shields -= 1;
+      s.invuln = 1.2;
+      fx.current.floaters.add('Shield!', BIRD_X, s.y - 34, '#67e8f9', 20, 0.9);
+      fx.current.particles.burst(BIRD_X, s.y, {
+        count: 20,
+        colors: ['#67e8f9', '#fff'],
+        speed: 200,
+        life: 0.5,
+      });
+      api.sfx('hit');
+      return;
+    }
     s.dead = true;
     s.deadTimer = 0.9;
     fx.current.shake.add(12);
@@ -104,7 +132,7 @@ export function SkyHopper({ api, paused }: GameProps) {
       s.y = H * 0.42 + Math.sin(s.time * 3) * 10;
       s.scroll += speed * 0.5 * dt;
     } else {
-      s.vy += GRAVITY * dt;
+      s.vy += gravity * dt;
       s.y += s.vy * dt;
       if (s.y < R) {
         s.y = R;
@@ -127,21 +155,51 @@ export function SkyHopper({ api, paused }: GameProps) {
           }
           if (hitsPillar(BIRD_X, s.y, R - 2, p, PILLAR_W, FLOOR)) die();
         }
+        for (const c of s.coins) {
+          c.x -= speed * dt;
+          const dx = BIRD_X - c.x;
+          const dy = s.y - c.y;
+          if (dx * dx + dy * dy < magnet * magnet) {
+            floaters.add('+1', c.x, c.y - 20, '#fde047', 14);
+            c.x = -100;
+            s.coinCount += 1;
+            api.addCoins(1);
+            api.sfx('coin');
+          }
+        }
+        s.coins = s.coins.filter((c) => c.x > -20);
+        s.invuln = Math.max(0, s.invuln - dt);
         s.pillars = s.pillars.filter((p) => p.x > -PILLAR_W - 10);
         const last = s.pillars[s.pillars.length - 1];
         if (!last || last.x < W + 60 - SPACING) spawn((last?.x ?? W) + SPACING);
       }
       if (s.y + R >= FLOOR) {
         s.y = FLOOR - R;
-        s.vy = 0;
-        die();
+        s.vy = s.invuln > 0 ? FLAP_VELOCITY : 0;
+        die(true);
       }
     }
-    if (s.dead && !s.ended) {
+    if (s.dead && !s.ended && !s.waiting) {
       s.deadTimer -= dt;
       if (s.deadTimer <= 0) {
-        s.ended = true;
-        api.gameOver({ score: s.score });
+        s.waiting = true;
+        continueGate(
+          () => {
+            // Clear the pillar that got us and hover in the next gap.
+            s.pillars = s.pillars.filter((p) => p.x > BIRD_X + 150 || p.x + PILLAR_W < BIRD_X - 60);
+            const next = s.pillars.find((p) => p.x > BIRD_X);
+            s.y = next ? next.gapY : H * 0.42;
+            s.vy = FLAP_VELOCITY * 0.6;
+            s.dead = false;
+            s.waiting = false;
+            s.invuln = 2;
+            fx.current.floaters.add('Fly on!', W / 2, H * 0.3, '#86efac', 30, 1.2);
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({ score: s.score, stats: [{ label: 'Coins', value: String(s.coinCount) }] });
+          },
+        );
       }
     }
     particles.update(dt);
@@ -189,6 +247,8 @@ export function SkyHopper({ api, paused }: GameProps) {
       fillRoundRect(ctx, p.x - 5, bottom, PILLAR_W + 10, 22, 6, '#67e8f9');
     }
 
+    for (const c of s.coins) drawCoin(ctx, c.x, c.y, 10, s.time);
+
     // ground
     ctx.fillStyle = '#312e81';
     ctx.fillRect(0, FLOOR, W, H - FLOOR);
@@ -200,8 +260,11 @@ export function SkyHopper({ api, paused }: GameProps) {
     ctx.save();
     ctx.translate(BIRD_X, s.y);
     ctx.rotate(tilt);
-    circle(ctx, 0, 0, R + 1, '#f59e0b');
-    circle(ctx, 0, 0, R - 2, '#fde047');
+    if (s.invuln > 0 && Math.floor(s.time * 10) % 2 === 0) ctx.globalAlpha = 0.4;
+    if (s.shields > 0 && !s.dead) circle(ctx, 0, 0, R + 7, 'rgba(103,232,249,0.25)');
+    if (lo.skin.id === 'phoenix') circle(ctx, -4, 0, R + 5, 'rgba(249,115,22,0.3)');
+    circle(ctx, 0, 0, R + 1, bodyColor);
+    circle(ctx, 0, 0, R - 2, bellyColor);
     circle(ctx, 6, -5, 5, '#fff');
     circle(ctx, 7.5, -5, 2.4, '#111827');
     ctx.fillStyle = '#f97316';
@@ -210,11 +273,24 @@ export function SkyHopper({ api, paused }: GameProps) {
     ctx.lineTo(22, 3);
     ctx.lineTo(12, 7);
     ctx.fill();
-    ctx.fillStyle = '#fbbf24';
+    ctx.fillStyle = wingColor;
     ctx.beginPath();
     const wing = s.flapAnim > 0 ? -10 * s.flapAnim : 4 + Math.sin(s.time * 12) * 2;
     ctx.ellipse(-5, 3, 9, 6, wing * 0.08, 0, Math.PI * 2);
     ctx.fill();
+    if (lo.skin.id === 'royal') {
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.moveTo(-8, -R + 1);
+      ctx.lineTo(-6, -R - 9);
+      ctx.lineTo(-2, -R - 3);
+      ctx.lineTo(2, -R - 10);
+      ctx.lineTo(4, -R - 3);
+      ctx.lineTo(8, -R - 9);
+      ctx.lineTo(9, -R + 1);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
     ctx.restore();
 
     particles.draw(ctx);

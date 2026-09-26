@@ -24,4 +24,5 @@ export default defineMeta({
   realtime: false,
   popularity: 80,
   addedAt: '2026-06-12',
+  maxRevives: 1,
 });

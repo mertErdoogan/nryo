@@ -1,0 +1,146 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  width: 100%;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.grid {
+  --c: min((100cqw - 32px) / 10, (100cqh - 250px) / 14.5, 38px);
+  display: grid;
+  grid-template-columns: repeat(10, var(--c));
+  gap: 1px;
+  padding: 3px;
+  border-radius: 8px;
+  background: rgb(125 211 252 / 0.25);
+}
+
+.small {
+  --c: min((100cqw - 32px) / 10 * 0.5, (100cqh - 250px) / 14.5 * 0.55, 20px);
+}
+
+.cell {
+  position: relative;
+  width: var(--c);
+  height: var(--c);
+  padding: 0;
+  border: 0;
+  background: #0369a1;
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--c) * 0.55);
+}
+
+.cell[data-state='miss']::after {
+  content: '';
+  width: 26%;
+  height: 26%;
+  border-radius: 50%;
+  background: rgb(248 250 252 / 0.7);
+}
+
+.cell[data-state='hit'] {
+  background: #b91c1c;
+}
+
+.cell[data-state='hit']::after {
+  content: '🔥';
+}
+
+.cell[data-state='sunk'] {
+  background: #450a0a;
+}
+
+.cell[data-state='sunk']::after {
+  content: '✖';
+  color: #fca5a5;
+  font-weight: 900;
+}
+
+.cell[data-ship='true'] {
+  background: var(--ship);
+}
+
+.cell[data-radar='true'] {
+  box-shadow: inset 0 0 0 2px #fde047;
+}
+
+.cell[data-radarship='true']::before {
+  content: '';
+  position: absolute;
+  inset: 25%;
+  border-radius: 3px;
+  background: rgb(253 224 71 / 0.6);
+}
+
+.enemy .cell:not([data-state]):hover {
+  background: #0284c7;
+}
+
+.tools {
+  display: flex;
+  gap: 8px;
+}
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.1);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  font-weight: 750;
+  font-size: 0.8rem;
+}
+
+.tool[aria-pressed='true'] {
+  background: #fde047;
+  color: #0c1a2b;
+}
+
+.tool:disabled {
+  opacity: 0.45;
+}
+
+.tool small {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.18);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+}
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: auto;
+  width: min(320px, 100%);
+}
+
+.pick {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.08);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  font-weight: 800;
+}
+
+.pick span {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}

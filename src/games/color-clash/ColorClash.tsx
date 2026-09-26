@@ -1,5 +1,15 @@
 import { useRef, useState } from 'react';
-import { DomStage, Stat, StatBar, TimerBar, useCountdown, useKeyDown, useSeededRng } from '../../engine';
+import {
+  Banner,
+  DomStage,
+  Stat,
+  StatBar,
+  TimerBar,
+  createContinueGate,
+  useCountdown,
+  useKeyDown,
+  useSeededRng,
+} from '../../engine';
 import type { GameProps } from '../../platform/types';
 import { COLORS, makeQuestion, multiplier } from './logic';
 import styles from './ColorClash.module.css';
@@ -8,6 +18,11 @@ const ROUND = 45;
 
 export function ColorClash({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
+  const lo = api.loadout;
+  const roundTime = ROUND + 3 * lo.level('time');
+  const [shields, setShields] = useState(lo.level('shield'));
+  const [banner, setBanner] = useState<{ key: number; text: string } | null>(null);
+  const continueGate = useRef(createContinueGate(api)).current;
   const [question, setQuestion] = useState(() => makeQuestion(rng, 0));
   const [qid, setQid] = useState(0);
   const [feedback, setFeedback] = useState<'good' | 'bad' | null>(null);
@@ -18,28 +33,40 @@ export function ColorClash({ api, paused }: GameProps) {
     correct: 0,
     wrong: 0,
     over: false,
+    waiting: false,
     started: performance.now(),
   });
 
-  const clock = useCountdown(ROUND, !paused, () => {
-    g.current.over = true;
+  const clock = useCountdown(roundTime, !paused, () => {
     const s = g.current;
-    const total = s.correct + s.wrong;
-    api.gameOver({
-      score: s.score,
-      stats: [
-        { label: 'Correct', value: String(s.correct) },
-        { label: 'Accuracy', value: total ? `${Math.round((s.correct / total) * 100)}%` : '—' },
-        { label: 'Best streak', value: String(s.best) },
-      ],
-    });
+    s.waiting = true;
+    continueGate(
+      () => {
+        s.waiting = false;
+        clock.reset(10);
+        setBanner({ key: Date.now(), text: '+10 seconds' });
+      },
+      () => {
+        s.over = true;
+        const total = s.correct + s.wrong;
+        api.gameOver({
+          score: s.score,
+          stats: [
+            { label: 'Correct', value: String(s.correct) },
+            { label: 'Accuracy', value: total ? `${Math.round((s.correct / total) * 100)}%` : '—' },
+            { label: 'Best streak', value: String(s.best) },
+          ],
+        });
+      },
+    );
   });
 
   const answer = (saysMatch: boolean) => {
     const s = g.current;
-    if (paused || s.over) return;
+    if (paused || s.over || s.waiting) return;
     if (saysMatch === question.matches) {
       s.streak += 1;
+      if (s.correct % 20 === 19) api.addCoins(1);
       s.best = Math.max(s.best, s.streak);
       s.correct += 1;
       s.score += 10 * multiplier(s.streak);
@@ -48,13 +75,14 @@ export function ColorClash({ api, paused }: GameProps) {
     } else {
       s.streak = 0;
       s.wrong += 1;
-      clock.add(-2);
+      if (shields > 0) setShields((n) => n - 1);
+      else clock.add(-2);
       api.sfx('error');
       api.haptic(60);
       setFeedback('bad');
     }
     api.setScore(s.score);
-    setQuestion(makeQuestion(rng, ROUND - clock.remaining));
+    setQuestion(makeQuestion(rng, roundTime - clock.remaining));
     setQid((q) => q + 1);
   };
 
@@ -77,8 +105,9 @@ export function ColorClash({ api, paused }: GameProps) {
         />
         <Stat label="Streak" value={g.current.streak} />
         <Stat label="Multiplier" value={`×${mult}`} tone={mult > 1 ? 'good' : undefined} />
+        {shields > 0 && <Stat label="Shields" value={shields} />}
       </StatBar>
-      <TimerBar ratio={clock.remaining / ROUND} label="Time remaining" />
+      <TimerBar ratio={Math.min(1, clock.remaining / roundTime)} label="Time remaining" />
       <div
         className={styles.card}
         data-feedback={feedback ?? undefined}
@@ -118,6 +147,7 @@ export function ColorClash({ api, paused }: GameProps) {
           ✓<small>Yes · →</small>
         </button>
       </div>
+      {banner && <Banner key={banner.key} text={banner.text} />}
     </DomStage>
   );
 }

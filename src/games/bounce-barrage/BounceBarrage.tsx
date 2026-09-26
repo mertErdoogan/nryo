@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import {
+  createContinueGate,
   CanvasStage,
   FloatingText,
   Particles,
@@ -44,9 +45,14 @@ export function BounceBarrage({ api, paused }: GameProps<Save>) {
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
   const fx = useRef({ particles: new Particles(400, rng.next), floaters: new FloatingText() });
+  const lo = api.loadout;
+  const [ballColor, guideColor] = lo.skin.colors;
+  const speed = SPEED * (1 + 0.1 * lo.level('speed'));
+  const guideDots = 16 + 6 * lo.level('guide');
+  const continueGate = useRef(createContinueGate(api)).current;
   const s = useRef({
     grid: api.resume?.grid ?? advance(emptyGrid(), 1, rng).grid,
-    balls: api.resume?.balls ?? 1,
+    balls: api.resume?.balls ?? 1 + lo.level('start'),
     turn: api.resume?.turn ?? 1,
     x: api.resume?.x ?? W / 2,
     aim: -Math.PI / 2,
@@ -103,13 +109,24 @@ export function BounceBarrage({ api, paused }: GameProps<Save>) {
     s.balls += s.gained;
     s.x = s.nextX ?? s.x;
     s.turn += 1;
+    if (s.turn % 10 === 0) api.addCoins(2);
     const res = advance(s.grid, s.turn, rng);
     if (!res.alive) {
       s.over = true;
       api.sfx('gameover');
-      setTimeout(
+      continueGate(
+        () => {
+          // Wipe the three lowest rows and carry on.
+          for (let r = ROWS - 3; r < ROWS; r++) s.grid[r] = Array<number>(COLS).fill(0);
+          s.grid = advance(s.grid, s.turn, rng).grid;
+          s.over = false;
+          fx.current.floaters.add('Rows cleared!', W / 2, FLOOR - 120, '#5eead4', 24, 1.2);
+          api.save(
+            { grid: s.grid, balls: s.balls, turn: s.turn, x: s.x },
+            { label: `Turn ${s.turn} · ${s.balls} balls`, progress: Math.min(1, s.turn / 80) },
+          );
+        },
         () => api.gameOver({ score: s.turn - 1, stats: [{ label: 'Balls', value: String(s.balls) }] }),
-        700,
       );
       return;
     }
@@ -146,8 +163,8 @@ export function BounceBarrage({ api, paused }: GameProps<Save>) {
             s.flying.push({
               x: s.x,
               y: FLOOR - BALL_R,
-              vx: Math.cos(s.aim) * SPEED,
-              vy: Math.sin(s.aim) * SPEED,
+              vx: Math.cos(s.aim) * speed,
+              vy: Math.sin(s.aim) * speed,
               done: false,
             });
           }
@@ -268,21 +285,24 @@ export function BounceBarrage({ api, paused }: GameProps<Save>) {
     if (!busy() && !s.over) {
       // aim guide
       ctx.fillStyle = 'rgba(255,255,255,0.7)';
-      for (let i = 1; i < 16; i++) {
+      for (let i = 1; i < guideDots; i++) {
         const d = i * 22;
         let x = s.x + Math.cos(s.aim) * d;
         const y = FLOOR - BALL_R + Math.sin(s.aim) * d;
         if (x < 0) x = -x;
         if (x > W) x = 2 * W - x;
         if (y < 40) break;
-        ctx.globalAlpha = s.aiming ? 0.9 - i * 0.05 : 0.35 - i * 0.02;
-        circle(ctx, x, y, 3, '#fff');
+        ctx.globalAlpha = Math.max(
+          0.08,
+          s.aiming ? 0.9 - i * (0.8 / guideDots) : 0.35 - i * (0.3 / guideDots),
+        );
+        circle(ctx, x, y, 3, guideColor);
       }
       ctx.globalAlpha = 1;
-      circle(ctx, s.x, FLOOR - BALL_R, BALL_R, '#f8fafc');
+      circle(ctx, s.x, FLOOR - BALL_R, BALL_R, ballColor);
       text(ctx, `×${s.balls}`, s.x, FLOOR + 18, { size: 13, weight: 800, color: '#5eead4' });
     }
-    for (const b of s.flying) circle(ctx, b.x, b.y, BALL_R, '#f8fafc');
+    for (const b of s.flying) circle(ctx, b.x, b.y, BALL_R, ballColor);
     particles.draw(ctx);
     floaters.draw(ctx);
     text(ctx, `Turn ${s.turn}`, 14, 22, { size: 15, weight: 800, align: 'left' });

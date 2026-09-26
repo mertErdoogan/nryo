@@ -1,5 +1,14 @@
 import { useRef } from 'react';
-import { CanvasStage, FloatingText, Particles, useGameLoop, useHeldKeys, useSeededRng } from '../../engine';
+import {
+  CanvasStage,
+  FloatingText,
+  Particles,
+  createContinueGate,
+  drawCoin,
+  useGameLoop,
+  useHeldKeys,
+  useSeededRng,
+} from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
 import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
 import type { GameProps } from '../../platform/types';
@@ -30,6 +39,12 @@ interface Drone {
 
 export function SkyClimber({ api, paused }: GameProps) {
   const rng = useSeededRng(api.seed);
+  const lo = api.loadout;
+  const [bodyColor, shineColor, trimColor] = lo.skin.colors;
+  const jump = JUMP * (1 + 0.04 * lo.level('jump'));
+  const springChance = 0.12 + 0.04 * lo.level('springs');
+  const magnet = R + 14 + 14 * lo.level('magnet');
+  const continueGate = useRef(createContinueGate(api)).current;
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
   const fx = useRef({ particles: new Particles(300, rng.next), floaters: new FloatingText() });
@@ -41,6 +56,10 @@ export function SkyClimber({ api, paused }: GameProps) {
     cam: 0,
     platforms: [] as Platform[],
     drones: [] as Drone[],
+    coins: [] as { x: number; y: number }[],
+    coinCount: 0,
+    invuln: 0,
+    waiting: false,
     highest: H - 40,
     maxHeight: 0,
     touch: new Map<number, number>(),
@@ -57,7 +76,7 @@ export function SkyClimber({ api, paused }: GameProps) {
     const height = (H - y) / 10;
     const roll = rng.next();
     let kind: Kind = 'normal';
-    if (height > 150 && roll < 0.12) kind = 'spring';
+    if (height > 150 && roll < springChance) kind = 'spring';
     else if (height > 300 && roll < 0.32) kind = 'moving';
     else if (height > 500 && roll < 0.45) kind = 'crumble';
     else if (height > 900 && roll < 0.55) kind = 'cloud';
@@ -79,6 +98,7 @@ export function SkyClimber({ api, paused }: GameProps) {
         broken: false,
         used: false,
       });
+    if (rng.chance(0.18)) s.coins.push({ x: rng.range(24, W - 24), y: y - rng.range(30, 50) });
     if (height > 1500 && rng.chance(0.06))
       s.drones.push({ x: rng.range(30, W - 30), y: y - 60, dir: rng.chance(0.5) ? 1 : -1 });
   };
@@ -149,7 +169,7 @@ export function SkyClimber({ api, paused }: GameProps) {
             continue;
           }
           s.y = p.y - R;
-          s.vy = p.kind === 'spring' ? SPRING : JUMP;
+          s.vy = p.kind === 'spring' ? SPRING : jump;
           s.squash = 1;
           if (p.kind === 'spring') {
             api.sfx('powerup');
@@ -169,10 +189,10 @@ export function SkyClimber({ api, paused }: GameProps) {
           if (s.vy > 0 && s.y < d.y - 6) {
             // Stomp from above.
             d.y = 1e9;
-            s.vy = JUMP;
+            s.vy = jump;
             api.sfx('hit');
             floaters.add('Stomp!', s.x, s.y - 30, '#fca5a5', 16);
-          } else {
+          } else if (s.invuln <= 0) {
             s.dead = true;
             s.deadTimer = 1;
             api.sfx('explode');
@@ -180,6 +200,16 @@ export function SkyClimber({ api, paused }: GameProps) {
           }
         }
       }
+      for (const c of s.coins) {
+        if (Math.hypot(c.x - s.x, c.y - s.y) < magnet) {
+          floaters.add('+1', c.x, c.y - 16, '#fde047', 14, 0.6);
+          c.y = 1e9;
+          s.coinCount += 1;
+          api.addCoins(1);
+          api.sfx('coin');
+        }
+      }
+      s.invuln = Math.max(0, s.invuln - dt);
       // camera follows upward only
       const target = s.y - H * 0.42;
       if (target < s.cam) s.cam = target;
@@ -189,6 +219,7 @@ export function SkyClimber({ api, paused }: GameProps) {
       }
       s.platforms = s.platforms.filter((p) => p.y < s.cam + H + 40);
       s.drones = s.drones.filter((d) => d.y < s.cam + H + 40);
+      s.coins = s.coins.filter((c) => c.y < s.cam + H + 40);
       const score = Math.max(s.maxHeight, height);
       if (score > s.maxHeight) {
         s.maxHeight = score;
@@ -211,11 +242,36 @@ export function SkyClimber({ api, paused }: GameProps) {
     } else if (!s.started) {
       s.y = H - 40 - R - Math.abs(Math.sin(s.time * 3.4)) * 110;
     }
-    if (s.dead && !s.ended) {
+    if (s.dead && !s.ended && !s.waiting) {
       s.deadTimer -= dt;
       if (s.deadTimer <= 0) {
-        s.ended = true;
-        api.gameOver({ score: s.maxHeight, stats: [{ label: 'Height', value: `${s.maxHeight} m` }] });
+        s.waiting = true;
+        continueGate(
+          () => {
+            // A rescue spring appears under the hero.
+            const y = s.cam + H * 0.75;
+            s.platforms.push({ x: W / 2 - PW / 2, y, kind: 'spring', dir: 1, broken: false, used: false });
+            s.drones = s.drones.filter((d) => Math.abs(d.y - s.y) > 260);
+            s.x = W / 2;
+            s.y = y - R;
+            s.vx = 0;
+            s.vy = SPRING;
+            s.invuln = 2;
+            s.dead = false;
+            s.waiting = false;
+            fx.current.floaters.add('Up you go!', W / 2, y - 80, '#86efac', 24, 1.2);
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({
+              score: s.maxHeight,
+              stats: [
+                { label: 'Height', value: `${s.maxHeight} m` },
+                { label: 'Coins', value: String(s.coinCount) },
+              ],
+            });
+          },
+        );
       }
     }
     s.squash = Math.max(0, s.squash - dt * 5);
@@ -282,18 +338,26 @@ export function SkyClimber({ api, paused }: GameProps) {
       }
       circle(ctx, d.x, d.y, 5, '#fff');
     }
+    for (const c of s.coins) drawCoin(ctx, c.x, c.y, 9, s.time);
     // hero (squashes on landing)
     if (!s.dead || s.y - s.cam < H) {
       const sq = s.squash * 0.25;
       ctx.save();
       ctx.translate(s.x, s.y);
       ctx.scale(1 + sq, 1 - sq);
-      circle(ctx, 0, 0, R, '#a855f7');
-      circle(ctx, -4, -4, R * 0.55, '#c084fc');
+      if (s.invuln > 0 && Math.floor(s.time * 10) % 2 === 0) ctx.globalAlpha = 0.45;
+      circle(ctx, 0, 0, R, bodyColor);
+      circle(ctx, -4, -4, R * 0.55, shineColor);
+      if (lo.skin.id !== 'blob') {
+        // hat / helmet brim in the trim colour
+        fillRoundRect(ctx, -R * 0.8, -R - 2, R * 1.6, 6, 3, trimColor);
+        if (lo.skin.id === 'astro') circle(ctx, 0, -2, R * 0.75, 'rgba(186,230,253,0.35)');
+      }
       circle(ctx, s.facing * 5, -3, 4, '#fff');
       circle(ctx, s.facing * 6, -3, 2, '#111');
       circle(ctx, s.facing * -3, -3, 4, '#fff');
       circle(ctx, s.facing * -2, -3, 2, '#111');
+      ctx.globalAlpha = 1;
       ctx.restore();
     }
     particles.draw(ctx);

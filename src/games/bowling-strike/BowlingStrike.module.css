@@ -1,0 +1,33 @@
+.wrap {
+  position: absolute;
+  inset: 0;
+}
+
+.bumpers {
+  position: absolute;
+  left: 12px;
+  bottom: calc(12px + var(--safe-bottom));
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgb(15 23 42 / 0.75);
+  border: 1px solid rgb(244 114 182 / 0.6);
+  color: #fdf2f8;
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.bumpers span {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.15);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.bumpers:disabled {
+  opacity: 0.5;
+}

@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'block-fit',
@@ -24,4 +24,10 @@ export default defineMeta({
   realtime: false,
   popularity: 92,
   addedAt: '2026-06-13',
+  shop: {
+    title: 'Toolbox',
+    icon: '🧩',
+    upgrades: [upgrade('reroll', 'Free swaps', '🔄', 'One free piece swap per level each game', 4, 80)],
+    skins: [skin('classic', 'Classic', 0, ['#f472b6', '#22d3ee', '#facc15'])],
+  },
 });

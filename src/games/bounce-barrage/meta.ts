@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'bounce-barrage',
@@ -27,4 +27,21 @@ export default defineMeta({
   realtime: false,
   popularity: 79,
   addedAt: '2026-06-22',
+  shop: {
+    title: 'Ball Shop',
+    icon: '⚪',
+    skinLabel: 'Balls',
+    upgrades: [
+      upgrade('start', 'Head start', '➕', 'Start new games with one more ball per level', 5, 80),
+      upgrade('speed', 'Fast balls', '💨', '+10% ball speed per level', 3, 60),
+      upgrade('guide', 'Long sight', '🔭', 'Longer aiming guide', 2, 100),
+    ],
+    skins: [
+      skin('white', 'Classic', 0, ['#f8fafc', '#ffffff', '#5eead4'], { icon: '⚪' }),
+      skin('mint', 'Mint', 100, ['#5eead4', '#99f6e4', '#14b8a6'], { icon: '🟢' }),
+      skin('flame', 'Flame', 200, ['#fb923c', '#fed7aa', '#ea580c'], { icon: '🟠' }),
+      skin('plasma', 'Plasma', 300, ['#e879f9', '#f5d0fe', '#a21caf'], { icon: '🟣' }),
+      skin('gold', 'Gold', 0, ['#facc15', '#fef08a', '#ca8a04'], { icon: '🟡', adUnlock: 3 }),
+    ],
+  },
 });

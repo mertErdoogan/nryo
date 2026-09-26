@@ -1,4 +1,4 @@
-import { defineMeta } from '../define';
+import { defineMeta, skin, upgrade } from '../define';
 
 export default defineMeta({
   id: 'planet-conquest',
@@ -23,4 +23,20 @@ export default defineMeta({
   realtime: true,
   popularity: 81,
   addedAt: '2026-06-25',
+  shop: {
+    title: 'Shipyard',
+    icon: '🪐',
+    skinLabel: 'Fleet colours',
+    upgrades: [
+      upgrade('production', 'Factories', '🏭', 'Your planets build 8% faster per level', 4, 100),
+      upgrade('engines', 'Warp engines', '🚀', 'Your fleets fly 10% faster per level', 3, 90),
+      upgrade('garrison', 'Garrison', '🛡️', '+10 ships on your home world per level', 3, 80),
+    ],
+    skins: [
+      skin('blue', 'Azure Fleet', 0, ['#3b82f6', '#93c5fd', '#1d4ed8']),
+      skin('violet', 'Violet Armada', 150, ['#a855f7', '#e9d5ff', '#7e22ce'], { icon: '🟣' }),
+      skin('gold', 'Golden Empire', 250, ['#f59e0b', '#fde68a', '#b45309'], { icon: '🟡' }),
+      skin('cyan', 'Ice Legion', 250, ['#06b6d4', '#a5f3fc', '#0e7490'], { icon: '🔷' }),
+    ],
+  },
 });

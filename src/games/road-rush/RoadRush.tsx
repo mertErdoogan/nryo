@@ -4,14 +4,16 @@ import {
   FloatingText,
   Particles,
   Shake,
+  createContinueGate,
+  drawCoin,
   useGameLoop,
   useHeldKeys,
   useSeededRng,
 } from '../../engine';
 import type { CanvasView, StagePointer } from '../../engine';
-import { circle, fillRoundRect, prompt, text } from '../../engine/draw';
+import { circle, fillRoundRect, prompt, shade, text } from '../../engine/draw';
 import { clamp, rectsOverlap } from '../../lib/math';
-import type { GameProps } from '../../platform/types';
+import type { GameProps, SkinDef } from '../../platform/types';
 
 const W = 360;
 const H = 640;
@@ -62,7 +64,46 @@ function drawCar(
   ctx.fillRect(x + w / 2 - 12, y - h / 2 + (player ? 1 : h - 4), 8, 3);
 }
 
+/** The player's car, dressed in the equipped garage skin. */
+function drawPlayerCar(ctx: CanvasRenderingContext2D, x: number, y: number, skin: SkinDef, time: number) {
+  const [body, trim, accent] = skin.colors;
+  const w = CAR_W;
+  const h = CAR_H;
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(x - w / 2 + 3, y - h / 2 + 5, w, h);
+  fillRoundRect(ctx, x - w / 2, y - h / 2, w, h, skin.id === 'super' || skin.id === 'gold' ? 14 : 9, body);
+  fillRoundRect(ctx, x - w / 2 + 3, y - h / 2 + 3, w - 6, h - 6, 7, shade(body, 0.12));
+  // racing stripes
+  if (skin.id !== 'hatch' && skin.id !== 'police') {
+    ctx.fillStyle = trim;
+    ctx.fillRect(x - 7, y - h / 2 + 2, 4, h - 4);
+    ctx.fillRect(x + 3, y - h / 2 + 2, 4, h - 4);
+  }
+  fillRoundRect(ctx, x - w / 2 + 5, y - h / 2 + 16, w - 10, 12, 4, 'rgba(15,23,42,0.8)');
+  fillRoundRect(ctx, x - w / 2 + 6, y + h / 2 - 22, w - 12, 9, 3, 'rgba(15,23,42,0.6)');
+  if (skin.id === 'police') {
+    const on = Math.floor(time * 6) % 2 === 0;
+    fillRoundRect(ctx, x - 12, y - 4, 11, 6, 2, on ? '#ef4444' : '#7f1d1d');
+    fillRoundRect(ctx, x + 1, y - 4, 11, 6, 2, on ? '#1e3a8a' : '#3b82f6');
+  }
+  // spoiler for the fast ones
+  if (skin.id === 'sport' || skin.id === 'super' || skin.id === 'gold' || skin.id === 'muscle')
+    fillRoundRect(ctx, x - w / 2 - 3, y + h / 2 - 7, w + 6, 6, 2, trim);
+  ctx.fillStyle = accent;
+  ctx.fillRect(x - w / 2 + 4, y - h / 2 + 1, 8, 3);
+  ctx.fillRect(x + w / 2 - 12, y - h / 2 + 1, 8, 3);
+}
+
+/** Per-car handling bonus (skins with perks). */
+const CAR_GRIP: Record<string, number> = { sport: 0.1, muscle: 0.05, police: 0.08, super: 0.18, gold: 0.12 };
+
 export function RoadRush({ api, paused }: GameProps) {
+  const lo = api.loadout;
+  const handling = 1 + 0.08 * lo.level('handling') + (CAR_GRIP[lo.skin.id] ?? 0);
+  const magnet = 26 + 14 * lo.level('magnet');
+  const nearMult = 1 + 0.25 * lo.level('bonus');
+  const shieldEvery = lo.level('shield') > 0 ? 1600 - 250 * (lo.level('shield') - 1) : 0;
+  const continueGate = useRef(createContinueGate(api)).current;
   const rng = useSeededRng(api.seed);
   const view = useRef<CanvasView | null>(null);
   const keys = useHeldKeys(!paused);
@@ -88,6 +129,10 @@ export function RoadRush({ api, paused }: GameProps) {
     ended: false,
     nearMisses: 0,
     coinCount: 0,
+    invuln: 0,
+    shield: false,
+    shieldAt: 0,
+    waiting: false,
     combo: 0,
     comboTimer: 0,
     bonus: 0,
@@ -159,10 +204,10 @@ export function RoadRush({ api, paused }: GameProps) {
       s.distance += s.speed * dt;
       s.scroll += s.speed * dt;
       if (steer) {
-        s.vx = clamp(s.vx + steer * 1600 * dt, -330, 330);
+        s.vx = clamp(s.vx + steer * 1600 * handling * dt, -330 * handling, 330 * handling);
         s.targetX = null;
       } else if (s.targetX !== null) {
-        s.vx = clamp((s.targetX - s.x) * 9, -380, 380);
+        s.vx = clamp((s.targetX - s.x) * 9, -380 * handling, 380 * handling);
       } else s.vx *= Math.max(0, 1 - dt * 10);
       s.x = clamp(s.x + s.vx * dt, ROAD_L + CAR_W / 2 + 2, ROAD_R - CAR_W / 2 - 2);
 
@@ -176,7 +221,22 @@ export function RoadRush({ api, paused }: GameProps) {
         c.y += (s.speed - c.speed) * dt;
         if (c.shiftTarget !== c.x && c.y > 60) c.x += clamp(c.shiftTarget - c.x, -60 * dt, 60 * dt);
         const box = { x: c.x - c.w / 2 + 3, y: c.y - c.h / 2 + 3, w: c.w - 6, h: c.h - 6 };
-        if (rectsOverlap(player, box)) {
+        if (s.invuln <= 0 && rectsOverlap(player, box)) {
+          if (s.shield) {
+            s.shield = false;
+            s.invuln = 1.2;
+            c.y = H + 200;
+            shake.add(8);
+            particles.burst(s.x, PLAYER_Y - 20, {
+              count: 30,
+              colors: ['#67e8f9', '#fff'],
+              speed: 260,
+              life: 0.6,
+            });
+            floaters.add('Shield!', s.x, PLAYER_Y - 60, '#67e8f9', 20, 0.9);
+            api.sfx('hit');
+            break;
+          }
           s.crashed = true;
           s.crashTimer = 1.1;
           shake.add(18);
@@ -201,7 +261,7 @@ export function RoadRush({ api, paused }: GameProps) {
           s.nearMisses += 1;
           s.combo += 1;
           s.comboTimer = 2.5;
-          const pts = 20 * Math.min(5, s.combo);
+          const pts = Math.round(20 * Math.min(5, s.combo) * nearMult);
           s.bonus += pts;
           floaters.add(
             s.combo > 1 ? `Near miss ×${s.combo} +${pts}` : `Near miss +${pts}`,
@@ -217,16 +277,25 @@ export function RoadRush({ api, paused }: GameProps) {
       s.cars = s.cars.filter((c) => c.y < H + 140);
       for (const coin of s.coins) {
         coin.y += s.speed * dt;
-        if (Math.abs(coin.x - s.x) < 26 && Math.abs(coin.y - PLAYER_Y) < 40) {
+        if (magnet > 26 && Math.abs(coin.x - s.x) < magnet * 1.6 && Math.abs(coin.y - PLAYER_Y) < magnet * 2)
+          coin.x += clamp(s.x - coin.x, -300 * dt, 300 * dt);
+        if (Math.abs(coin.x - s.x) < magnet && Math.abs(coin.y - PLAYER_Y) < 40) {
           coin.y = H + 100;
           s.coinCount += 1;
           s.bonus += 10;
+          api.addCoins(1);
           api.sfx('coin');
         }
       }
       s.coins = s.coins.filter((c) => c.y < H + 20);
       s.comboTimer -= dt;
       if (s.comboTimer <= 0) s.combo = 0;
+      s.invuln = Math.max(0, s.invuln - dt);
+      if (shieldEvery && !s.shield && s.distance >= s.shieldAt) {
+        s.shield = true;
+        s.shieldAt = s.distance + shieldEvery * 10;
+        floaters.add('Shield ready', s.x, PLAYER_Y - 60, '#67e8f9', 16, 0.9);
+      }
       const next = Math.floor(s.distance / 10) + s.bonus;
       if (next !== s.score) {
         s.score = next;
@@ -242,18 +311,33 @@ export function RoadRush({ api, paused }: GameProps) {
           angle: Math.PI / 2,
           spread: 0.5,
         });
-    } else if (s.crashed && !s.ended) {
+    } else if (s.crashed && !s.ended && !s.waiting) {
       s.crashTimer -= dt;
       if (s.crashTimer <= 0) {
-        s.ended = true;
-        api.gameOver({
-          score: s.score,
-          stats: [
-            { label: 'Distance', value: `${(s.distance / 1000).toFixed(2)} km` },
-            { label: 'Near misses', value: String(s.nearMisses) },
-            { label: 'Coins', value: String(s.coinCount) },
-          ],
-        });
+        s.waiting = true;
+        continueGate(
+          () => {
+            // Back on the road: clear nearby traffic and blink for a moment.
+            s.cars = s.cars.filter((c) => c.y < PLAYER_Y - 260 || c.y > PLAYER_Y + 160);
+            s.crashed = false;
+            s.waiting = false;
+            s.invuln = 2.5;
+            s.vx = 0;
+            s.speed = Math.max(300, s.speed * 0.8);
+            fx.current.floaters.add('Keep going!', W / 2, H * 0.4, '#86efac', 26, 1.2);
+          },
+          () => {
+            s.ended = true;
+            api.gameOver({
+              score: s.score,
+              stats: [
+                { label: 'Distance', value: `${(s.distance / 1000).toFixed(2)} km` },
+                { label: 'Near misses', value: String(s.nearMisses) },
+                { label: 'Coins', value: String(s.coinCount) },
+              ],
+            });
+          },
+        );
       }
     }
     particles.update(dt);
@@ -282,12 +366,17 @@ export function RoadRush({ api, paused }: GameProps) {
       const x = ROAD_L + LANE_W * lane - 2;
       for (let y = (s.scroll % 60) - 60; y < H; y += 60) ctx.fillRect(x, y, 4, 30);
     }
-    for (const coin of s.coins) {
-      circle(ctx, coin.x, coin.y, 9, '#facc15');
-      circle(ctx, coin.x - 2, coin.y - 2, 3, '#fef9c3');
-    }
+    for (const coin of s.coins) drawCoin(ctx, coin.x, coin.y, 9, s.time);
     for (const c of s.cars) drawCar(ctx, c.x, c.y, c.w, c.h, c.color, false);
-    if (!s.crashed) drawCar(ctx, s.x, PLAYER_Y, CAR_W, CAR_H, '#fbbf24', true);
+    if (!s.crashed && (s.invuln <= 0 || Math.floor(s.time * 10) % 2 === 0))
+      drawPlayerCar(ctx, s.x, PLAYER_Y, lo.skin, s.time);
+    if (!s.crashed && s.shield) {
+      ctx.strokeStyle = 'rgba(103,232,249,0.7)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(s.x, PLAYER_Y, CAR_W * 0.9, CAR_H * 0.7, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     particles.draw(ctx);
     floaters.draw(ctx);
     ctx.restore();
