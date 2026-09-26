@@ -1,4 +1,5 @@
 import { addDays, DATE_KEY_PATTERN } from '../../lib/date';
+import { createRng } from '../../lib/rng';
 import { hashString } from '../../lib/rng';
 import { isPlainObject, nullable, num, obj, record, str } from '../../lib/schema';
 import { meetsThreshold, niceNumber } from '../scoring';
@@ -60,23 +61,34 @@ function eligible(games: readonly DailyGame[]): DailyGame[] {
   return games.filter((g) => g.dailyEligible !== false).sort((a, b) => a.id.localeCompare(b.id));
 }
 
-function rawPick(dateKey: string, pool: DailyGame[]): number {
-  return hashString(`nryo-daily:${dateKey}`) % pool.length;
+/** Days since 1970-01-01 for a YYYY-MM-DD key (calendar based, timezone independent). */
+function dayNumber(dateKey: string): number {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  return Math.floor(Date.UTC(y!, m! - 1, d!) / 86_400_000);
+}
+
+function cyclePermutation(cycle: number, n: number): number[] {
+  return createRng(hashString(`nryo-daily-cycle:${cycle}`)).shuffle(Array.from({ length: n }, (_, i) => i));
 }
 
 /**
  * Deterministic challenge for a calendar day: every visitor sees the same game,
- * target and seed for a given YYYY-MM-DD. Consecutive days never repeat a game.
+ * target and seed for a given YYYY-MM-DD. Games rotate through a shuffled cycle
+ * (each eligible game once per cycle) and never repeat on consecutive days.
  */
 export function getDailyChallenge(dateKey: string, games: readonly DailyGame[]): DailyChallenge | null {
   const pool = eligible(games);
-  if (pool.length === 0) return null;
-  const hash = hashString(`nryo-daily:${dateKey}`);
-  let index = rawPick(dateKey, pool);
-  if (pool.length > 1 && index === rawPick(addDays(dateKey, -1), pool)) {
-    index = (index + 1 + ((hash >>> 8) % (pool.length - 1))) % pool.length;
+  const n = pool.length;
+  if (n === 0) return null;
+  const day = dayNumber(dateKey);
+  const cycle = Math.floor(day / n);
+  const perm = cyclePermutation(cycle, n);
+  if (n > 2) {
+    const previousLast = cyclePermutation(cycle - 1, n)[n - 1];
+    if (perm[0] === previousLast) [perm[0], perm[1]] = [perm[1]!, perm[0]!];
   }
-  const game = pool[index]!;
+  const game = pool[perm[day % n]!]!;
+  const hash = hashString(`nryo-daily:${dateKey}`);
   // Target sits between silver and gold: achievable, but a real stretch.
   const t = 0.2 + (((hash >>> 16) % 100) / 100) * 0.6;
   const { silver, gold } = game.medals;
