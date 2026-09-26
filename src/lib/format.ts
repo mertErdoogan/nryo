@@ -26,13 +26,14 @@ export function formatClock(seconds: number, tenths = false): string {
   return `${m}:${String(Math.floor(s)).padStart(2, '0')}`;
 }
 
-export function formatScore(value: number, format: ScoreFormat = 'points'): string {
+export function formatScore(value: number, format: ScoreFormat = 'points', compact = false): string {
   switch (format) {
     case 'ms':
-      return `${Math.round(value)} ms`;
+      return compact ? `${Math.round(value)}ms` : `${Math.round(value)} ms`;
     case 'time':
       return formatClock(value / 1000, true);
     case 'strokes':
+      if (compact) return String(Math.round(value));
       return `${Math.round(value)} ${Math.round(value) === 1 ? 'stroke' : 'strokes'}`;
     case 'level':
       return `Lv ${Math.round(value)}`;

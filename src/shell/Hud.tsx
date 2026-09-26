@@ -40,7 +40,7 @@ function LiveScore({ store, game }: { store: ValueStore<number>; game: GameEntry
   }, [value]);
   return (
     <span className={styles.scoreValue} data-bump={bump} data-testid="hud-score">
-      {formatScore(value, game.score.format)}
+      {formatScore(value, game.score.format, true)}
     </span>
   );
 }
@@ -55,7 +55,7 @@ export function Hud(props: HudProps) {
         <span className={styles.hudName}>{game.title}</span>
         <span className={styles.hudMode} data-daily={mode === 'daily'}>
           {mode === 'daily' && target !== null
-            ? `Daily · target ${formatScore(target, game.score.format)}`
+            ? `Daily · target ${formatScore(target, game.score.format, true)}`
             : game.score.label}
         </span>
       </div>
@@ -68,7 +68,7 @@ export function Hud(props: HudProps) {
         <span className={styles.scoreLabel}>Best</span>
         <span className={styles.bestValue} data-testid="hud-best">
           {medal > 0 && <Medal tier={medal} size={14} />}
-          {best === null ? '—' : formatScore(best, game.score.format)}
+          {best === null ? '—' : formatScore(best, game.score.format, true)}
         </span>
       </div>
       {props.canPause && (
